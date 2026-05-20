@@ -957,6 +957,9 @@ export default function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
+      // reset advance guards on new question
+      if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
+      if(r.phase==="betting"){advanceBetPhaseRef.current=false;}
     });
   }
 
@@ -988,33 +991,70 @@ export default function App(){
   }
 
   async function handleGuess(val){
+    // write own guess
     await update(ref(db,`rooms/${code}/guesses`),{[myId]:val});
-    const r=await dbGet(code);
-    const guesses=r.guesses||{};
-    const allDone=(r.order||[]).every(id=>guesses[id]!=null);
-    if(allDone){
-      if(order.length<3){const merged={...r,guesses};const{roundScores,newScores,closestId,farthestId}=calcRound(merged);const histEntry={guesses,answer:r.q?.a,bets:{},closestId,farthestId};const prevHistory=r.history||[];await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});}
-      else await dbPatch(code,{phase:"betting"});
-    }
+    // only the HOST decides when to advance phase – avoids race conditions
+    // the onValue listener (listenRoom) will pick up the change for everyone
+    // host watches and advances once all guesses are in
   }
 
+  // called by the room listener whenever room updates
+  const advanceGuessPhaseRef=useRef(false);
+  useEffect(()=>{
+    if(!room||room.phase!=="question")return;
+    const order=room.order||[];
+    const guesses=room.guesses||{};
+    const allDone=order.length>0&&order.every(id=>guesses[id]!=null);
+    // only host advances to avoid double-write
+    if(allDone&&room.hostId===myId&&!advanceGuessPhaseRef.current){
+      advanceGuessPhaseRef.current=true;
+      const advance=async()=>{
+        const r=await dbGet(code);
+        const g=r.guesses||{};
+        const stillAllDone=(r.order||[]).every(id=>g[id]!=null);
+        if(!stillAllDone)return;
+        if((r.order||[]).length<3){
+          const merged={...r,guesses:g};
+          const{roundScores,newScores,closestId,farthestId}=calcRound(merged);
+          const histEntry={guesses:g,answer:r.q?.a,bets:{},closestId,farthestId};
+          const prevHistory=r.history||[];
+          await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});
+        } else {
+          await dbPatch(code,{phase:"betting"});
+        }
+      };
+      advance();
+    }
+    if(!allDone) advanceGuessPhaseRef.current=false;
+  },[room?.guesses,room?.phase]);
+
   async function handleBet(closest,farthest){
-    // write bet first
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
-    // small delay so Firebase settles
-    await new Promise(res=>setTimeout(res,300));
-    const r=await dbGet(code);
-    const bets=r.bets||{};
-    const order=r.order||[];
-    // allDone = every player has a bet object with closest AND farthest
-    const allDone=order.every(id=>bets[id]&&bets[id].closest&&bets[id].farthest);
-    if(!allDone)return;
-    const{roundScores,newScores,closestId,farthestId}=calcRound(r);
-    // save round to history for end stats
-    const histEntry={guesses:r.guesses,answer:r.q?.a,bets:r.bets,closestId,farthestId};
-    const prevHistory=r.history||[];
-    await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});
+    // host advances phase once all bets are in
   }
+
+  const advanceBetPhaseRef=useRef(false);
+  useEffect(()=>{
+    if(!room||room.phase!=="betting")return;
+    const order=room.order||[];
+    const bets=room.bets||{};
+    const allDone=order.length>0&&order.every(id=>bets[id]&&bets[id].closest&&bets[id].farthest);
+    if(allDone&&room.hostId===myId&&!advanceBetPhaseRef.current){
+      advanceBetPhaseRef.current=true;
+      const advance=async()=>{
+        const r=await dbGet(code);
+        const b=r.bets||{};
+        const stillAllDone=(r.order||[]).every(id=>b[id]&&b[id].closest&&b[id].farthest);
+        if(!stillAllDone)return;
+        const{roundScores,newScores,closestId,farthestId}=calcRound(r);
+        const histEntry={guesses:r.guesses,answer:r.q?.a,bets:b,closestId,farthestId};
+        const prevHistory=r.history||[];
+        await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});
+      };
+      advance();
+    }
+    if(!allDone) advanceBetPhaseRef.current=false;
+  },[room?.bets,room?.phase]);
 
   async function handleNext(){
     const r=await dbGet(code);
