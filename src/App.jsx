@@ -753,19 +753,27 @@ function BettingScreen({room,myId,t,onBet}){
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const others=pl.filter(p=>p.id!==myId);
   const myBet=(room.bets||{})[myId];
+  const soloOther=others.length===1;
   function RG({label,color,val,setVal}){
     return <Card t={t} style={{marginBottom:12}}>
       <p style={{color,fontSize:13,fontWeight:800,marginBottom:10}}>{label}</p>
       {others.map(p=>{const sel=val===p.id;return <div key={p.id} onClick={()=>setVal(p.id)} style={{...row,padding:"11px 13px",borderRadius:t.radius,cursor:"pointer",background:sel?color+"18":t.surface,border:`1.5px solid ${sel?color:t.border}`,marginBottom:8,transition:"all .15s"}}><input type="radio" readOnly checked={sel} style={{accentColor:color}}/><Avatar name={p.name} t={t} size={30}/><span style={{fontWeight:600}}>{p.name}</span></div>;})}
     </Card>;
   }
+  const canSubmit=soloOther?!!closest:!!(closest&&farthest&&closest!==farthest);
+  function submitBet(){onBet(closest,soloOther?closest:farthest);}
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Pill t={t} color={t.gold}>{t.id==="kids"?"🎲 WETTEN":"WETTEN"}</Pill>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>{t.id==="kids"?"Wer trifft's am besten?":"Wer liegt wo?"}</h2>
     <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Richtige Wette = +1 Punkt extra</p>
     {myBet
       ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
-      :<><RG label={t.id==="kids"?"🎯 Wer liegt AM NÄCHSTEN?":"🎯 AM NÄCHSTEN dran"} color={t.green} val={closest} setVal={setClosest}/><RG label={t.id==="kids"?"🙈 Wer liegt AM WEITESTEN?":"💀 AM WEITESTEN daneben"} color={t.danger} val={farthest} setVal={setFarthest}/><Btn t={t} full disabled={!closest||!farthest||closest===farthest} onClick={()=>onBet(closest,farthest)}>Wette abgeben 🎲</Btn></>}
+      :<>
+        <RG label={t.id==="kids"?"🎯 Wer liegt AM NÄCHSTEN?":"🎯 AM NÄCHSTEN dran"} color={t.green} val={closest} setVal={setClosest}/>
+        {!soloOther&&<RG label={t.id==="kids"?"🙈 Wer liegt AM WEITESTEN?":"💀 AM WEITESTEN daneben"} color={t.danger} val={farthest} setVal={setFarthest}/>}
+        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
+        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
+      </>}
   </div>;
 }
 
@@ -886,10 +894,15 @@ export default function App(){
   }
 
   async function handleBet(closest,farthest){
+    // write bet first
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
+    // small delay so Firebase settles
+    await new Promise(res=>setTimeout(res,300));
     const r=await dbGet(code);
     const bets=r.bets||{};
-    const allDone=(r.order||[]).every(id=>bets[id]!=null);
+    const order=r.order||[];
+    // allDone = every player has a bet object with closest AND farthest
+    const allDone=order.every(id=>bets[id]&&bets[id].closest&&bets[id].farthest);
     if(!allDone)return;
     const{roundScores,newScores}=calcRound(r);
     await dbPatch(code,{phase:"results",roundScores,scores:newScores});
