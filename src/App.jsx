@@ -429,7 +429,16 @@ const QUESTIONS = {
 
 /* ─── HELPERS ────────────────────────────────────── */
 const genCode   = () => Math.random().toString(36).slice(2,7).toUpperCase();
-const fmtNum    = (n) => n==null?"?":Number(n).toLocaleString("de-DE",{maximumFractionDigits:2});
+const fmtNum    = (n) => {
+  if(n==null) return "?";
+  const num=Number(n);
+  // integers that look like years (1000-2200) or any whole number: no thousand separator
+  if(Number.isInteger(num)&&num>=1000&&num<=2200) return String(num);
+  // other integers >= 10000: use separator
+  if(Number.isInteger(num)) return num.toLocaleString("de-DE");
+  // decimals
+  return num.toLocaleString("de-DE",{maximumFractionDigits:2});
+};
 const inviteUrl = (c) => `${location.origin}${location.pathname}?room=${c}`;
 function avatarColor(name,t){
   const h=[...(name||"?")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
@@ -884,6 +893,14 @@ function FinalScreen({room,myId,t,onRestart}){
   },null);
   const worstPlayer=pl.find(p=>p.id===worstId);
 
+  const bestId=pl.reduce((best,p)=>{
+    if(!diffCount[p.id])return best;
+    const avg=avgDiff[p.id]/diffCount[p.id];
+    if(!best)return p.id;
+    return avg<(avgDiff[best]/diffCount[best])?p.id:best;
+  },null);
+  const bestPlayer=pl.find(p=>p.id===bestId);
+
   // Exact hits per player
   const exactHits={};
   history.forEach(r=>{
@@ -895,10 +912,14 @@ function FinalScreen({room,myId,t,onRestart}){
   const exactKingId=pl.reduce((best,p)=>(exactHits[p.id]||0)>(exactHits[best]||0)?p.id:best,pl[0]?.id);
   const exactKing=pl.find(p=>p.id===exactKingId);
 
+  const bestAvg=bestId&&diffCount[bestId]?Math.round(avgDiff[bestId]/diffCount[bestId]*10)/10:null;
+  const worstAvg=worstId&&diffCount[worstId]?Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10:null;
+
   const statCards=[
     betKing&&{icon:"🎲",label:"Wettkönig",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten richtig (${betKingRate}%)`,color:t.gold},
-    worstPlayer&&sorted.length>1&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Durchschnittlich am weitesten daneben`,color:t.danger},
-    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"🎯",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.green},
+    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Bester Schätzer",name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} ${totalRounds>0?"Abweichung":""}`,color:t.green},
+    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
