@@ -798,8 +798,31 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
       {ranked.map((p,i)=>{const exact=p.diff===0,win=i===0&&!exact,pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>WETTEN</p>
-      {pl.map(p=>{const b=bets[p.id];if(!b)return null;const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest),okC=b.closest===closestId,okF=b.farthest===farthestId;return <div key={p.id} style={{fontSize:14,color:t.muted,lineHeight:1.9}}><strong style={{color:t.text}}>{p.name}</strong>:{" "}<span style={{color:okC?t.green:t.danger}}>🎯 {cp?.name||"?"} {okC?"✓":"✗"}</span>{" · "}<span style={{color:okF?t.green:t.danger}}>{t.id==="kids"?"🙈":"💀"} {fp?.name||"?"} {okF?"✓":"✗"}</span></div>;})}
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>WETTEN</p>
+      {pl.map(p=>{
+        const b=bets[p.id];if(!b)return null;
+        const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
+        const okC=b.closest===closestId,okF=b.farthest===farthestId;
+        const betPts=(rs[p.id]||0)-(()=>{const diff=Math.abs((guesses[p.id]||0)-q.a);const base=diff===0?2:p.id===closestId&&!ranked.some(r=>r.diff===0)?1:0;return base;})();
+        return <div key={p.id} style={{marginBottom:12,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1px solid ${t.border}`}}>
+          <div style={{...row,marginBottom:8}}>
+            <Avatar name={p.name} t={t} size={26}/>
+            <span style={{fontWeight:700,fontSize:14}}>{p.name}</span>
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,background:okC?t.green+"22":t.danger+"18",border:`1px solid ${okC?t.green:t.danger}`,fontSize:13}}>
+              <span>{okC?"🎯":"❌"}</span>
+              <span style={{color:okC?t.green:t.danger,fontWeight:700}}>Nächster: {cp?.name||"?"}</span>
+              {okC&&<span style={{color:t.green,fontSize:11,fontWeight:800}}>+1P</span>}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,background:okF?t.green+"22":t.danger+"18",border:`1px solid ${okF?t.green:t.danger}`,fontSize:13}}>
+              <span>{okF?"💀":"❌"}</span>
+              <span style={{color:okF?t.green:t.danger,fontWeight:700}}>Weitester: {fp?.name||"?"}</span>
+              {okF&&<span style={{color:t.green,fontSize:11,fontWeight:800}}>+1P</span>}
+            </div>
+          </div>
+        </div>;
+      })}
     </Card>}
     <Card t={t} style={{marginBottom:18}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"PUNKTE 🏆":"GESAMTPUNKTE"}</p>
@@ -813,19 +836,101 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
 function FinalScreen({room,myId,t,onRestart}){
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const scores=room.scores||{};
+  const allBets=room.allBets||{};  // accumulated bets across rounds
+  const allGuesses=room.allGuesses||{};  // accumulated guesses across rounds
   const sorted=[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const winner=sorted[0];
+  const loser=sorted[sorted.length-1];
   const medals=["🥇","🥈","🥉"];
   useEffect(()=>{launchConfetti();},[]);
-  return <div style={{...page,textAlign:"center",paddingTop:44}}>
-    <div style={{fontSize:72,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
-    <div style={{fontFamily:t.fontTitle,fontSize:52,color:t.gold,marginTop:7,animation:"pop .7s .1s ease both"}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:17,margin:"5px 0 30px"}}>{t.id==="kids"?`gewinnt mit ${scores[winner?.id]||0} Punkten! 🎊`:`gewinnt mit ${scores[winner?.id]||0} Punkten.`}</p>
-    <Card t={t} style={{textAlign:"left",marginBottom:20}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:16}}>ENDSTAND</p>
-      {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"11px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.09}s ease both`}}><span style={{fontSize:22,minWidth:26}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t}/><span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15}}>{p.name}</span><span style={{fontFamily:t.fontTitle,fontSize:38,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
+
+  // Calculate stats from history
+  const history=room.history||[];
+  const totalRounds=history.length;
+
+  // Bet king: most correct bets
+  const betWins={};
+  const betTotal={};
+  pl.forEach(p=>{betWins[p.id]=0;betTotal[p.id]=0;});
+  history.forEach(r=>{
+    if(!r.bets||!r.closestId)return;
+    Object.entries(r.bets).forEach(([pid,bet])=>{
+      if(!bet)return;
+      betTotal[pid]=(betTotal[pid]||0)+2;
+      if(bet.closest===r.closestId) betWins[pid]=(betWins[pid]||0)+1;
+      if(bet.farthest===r.farthestId) betWins[pid]=(betWins[pid]||0)+1;
+    });
+  });
+  const betKingId=pl.reduce((best,p)=>(!best||betWins[p.id]>betWins[best])&&betTotal[p.id]>0?p.id:best,null);
+  const betKing=pl.find(p=>p.id===betKingId);
+  const betKingRate=betKingId&&betTotal[betKingId]>0?Math.round((betWins[betKingId]/betTotal[betKingId])*100):0;
+
+  // Worst guesser: highest average diff
+  const avgDiff={};
+  const diffCount={};
+  history.forEach(r=>{
+    if(!r.guesses||!r.answer)return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g==null)return;
+      avgDiff[pid]=(avgDiff[pid]||0)+Math.abs(g-r.answer);
+      diffCount[pid]=(diffCount[pid]||0)+1;
+    });
+  });
+  const worstId=pl.reduce((worst,p)=>{
+    if(!diffCount[p.id])return worst;
+    const avg=avgDiff[p.id]/diffCount[p.id];
+    if(!worst)return p.id;
+    return avg>(avgDiff[worst]/diffCount[worst])?p.id:worst;
+  },null);
+  const worstPlayer=pl.find(p=>p.id===worstId);
+
+  // Exact hits per player
+  const exactHits={};
+  history.forEach(r=>{
+    if(!r.guesses||!r.answer)return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g!=null&&Math.abs(g-r.answer)===0) exactHits[pid]=(exactHits[pid]||0)+1;
+    });
+  });
+  const exactKingId=pl.reduce((best,p)=>(exactHits[p.id]||0)>(exactHits[best]||0)?p.id:best,pl[0]?.id);
+  const exactKing=pl.find(p=>p.id===exactKingId);
+
+  const statCards=[
+    betKing&&{icon:"🎲",label:"Wettkönig",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten richtig (${betKingRate}%)`,color:t.gold},
+    worstPlayer&&sorted.length>1&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Durchschnittlich am weitesten daneben`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"🎯",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.green},
+  ].filter(Boolean);
+
+  return <div style={{...page,textAlign:"center",paddingTop:36}}>
+    <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
+    <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>{t.id==="kids"?`gewinnt mit ${scores[winner?.id]||0} Punkten! 🎊`:`gewinnt mit ${scores[winner?.id]||0} Punkten.`}</p>
+
+    {/* Endstand */}
+    <Card t={t} style={{textAlign:"left",marginBottom:14}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>ENDSTAND</p>
+      {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
+        <span style={{fontSize:20,minWidth:26}}>{medals[i]||`${i+1}.`}</span>
+        <Avatar name={p.name} t={t}/>
+        <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (Du)</span>}</span>
+        <span style={{fontFamily:t.fontTitle,fontSize:36,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span>
+      </div>)}
     </Card>
-    <Btn t={t} onClick={onRestart} full>{t.id==="kids"?"🔄 Nochmal spielen!":"Neue Runde starten"}</Btn>
+
+    {/* Stats */}
+    {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATISTIKEN</p>
+      {statCards.map((s,i)=><div key={i} style={{...row,padding:"10px 12px",borderRadius:t.radius,background:s.color+"14",border:`1px solid ${s.color}33`,marginBottom:8}}>
+        <div style={{fontSize:26,minWidth:34}}>{s.icon}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:s.color,fontWeight:700,letterSpacing:.5,marginBottom:1}}>{s.label.toUpperCase()}</div>
+          <div style={{fontWeight:800,fontSize:15}}>{s.name}</div>
+          <div style={{fontSize:12,color:t.muted,marginTop:1}}>{s.sub}</div>
+        </div>
+      </div>)}
+    </Card>}
+
+    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{t.id==="kids"?"🔄 Nochmal spielen!":"Neue Runde starten"}</Btn>
   </div>;
 }
 
@@ -859,7 +964,7 @@ export default function App(){
     setMode(m);
     const c=genCode();
     setCode(c);
-    await dbSet(c,{code:c,mode:m,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0});
+    await dbSet(c,{code:c,mode:m,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[]});
     listenRoom(c);
   }
 
@@ -888,7 +993,7 @@ export default function App(){
     const guesses=r.guesses||{};
     const allDone=(r.order||[]).every(id=>guesses[id]!=null);
     if(allDone){
-      if((r.order||[]).length<=1){const{roundScores,newScores}=calcRound({...r,guesses});await dbPatch(code,{phase:"results",roundScores,scores:newScores});}
+      if(order.length<3){const merged={...r,guesses};const{roundScores,newScores,closestId,farthestId}=calcRound(merged);const histEntry={guesses,answer:r.q?.a,bets:{},closestId,farthestId};const prevHistory=r.history||[];await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});}
       else await dbPatch(code,{phase:"betting"});
     }
   }
@@ -904,8 +1009,11 @@ export default function App(){
     // allDone = every player has a bet object with closest AND farthest
     const allDone=order.every(id=>bets[id]&&bets[id].closest&&bets[id].farthest);
     if(!allDone)return;
-    const{roundScores,newScores}=calcRound(r);
-    await dbPatch(code,{phase:"results",roundScores,scores:newScores});
+    const{roundScores,newScores,closestId,farthestId}=calcRound(r);
+    // save round to history for end stats
+    const histEntry={guesses:r.guesses,answer:r.q?.a,bets:r.bets,closestId,farthestId};
+    const prevHistory=r.history||[];
+    await dbPatch(code,{phase:"results",roundScores,scores:newScores,history:[...prevHistory,histEntry]});
   }
 
   async function handleNext(){
