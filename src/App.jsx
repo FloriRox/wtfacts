@@ -5,10 +5,10 @@ import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4ylsGv34UhkQJsxSWhmPx2eb5IPhI7SA",
-  authDomain: "wtfacts-958c6.firebaseapp.com",
-  databaseURL: "https://wtfacts-958c6-default-rtdb.firebaseio.com",
-  projectId: "wtfacts-958c6",
-  storageBucket: "wtfacts-958c6.firebasestorage.app",
+  authDomain: "estimates-958c6.firebaseapp.com",
+  databaseURL: "https://estimates-958c6-default-rtdb.firebaseio.com",
+  projectId: "estimates-958c6",
+  storageBucket: "estimates-958c6.firebasestorage.app",
   messagingSenderId: "504687472282",
   appId: "1:504687472282:web:d129a0ddb9b209f2c13923",
 };
@@ -21,7 +21,7 @@ const dbGet   = (c)    => get(dbRef(c)).then(s => s.val());
 const dbListen= (c,fn) => onValue(dbRef(c), s => fn(s.val()));
 
 /* ─── THEMES ─────────────────────────────────────── */
-const ADULT = {
+const AYOULT = {
   id:"adult", bg:"#0d0b0a", surface:"#181310", card:"#211c18", border:"#32261e",
   accent:"#e8360a", gold:"#ff8c2a", green:"#39d98a", text:"#f2ece6", muted:"#6e5e54", danger:"#cc2244",
   fontTitle:"'Bebas Neue', sans-serif", fontBody:"'DM Sans', sans-serif", fontMono:"'DM Mono', monospace",
@@ -35,7 +35,7 @@ const KIDS = {
 };
 
 /* ─── QUESTION DATABASE ──────────────────────────── */
-// Fragen kommen aus src/questions/ – eine Datei pro Kategorie
+// questions kommen aus src/questions/ – eine Datei pro Kategorie
 // Locked-Status wird in src/questions/index.js gesetzt
 
 // Adapter: wandelt neues Format in App-kompatibles Format um
@@ -182,9 +182,18 @@ function Avatar({name,t,size=36}){
   return <div style={{width:size,height:size,borderRadius:"50%",background:avatarColor(name,t),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.42,fontWeight:800,flexShrink:0}}>{(name||"?")[0].toUpperCase()}</div>;
 }
 function Logo({t,size="lg"}){
-  const fs=size==="lg"?"clamp(56px,13vw,88px)":"40px";
-  if(t.id==="adult")return <div style={{fontFamily:t.fontTitle,fontSize:fs,letterSpacing:3,lineHeight:1,color:t.accent,animation:"flame 2.5s ease infinite"}}>WTFacts{size==="lg"&&<div style={{fontFamily:t.fontBody,fontSize:12,letterSpacing:2.5,color:t.muted,marginTop:4}}>FAKTEN. DIE DU NIE GEBRAUCHT HAST.</div>}</div>;
-  return <div style={{textAlign:"center"}}><div style={{fontFamily:t.fontTitle,fontSize:fs,lineHeight:1.1,animation:"rainbow 3s linear infinite"}}>WTFacts</div><div style={{fontSize:size==="lg"?24:16,animation:"bop 1.2s ease infinite"}}>🌈✨</div></div>;
+  const fs=size==="lg"?"clamp(52px,12vw,80px)":"36px";
+  if(t.id==="adult")return <div style={{fontFamily:t.fontTitle,fontSize:fs,letterSpacing:2,lineHeight:1,color:t.accent,animation:"flame 2.5s ease infinite"}}>
+    Esti<span style={{color:t.gold}}>Mates</span>
+    {size==="lg"&&<div style={{fontFamily:t.fontBody,fontSize:12,letterSpacing:1.8,color:t.muted,marginTop:6,textTransform:"uppercase"}}>The pocket party game to prove your mates wrong.</div>}
+  </div>;
+  return <div style={{textAlign:"center"}}>
+    <div style={{fontFamily:t.fontTitle,fontSize:fs,lineHeight:1.1}}>
+      <span style={{animation:"rainbow 3s linear infinite"}}>Esti</span><span style={{animation:"rainbow 3s .5s linear infinite"}}>Mates</span>
+    </div>
+    {size==="lg"&&<div style={{fontSize:13,color:t.muted,marginTop:4}}>The pocket party game to prove your mates wrong. 🎉</div>}
+    {size!=="lg"&&<div style={{fontSize:16,animation:"bop 1.2s ease infinite"}}>🎉✨</div>}
+  </div>;
 }
 function LoadingOverlay({t,text}){
   return <div style={{position:"fixed",inset:0,background:t.bg+"ee",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>{t.id==="kids"?<div style={{fontSize:48,animation:"bop .6s ease infinite"}}>🤔</div>:<Spinner t={t}/>}<p style={{color:t.muted,fontSize:15}}>{text}</p></div>;
@@ -193,9 +202,9 @@ function QRCode({url,t}){
   const bg=t.id==="adult"?"211c18":"ffffff";
   const fg=t.id==="adult"?"e8360a":"ff5c5c";
   return <div style={{textAlign:"center",marginTop:18}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>EINLADUNGS-QR</p>
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>EINLAYOUNGS-QR</p>
     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:130,height:130,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
-    <p style={{fontSize:12,color:t.muted,marginTop:7}}>Scannen zum Beitreten</p>
+    <p style={{fontSize:12,color:t.muted,marginTop:7}}>Scannen zum Join</p>
   </div>;
 }
 
@@ -207,50 +216,50 @@ function HomeScreen({onHost,onJoin}){
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
-  const t=mode==="kids"?KIDS:ADULT;
-  useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
+  const t=mode==="kids"?KIDS:AYOULT;
+  useEffect(()=>{inject(globalCSS(tab==="landing"?AYOULT:t));},[t,tab]);
 
   async function submit(){
-    if(!name.trim()){setError("Bitte gib deinen Namen ein.");return;}
+    if(!name.trim()){setError("Please enter your name.");return;}
     setError("");
     if(tab==="host"){onHost(name.trim(),mode);}
     else{
       const c=code.trim().toUpperCase();
-      if(!c){setError("Bitte gib einen Raumcode ein.");return;}
+      if(!c){setError("Please enter a room code.");return;}
       setBusy(true);
       const room=await dbGet(c);
       setBusy(false);
-      if(!room){setError("Raum nicht gefunden.");return;}
-      if(room.phase!=="lobby"){setError("Das Spiel läuft bereits.");return;}
+      if(!room){setError("Room not found.");return;}
+      if(room.phase!=="lobby"){setError("Game already in progress.");return;}
       onJoin(c,name.trim(),room.mode);
     }
   }
 
   if(tab==="landing"){
-    inject(globalCSS(ADULT));
-    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
+    inject(globalCSS(AYOULT));
+    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:AYOULT.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        <Logo t={ADULT} size="lg"/>
+        <Logo t={AYOULT} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
-          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Raum erstellen</Btn>
-          <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Beitreten</Btn>
+          <Btn t={AYOULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Create Room</Btn>
+          <Btn t={AYOULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Join</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {["1–15 Spieler","330 Fragen","Echtzeit","Wetten"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
+          {["1–15 players","330 questions","Real-time","Wetten"].map(x=><Pill key={x} t={AYOULT} color={AYOULT.muted}>{x}</Pill>)}
         </div>
       </div>
     </div>;
   }
 
   return <div style={{...page,background:t.bg,animation:"fu .3s ease both"}}>
-    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Zurück</Btn>
+    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(AYOULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Back</Btn>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>SPIELMODUS</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>GAME MODE</p>
       <div style={{display:"flex",gap:10}}>
-        {[{id:"adult",icon:"🔥",label:"Erwachsene",sub:"Witzig · obszön"},{id:"kids",icon:"🌈",label:"Kinder",sub:"Bunt · sicher"}].map(m=>(
+        {[{id:"adult",icon:"🔥",label:"Adults",sub:"Funny · spicy"},{id:"kids",icon:"🌈",label:"Kids",sub:"Colorful · safe"}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
             <div style={{fontSize:22}}>{m.icon}</div>
             <div style={{fontWeight:800,fontSize:13,marginTop:3}}>{m.label}</div>
@@ -261,10 +270,10 @@ function HomeScreen({onHost,onJoin}){
     </Card>}
     <Card t={t}>
       <div style={col}>
-        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Dein Name 😊":"Dein Name"} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder="Raumcode (z.B. AB3XY)" t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Your name 😊":"Your name"} t={t} autoFocus/>
+        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder="Room code (e.g. AB3XY)" t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
-        <Btn t={t} onClick={submit} disabled={busy} full>{busy?"Suche Raum...":tab==="host"?`${t.emoji} Raum erstellen`:"Beitreten →"}</Btn>
+        <Btn t={t} onClick={submit} disabled={busy} full>{busy?"Searching...":tab==="host"?`${t.emoji} Create Room`:"Join →"}</Btn>
       </div>
     </Card>
   </div>;
@@ -283,11 +292,11 @@ function CategoryScreen({mode,onStart,t}){
 
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
-    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>KATEGORIEN WÄHLEN</Pill></div>
+    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>CHOOSE CATEGORIES</Pill></div>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:6}}>
-      {t.id==="kids"?"Was wollt ihr spielen?":"Was wird gespielt?"}
+      {t.id==="kids"?"What do you want to play?":"What are we playing?"}
     </h2>
-    <p style={{color:t.muted,fontSize:14,marginBottom:18}}>Wähle mindestens eine Kategorie</p>
+    <p style={{color:t.muted,fontSize:14,marginBottom:18}}>Choose at least one category</p>
     <div style={{...col,marginBottom:18}}>
       {catMeta.map(({name,count,locked})=>{
         const isFree=name===freeKey;
@@ -304,15 +313,15 @@ function CategoryScreen({mode,onStart,t}){
           </div>
           <div style={{flex:1}}>
             <div style={{fontWeight:700,fontSize:15}}>{name}</div>
-            {isFree&&<div style={{fontSize:12,color:t.green,fontWeight:700,marginTop:2}}>✓ Kostenlos – perfekt zum Testen!</div>}
-            {locked&&<div style={{fontSize:12,color:t.muted,fontWeight:700,marginTop:2}}>🔒 Kommt bald – kostenpflichtiges Paket</div>}
-            <div style={{fontSize:12,color:t.muted,marginTop:1}}>{count} Fragen</div>
+            {isFree&&<div style={{fontSize:12,color:t.green,fontWeight:700,marginTop:2}}>✓ Free – perfect for trying out!</div>}
+            {locked&&<div style={{fontSize:12,color:t.muted,fontWeight:700,marginTop:2}}>🔒 Coming soon – paid pack</div>}
+            <div style={{fontSize:12,color:t.muted,marginTop:1}}>{count} questions</div>
           </div>
         </div>;
       })}
     </div>
     <Btn t={t} full disabled={selected.length===0} onClick={()=>onStart(selected)}>
-      {t.id==="kids"?`Spiel starten mit ${selected.length} Kategorie(n) 🎮`:`Spiel starten (${selected.length} Kategorie(n)) →`}
+      {t.id==="kids"?`Start game mit ${selected.length} category/ies 🎮`:`Start game (${selected.length} category/ies →`}
     </Btn>
   </div>;
 }
@@ -327,28 +336,28 @@ function LobbyScreen({room,code,myId,t,onGoCategories}){
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{t.id==="kids"?"Warte auf alle!":"Warte auf Mitspieler"}</h2>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{t.id==="kids"?"Waiting for everyone!":"Waiting for players"}</h2>
     <div style={{...row,marginBottom:16}}>
       <span style={{fontFamily:t.fontMono,fontSize:28,letterSpacing:5,color:t.accent,fontWeight:800}}>{code}</span>
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
     </div>
     <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>SPIELER ({pl.length}/15)</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>PLAYERS ({pl.length}/15)</p>
       <div style={col}>
         {pl.map(p=>(
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
             <Avatar name={p.name} t={t}/>
             <span style={{flex:1,fontWeight:600}}>{p.name}</span>
             {p.id===room.hostId&&<Pill t={t} color={t.gold}>HOST</Pill>}
-            {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>DU</Pill>}
+            {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>YOU</Pill>}
           </div>
         ))}
       </div>
       <QRCode url={link} t={t}/>
     </Card>
     {isHost
-      ?<Btn t={t} onClick={onGoCategories} full>{t.id==="kids"?"Kategorien wählen 🎮":"Kategorien wählen →"}</Btn>
-      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Warte auf den Spielleiter 🙂":"Warte auf den Host..."}</p>}
+      ?<Btn t={t} onClick={onGoCategories} full>{t.id==="kids"?"Choose categories 🎮":"Choose categories →"}</Btn>
+      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Waiting for the host 🙂":"Waiting for the host..."}</p>}
   </div>;
 }
 
@@ -364,28 +373,28 @@ function QuestionScreen({room,myId,t,onGuess}){
   function submit(){const n=parseFloat(val.replace(",","."));if(isNaN(n))return;onGuess(n);}
   return <div style={page}>
     <div style={{...row,justifyContent:"space-between",marginBottom:18,animation:"fu .3s ease both"}}>
-      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Frage ${(room.qIdx||0)+1}`:`FRAGE ${(room.qIdx||0)+1}`}</Pill>
+      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Question ${(room.qIdx||0)+1}`:`QUESTION ${(room.qIdx||0)+1}`}</Pill>
       <span style={{fontSize:13,color:t.muted,fontFamily:t.fontMono}}>{doneCount}/{pl.length} ✓</span>
     </div>
     <Card t={t} glow style={{marginBottom:14,animation:"fu .3s .05s ease both"}}>
       <div style={{fontSize:26,marginBottom:8}}>{q.emoji||"❓"}</div>
       <Pill t={t} color={t.muted}>{q.cat}</Pill>
       <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
-      <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
+      <p style={{marginTop:12,color:t.muted,fontSize:14}}>Answer in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
     </Card>
     {myGuess==null
       ?<Card t={t} style={{animation:"fu .3s .1s ease both"}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.6,marginBottom:10}}>{t.id==="kids"?`DEIN TIPP (${q.unit}) 🤔`:`DEIN TIPP (${q.unit})`}</p>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.6,marginBottom:10}}>{t.id==="kids"?`YOUR GUESS (${q.unit}) 🤔`:`YOUR GUESS (${q.unit})`}</p>
         <div style={row}>
-          <Inp type="number" value={val} onChange={setVal} placeholder="z.B. 42" t={t} autoFocus style={{fontSize:22,fontWeight:700,fontFamily:t.fontMono}}/>
+          <Inp type="number" value={val} onChange={setVal} placeholder="e.g. 42" t={t} autoFocus style={{fontSize:22,fontWeight:700,fontFamily:t.fontMono}}/>
           <Btn t={t} onClick={submit} disabled={!val} style={{flexShrink:0}}>OK ✓</Btn>
         </div>
-        <p style={{marginTop:11,color:t.muted,fontSize:13,lineHeight:1.5}}>{t.id==="kids"?"💬 Redet – aber zeigt eure Zahl nicht!":"💬 Diskutiert – zeigt euren Tipp aber nicht!"}</p>
+        <p style={{marginTop:11,color:t.muted,fontSize:13,lineHeight:1.5}}>{t.id==="kids"?"💬 Talk – but don't show your number!":"💬 Discuss – but don't show your guess!"}</p>
       </Card>
       :<Card t={t} style={{textAlign:"center",animation:"fu .3s .1s ease both"}}>
         <div style={{fontSize:42,fontFamily:t.fontMono,color:t.accent,fontWeight:800,marginBottom:6}}>{fmtNum(myGuess)} {q.unit}</div>
-        <p style={{color:t.green,fontWeight:700,marginBottom:14}}>✓ Tipp abgegeben!</p>
-        <div style={{fontSize:12,color:t.muted,display:"flex",justifyContent:"space-between",marginBottom:5}}><span>Warte auf alle...</span><span>{doneCount}/{pl.length}</span></div>
+        <p style={{color:t.green,fontWeight:700,marginBottom:14}}>✓ Guess submitted!</p>
+        <div style={{fontSize:12,color:t.muted,display:"flex",justifyContent:"space-between",marginBottom:5}}><span>Waiting for everyone...</span><span>{doneCount}/{pl.length}</span></div>
         <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${(doneCount/pl.length)*100}%`,background:`linear-gradient(90deg,${t.accent},${t.gold})`,borderRadius:3,transition:"width .4s ease"}}/></div>
       </Card>}
     <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:14}}>
@@ -411,16 +420,16 @@ function BettingScreen({room,myId,t,onBet}){
   const canSubmit=soloOther?!!closest:!!(closest&&farthest&&closest!==farthest);
   function submitBet(){onBet(closest,soloOther?closest:farthest);}
   return <div style={{...page,animation:"fu .3s ease both"}}>
-    <Pill t={t} color={t.gold}>{t.id==="kids"?"🎲 WETTEN":"WETTEN"}</Pill>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>{t.id==="kids"?"Wer trifft's am besten?":"Wer liegt wo?"}</h2>
-    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Richtige Wette = +1 Punkt extra</p>
+    <Pill t={t} color={t.gold}>{t.id==="kids"?"🎲 BETS":"BETS"}</Pill>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>{t.id==="kids"?"Who's closest?":"Who's where?"}</h2>
+    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Correct bet = +1 extra point</p>
     {myBet
-      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
+      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Bet placed!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Waiting for reveal...</p></Card>
       :<>
-        <RG label={t.id==="kids"?"🎯 Wer liegt AM NÄCHSTEN?":"🎯 AM NÄCHSTEN dran"} color={t.green} val={closest} setVal={setClosest}/>
-        {!soloOther&&<RG label={t.id==="kids"?"🙈 Wer liegt AM WEITESTEN?":"💀 AM WEITESTEN daneben"} color={t.danger} val={farthest} setVal={setFarthest}/>}
-        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
-        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
+        <RG label={t.id==="kids"?"🎯 Who's CLOSEST?":"🎯 CLOSEST guess"} color={t.green} val={closest} setVal={setClosest}/>
+        {!soloOther&&<RG label={t.id==="kids"?"🙈 Who's FURTHEST off?":"💀 FURTHEST off"} color={t.danger} val={farthest} setVal={setFarthest}/>}
+        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>With 2 players one choice is enough 👆</p>}
+        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Place bet 🎲</Btn>
       </>}
   </div>;
 }
@@ -437,16 +446,16 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
   return <div style={page}>
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
       <div style={{fontSize:30,marginBottom:6}}>{q.emoji||"❓"}</div>
-      <Pill t={t}>AUFLÖSUNG</Pill>
+      <Pill t={t}>ANSWER</Pill>
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:8,animation:"pop .5s ease both",textShadow:t.id==="adult"?"0 0 32px rgba(232,54,10,.35)":undefined}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"TIPPS 📊":"TIPPS DIESER RUNDE"}</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"GUESSES 📊":"THIS ROUND'S GUESSES"}</p>
       {ranked.map((p,i)=>{const exact=p.diff===0,win=i===0&&!exact,pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>WETTEN</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>BETS</p>
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
@@ -460,12 +469,12 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,background:okC?t.green+"22":t.danger+"18",border:`1px solid ${okC?t.green:t.danger}`,fontSize:13}}>
               <span>{okC?"🎯":"❌"}</span>
-              <span style={{color:okC?t.green:t.danger,fontWeight:700}}>Nächster: {cp?.name||"?"}</span>
+              <span style={{color:okC?t.green:t.danger,fontWeight:700}}>Closest: {cp?.name||"?"}</span>
               {okC&&<span style={{color:t.green,fontSize:11,fontWeight:800}}>+1P</span>}
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,background:okF?t.green+"22":t.danger+"18",border:`1px solid ${okF?t.green:t.danger}`,fontSize:13}}>
               <span>{okF?"💀":"❌"}</span>
-              <span style={{color:okF?t.green:t.danger,fontWeight:700}}>Weitester: {fp?.name||"?"}</span>
+              <span style={{color:okF?t.green:t.danger,fontWeight:700}}>Furthest: {fp?.name||"?"}</span>
               {okF&&<span style={{color:t.green,fontSize:11,fontWeight:800}}>+1P</span>}
             </div>
           </div>
@@ -473,10 +482,10 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
       })}
     </Card>}
     <Card t={t} style={{marginBottom:18}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"PUNKTE 🏆":"GESAMTPUNKTE"}</p>
-      {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"POINTS 🏆":"TOTAL POINTS"}</p>
+      {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (You)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
-    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>Nächste Frage →</Btn><Btn t={t} variant="secondary" onClick={onEnd}>Beenden</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Warte auf den Spielleiter 🙂":"Warte auf den Host..."}</p>}
+    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>Nächste Question →</Btn><Btn t={t} variant="secondary" onClick={onEnd}>End game</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Waiting for the host 🙂":"Waiting for the host..."}</p>}
   </div>;
 }
 
@@ -555,31 +564,31 @@ function FinalScreen({room,myId,t,onRestart}){
   const worstAvg=worstId&&diffCount[worstId]?Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10:null;
 
   const statCards=[
-    betKing&&{icon:"🎲",label:"Wettkönig",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten richtig (${betKingRate}%)`,color:t.gold},
-    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Bester Schätzer",name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} ${totalRounds>0?"Abweichung":""}`,color:t.green},
-    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
-    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
+    betKing&&{icon:"🎲",label:"Bet King",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} bets correct (${betKingRate}%)`,color:t.gold},
+    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Best Guesser",name:bestPlayer.name,sub:`avg. ${fmtNum(bestAvg)} ${totalRounds>0?"deviation":""}`,color:t.green},
+    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Worst Guesser",name:worstPlayer.name,sub:`avg. ${fmtNum(worstAvg)} deviation`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Bull's-eyes",name:exactKing.name,sub:`${exactHits[exactKingId]} exact hits`,color:t.accent},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>{t.id==="kids"?`gewinnt mit ${scores[winner?.id]||0} Punkten! 🎊`:`gewinnt mit ${scores[winner?.id]||0} Punkten.`}</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>{t.id==="kids"?`wins with ${scores[winner?.id]||0} points! 🎊`:`wins with ${scores[winner?.id]||0} points.`}</p>
 
     {/* Endstand */}
     <Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>ENDSTAND</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>FINAL SCORE</p>
       {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
         <span style={{fontSize:20,minWidth:26}}>{medals[i]||`${i+1}.`}</span>
         <Avatar name={p.name} t={t}/>
-        <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (Du)</span>}</span>
+        <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (You)</span>}</span>
         <span style={{fontFamily:t.fontTitle,fontSize:36,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span>
       </div>)}
     </Card>
 
     {/* Stats */}
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATISTIKEN</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATS</p>
       {statCards.map((s,i)=><div key={i} style={{...row,padding:"10px 12px",borderRadius:t.radius,background:s.color+"14",border:`1px solid ${s.color}33`,marginBottom:8}}>
         <div style={{fontSize:26,minWidth:34}}>{s.icon}</div>
         <div style={{flex:1}}>
@@ -590,7 +599,7 @@ function FinalScreen({room,myId,t,onRestart}){
       </div>)}
     </Card>}
 
-    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{t.id==="kids"?"🔄 Nochmal spielen!":"Neue Runde starten"}</Btn>
+    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{t.id==="kids"?"🔄 Play again!":"Start new round"}</Btn>
   </div>;
 }
 
@@ -606,7 +615,7 @@ export default function App(){
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const unsubRef=useRef(null);
-  const t=mode==="kids"?KIDS:ADULT;
+  const t=mode==="kids"?KIDS:AYOULT;
   useEffect(()=>{inject(globalCSS(t));},[t]);
 
   function listenRoom(c){
@@ -737,7 +746,7 @@ export default function App(){
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoCategories={handleGoCategories}/>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t}/>}
-    {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
+    {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host is choosing categories...</p></div>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess}/>}
     {screen==="betting"&&room&&(room.order||[]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
