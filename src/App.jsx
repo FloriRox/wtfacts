@@ -615,6 +615,8 @@ export default function App(){
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const unsubRef=useRef(null);
+  const advanceGuessPhaseRef=useRef(false);
+  const advanceBetPhaseRef=useRef(false);
   const t=mode==="kids"?KIDS:ADULT;
   useEffect(()=>{inject(globalCSS(t));},[t]);
 
@@ -668,7 +670,6 @@ export default function App(){
   }
 
   // called by the room listener whenever room updates
-  const advanceGuessPhaseRef=useRef(false);
   useEffect(()=>{
     if(!room||room.phase!=="question")return;
     const order=room.order||[];
@@ -702,7 +703,6 @@ export default function App(){
     // host advances phase once all bets are in
   }
 
-  const advanceBetPhaseRef=useRef(false);
   useEffect(()=>{
     if(!room||room.phase!=="betting")return;
     const order=room.order||[];
