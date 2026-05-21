@@ -609,22 +609,6 @@ function FinalScreen({room,myId,t,onRestart}){
 }
 
 /* ─── ROOT APP ───────────────────────────────────── */
-function ErrorBoundary({children}){
-  const[err,setErr]=React.useState(null);
-  React.useEffect(()=>{
-    const handler=(e)=>setErr(e.message||String(e));
-    window.addEventListener("error",handler);
-    window.addEventListener("unhandledrejection",(e)=>setErr(e.reason?.message||String(e.reason)));
-    return()=>{window.removeEventListener("error",handler);};
-  },[]);
-  if(err)return <div style={{padding:24,background:"#1a0000",color:"#ff6b6b",fontFamily:"monospace",fontSize:13,lineHeight:1.6,minHeight:"100vh"}}>
-    <div style={{fontSize:20,fontWeight:700,marginBottom:16}}>🔴 App Error</div>
-    <div style={{background:"#2a0000",padding:16,borderRadius:8,wordBreak:"break-all"}}>{err}</div>
-    <div style={{marginTop:16,color:"#888"}}>Check browser console for full stack trace</div>
-  </div>;
-  return children;
-}
-
 export default function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
@@ -762,7 +746,7 @@ export default function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];
   }
 
-  return <ErrorBoundary><>
+  return <>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoCategories={handleGoCategories}/>}
@@ -772,5 +756,5 @@ export default function App(){
     {screen==="betting"&&room&&(room.order||[]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart}/>}
-  </ErrorBoundary>;
+  </>;
 }
