@@ -21,7 +21,7 @@ const dbGet   = (c)    => get(dbRef(c)).then(s => s.val());
 const dbListen= (c,fn) => onValue(dbRef(c), s => fn(s.val()));
 
 /* ─── THEMES ─────────────────────────────────────── */
-const AYOULT = {
+const ADULT = {
   id:"adult", bg:"#0d0b0a", surface:"#181310", card:"#211c18", border:"#32261e",
   accent:"#e8360a", gold:"#ff8c2a", green:"#39d98a", text:"#f2ece6", muted:"#6e5e54", danger:"#cc2244",
   fontTitle:"'Bebas Neue', sans-serif", fontBody:"'DM Sans', sans-serif", fontMono:"'DM Mono', monospace",
@@ -216,8 +216,8 @@ function HomeScreen({onHost,onJoin}){
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
-  const t=mode==="kids"?KIDS:AYOULT;
-  useEffect(()=>{inject(globalCSS(tab==="landing"?AYOULT:t));},[t,tab]);
+  const t=mode==="kids"?KIDS:ADULT;
+  useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
 
   async function submit(){
     if(!name.trim()){setError("Please enter your name.");return;}
@@ -236,24 +236,24 @@ function HomeScreen({onHost,onJoin}){
   }
 
   if(tab==="landing"){
-    inject(globalCSS(AYOULT));
-    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:AYOULT.bg,position:"relative",overflow:"hidden"}}>
+    inject(globalCSS(ADULT));
+    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        <Logo t={AYOULT} size="lg"/>
+        <Logo t={ADULT} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
-          <Btn t={AYOULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Create Room</Btn>
-          <Btn t={AYOULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Join</Btn>
+          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Create Room</Btn>
+          <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Join</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {["1–15 players","330 questions","Real-time","Wetten"].map(x=><Pill key={x} t={AYOULT} color={AYOULT.muted}>{x}</Pill>)}
+          {["1–15 players","330 questions","Real-time","Betting"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
       </div>
     </div>;
   }
 
   return <div style={{...page,background:t.bg,animation:"fu .3s ease both"}}>
-    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(AYOULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Back</Btn>
+    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Back</Btn>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
@@ -615,7 +615,7 @@ export default function App(){
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const unsubRef=useRef(null);
-  const t=mode==="kids"?KIDS:AYOULT;
+  const t=mode==="kids"?KIDS:ADULT;
   useEffect(()=>{inject(globalCSS(t));},[t]);
 
   function listenRoom(c){
