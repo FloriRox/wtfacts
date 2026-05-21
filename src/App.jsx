@@ -4,7 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA4ylsGv34UhkQJsxSWhmPx2eb5IPhI7SA",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "wtfacts-958c6.firebaseapp.com",
   databaseURL: "https://wtfacts-958c6-default-rtdb.firebaseio.com",
   projectId: "wtfacts-958c6",
