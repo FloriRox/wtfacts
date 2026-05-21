@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import FRAGES_RAW from "./Fragen/index.js";
+import QUESTIONS_RAW from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
@@ -35,28 +35,28 @@ const KIDS = {
 };
 
 /* ─── FRAGE DATABASE ──────────────────────────── */
-// Fragen kommen aus src/Fragen/ – eine Datei pro Kategorie
-// Locked-Status wird in src/Fragen/index.js gesetzt
+// Questions from src/questions/ – eine Datei pro Kategorie
+// Locked-Status wird in src/questions/index.js gesetzt
 
 // Adapter: wandelt neues Format in App-kompatibles Format um
-let FRAGES = {};
+let QUESTIONS = {};
 try {
-  Object.keys(FRAGES_RAW).forEach(mode => {
-    FRAGES[mode] = {};
-    Object.entries(FRAGES_RAW[mode]).forEach(([cat, { Fragen, locked }]) => {
-      FRAGES[mode][cat] = Fragen.map(q => ({ ...q, locked }));
+  Object.keys(QUESTIONS_RAW).forEach(mode => {
+    QUESTIONS[mode] = {};
+    Object.entries(QUESTIONS_RAW[mode]).forEach(([cat, { questions, locked }]) => {
+      QUESTIONS[mode][cat] = questions.map(q => ({ ...q, locked }));
     });
   });
 } catch(e) {
-  console.error("FRAGES_RAW error:", e);
-  throw new Error("Failed to load Fragen: " + e.message);
+  console.error("QUESTIONS_RAW error:", e);
+  throw new Error("Failed to load questions: " + e.message);
 }
 
 // Gibt alle Kategorien zurück (mit locked-Info)
 export function getCategoryMeta(mode) {
-  return Object.entries(FRAGES_RAW[mode]).map(([name, { Fragen, locked }]) => ({
+  return Object.entries(QUESTIONS_RAW[mode]).map(([name, { questions, locked }]) => ({
     name,
-    count: Fragen.length,
+    count: questions.length,
     locked,
   }));
 }
@@ -108,10 +108,10 @@ input[type=number]{-moz-appearance:textfield}
 `;}
 
 function getQuestion(mode, selectedCats, usedIds){
-  const cats=FRAGES[mode];
+  const cats=QUESTIONS[mode];
   const available=selectedCats.filter(c=>cats[c]);
   if(!available.length)return null;
-  // gather all unused Fragen from selected categories
+  // gather all unused questions from selected categories
   let pool=[];
   available.forEach(cat=>{
     cats[cat].forEach((q,i)=>{
@@ -286,7 +286,7 @@ function HomeScreen({onHost,onJoin}){
 
 /* ─── CATEGORY SELECTION ─────────────────────────── */
 function CategoryScreen({mode,onStart,t}){
-  const catMeta=Object.entries(FRAGES_RAW[mode]).map(([name,{Fragen,locked}])=>({name,count:Fragen.length,locked}));
+  const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
   const freeKey="🎯 Gratis-Test";
   const [selected,setSelected]=useState([freeKey]);
 
@@ -732,7 +732,7 @@ export default function App(){
 
   async function handleNext(){
     const r=await dbGet(code);
-    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(FRAGES[mode]);
+    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1});
