@@ -1,8 +1,5 @@
 // ─────────────────────────────────────────────────────────
-// WTFACTS – FRAGEN-INDEX
-// ─────────────────────────────────────────────────────────
-// locked: false = kostenlos für alle Spieler
-// locked: true  = gesperrt (künftig kostenpflichtiges Paket)
+// ESTIMATESS – FRAGEN-INDEX
 // ─────────────────────────────────────────────────────────
 
 import adultTest         from "./adult_test.js";
@@ -50,15 +47,15 @@ const QUESTIONS = {
     "🐾 Tiere & Sex":           { questions: adultTiersex,      locked: false },
   },
   kids: {
-    "🎯 Gratis-Test":       { questions: kidsTest,     locked: false },
-    "🐘 Tiere":             { questions: kidsTiere,    locked: false },
-    "🌍 Geografie":         { questions: kidsGeo,      locked: false },
-    "🦕 Dinosaurier":       { questions: kidsDinos,    locked: false },
-    "🚀 Weltraum":          { questions: kidsWeltraum, locked: false },
-    "🏆 Sport & Rekorde":   { questions: kidsSport,    locked: false },
-    "🏰 Märchen & Fantasie":{ questions: kidsMaerchen, locked: false },
-    "🌊 Ozeane & Meere":    { questions: kidsOzeane,   locked: false },
-    "🎨 Kunst & Erfindungen":{ questions: kidsKunst,   locked: false },
+    "🎯 Gratis-Test":        { questions: kidsTest,     locked: false },
+    "🐘 Tiere":              { questions: kidsTiere,    locked: false },
+    "🌍 Geografie":          { questions: kidsGeo,      locked: false },
+    "🦕 Dinosaurier":        { questions: kidsDinos,    locked: false },
+    "🚀 Weltraum":           { questions: kidsWeltraum, locked: false },
+    "🏆 Sport & Rekorde":    { questions: kidsSport,    locked: false },
+    "🏰 Märchen & Fantasie": { questions: kidsMaerchen, locked: false },
+    "🌊 Ozeane & Meere":     { questions: kidsOzeane,   locked: false },
+    "🎨 Kunst & Erfindungen":{ questions: kidsKunst,    locked: false },
   },
 };
 
