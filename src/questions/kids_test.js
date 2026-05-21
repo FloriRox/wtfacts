@@ -109,8 +109,7 @@ export default [
   {q:"Wie viele Tage hat der Monat April?",a:30,unit:"Tage",hint:"April, Juni, September, November: 30 Tage.",emoji:"📅"},
   {q:"Wie viele Liter fasst ein normaler Eimer?",a:10,unit:"Liter",hint:"Standard-Eimer fasst 10 Liter.",emoji:"🪣"},
   {q:"Wie viele Buchstaben hat das deutsche Wort SCHMETTERLING?",a:13,unit:"Buchstaben",hint:"S-C-H-M-E-T-T-E-R-L-I-N-G.",emoji:"🦋"}
-];
-
+,
   {q:"Wie viele Beine hat eine Libelle?",a:6,unit:"Beine",hint:"Alle Insekten haben genau 6 Beine.",emoji:"🪲"},
   {q:"Wie viele Zähne hat ein erwachsener Mensch?",a:32,unit:"Zähne",hint:"Inklusive der Weisheitszähne.",emoji:"🦷"},
   {q:"Wie tief ist der tiefste See der Welt (Baikalsee)?",a:1642,unit:"Meter",hint:"In Russland – so tief wie 5 Eiffeltürme.",emoji:"💧"},

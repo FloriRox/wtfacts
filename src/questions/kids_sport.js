@@ -167,8 +167,7 @@ export default [
   {q:"Wie viele Spieler hat ein Handball-Team?",a:7,unit:"Spieler",hint:"Inklusive Torwart.",emoji:"🤾"},
   {q:"Wie lang ist ein Olympisches Gewichtheben-Wettkampftag?",a:10,unit:"Stunden",hint:"Alle Gewichtsklassen zusammen.",emoji:"🏋️"},
   {q:"Wie viele km/h fährt ein Downhill-Mountainbiker?",a:80,unit:"km/h",hint:"Auf extremen Strecken.",emoji:"🚵"}
-];
-
+,
   {q:"Wie viele Spieler hat ein Handball-Team auf dem Feld?",a:7,unit:"Spieler",hint:"6 Feldspieler plus Torwart.",emoji:"🤾"},
   {q:"Wie lang ist eine Olympia-Laufstrecke beim 400m-Lauf?",a:400,unit:"Meter",hint:"Eine Runde um die Bahn.",emoji:"🏃"},
   {q:"Wie hoch ist das Netz beim Badminton?",a:1.55,unit:"Meter",hint:"Etwas höher als beim Tennis.",emoji:"🏸"},

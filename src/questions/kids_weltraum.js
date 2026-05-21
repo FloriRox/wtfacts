@@ -155,8 +155,7 @@ export default [
   {q:"Wie groß ist der rote Überriese Beteigeuze in Sonnenradien?",a:700,unit:"Sonnenradien",hint:"700x größer als unsere Sonne.",emoji:"⭐"},
   {q:"Wie viele Stunden dauert ein Vollmond-Zyklus?",a:709,unit:"Stunden",hint:"29,5 Tage von Vollmond zu Vollmond.",emoji:"🌕"},
   {q:"Wie lang ist die Heliosphäre im Durchmesser in AU?",a:200,unit:"AU",hint:"200 Astronomische Einheiten.",emoji:"☀️"}
-];
-
+,
   {q:"Wie viele Monate dauert ein Jahr auf Jupiter?",a:144,unit:"Monate",hint:"12 Erdenjahre – 144 Erdenmonate.",emoji:"🪐"},
   {q:"Wie viele Grad Celsius ist die Oberfläche von Neptun?",a:-214,unit:"°C",hint:"Der kälteste Planet im Sonnensystem.",emoji:"🔵"},
   {q:"Wie weit ist der nächste Stern Alpha Centauri entfernt?",a:4.37,unit:"Lichtjahre",hint:"Das nächste Sternensystem.",emoji:"⭐"},

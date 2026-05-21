@@ -141,8 +141,7 @@ export default [
   {q:"Wie viele Hornzähne hatte ein Psittacosaurus?",a:9,unit:"Zähne",hint:"Kleiner früher Ceratopsier.",emoji:"🦖"},
   {q:"Wie schwer war ein Kritosaurus in Tonnen?",a:3,unit:"Tonnen",hint:"Hadrosaure aus Nordamerika.",emoji:"🦕"},
   {q:"Wie lang war ein Isanosaurus in Metern?",a:15,unit:"Meter",hint:"Sauropode aus Thailand.",emoji:"🦕"}
-];
-
+,
   {q:"Wie lang war die Zunge eines Brachiosaurus in cm?",a:60,unit:"cm",hint:"Perfekt um Blätter von Bäumen zu pflücken.",emoji:"🦕"},
   {q:"Wie schwer war ein Stegosaurus in Tonnen?",a:5,unit:"Tonnen",hint:"Trotz der Größe hatte er ein winziges Gehirn.",emoji:"🦖"},
   {q:"Wie viele Eier konnte ein Oviraptor auf einmal legen?",a:22,unit:"Eier",hint:"Der Name bedeutet 'Eierdieb' – aber das stimmte nicht.",emoji:"🥚"},

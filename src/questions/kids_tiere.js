@@ -30,9 +30,7 @@ export default [
   {q:"Wie viele Augen hat eine Biene?",a:5,unit:"Augen",hint:"2 Facettenaugen und 3 Punktaugen.",emoji:"🐝"},
   {q:"Wie schwer ist ein ausgewachsener Eisbär in kg?",a:700,unit:"kg",hint:"Das größte Landraubtier der Erde.",emoji:"🐻‍❄️"},
   {q:"Wie viele km/h läuft ein Nashorn?",a:55,unit:"km/h",hint:"Trotz ihrer Masse sind Nashörner erstaunlich schnell.",emoji:"🦏"},
-];
-
-  // ── Aufstockung auf 250 ──
+,
   {q:"Wie viele Beine hat eine Spinne?",a:8,unit:"Beine",hint:"Spinnen sind Spinnentiere, keine Insekten – die haben nur 6.",emoji:"🕷️"},
   {q:"Wie oft schlägt das Herz eines Kolibris pro Minute?",a:1200,unit:"Mal",hint:"Der schnellste Herzschlag aller Vögel.",emoji:"🐦"},
   {q:"Wie viele Jahre kann eine Landschildkröte werden?",a:150,unit:"Jahre",hint:"Manche werden über 200 Jahre alt!",emoji:"🐢"},
@@ -195,8 +193,7 @@ export default [
   {q:"Wie groß ist ein Orca in Metern?",a:8,unit:"Meter",hint:"Schwertkale – die größten Delfine.",emoji:"🐋"},
   {q:"Wie viele Rippen hat eine Schlange?",a:200,unit:"Rippen",hint:"Schlangen haben für jede Wirbel ein Rippenpaar.",emoji:"🐍"},
   {q:"Wie viele Stunden dauert eine Tigerjagd?",a:1,unit:"Stunde",hint:"Meist 15-30 Minuten – selten erfolgreich.",emoji:"🐯"},
-];
-
+,
   {q:"Wie viele Herzen hat ein Oktopus?",a:3,unit:"Herzen",hint:"Zwei Kiemenherzen und ein Körperherz.",emoji:"🐙"},
   {q:"Wie tief kann ein Lederschildkröte tauchen?",a:1200,unit:"Meter",hint:"Die tieftauchende Schildkröte.",emoji:"🐢"},
   {q:"Wie viele km weit kann ein Elefant riechen?",a:19,unit:"km",hint:"Bester Geruchssinn aller Landtiere.",emoji:"🐘"},

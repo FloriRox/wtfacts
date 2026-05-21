@@ -183,8 +183,7 @@ export default [
   {q:"Wie hoch sind die Victoriafälle in Simbabwe in Metern?",a:108,unit:"Meter",hint:"Größte Wasserfälle der Welt nach Breite.",emoji:"🌊"},
   {q:"Wie viele km² ist Ägypten groß?",a:1001449,unit:"km²",hint:"95% davon ist Wüste.",emoji:"🏜️"},
   {q:"Wie lang ist der Sambesi von der Quelle bis zur Mündung in km?",a:2574,unit:"km",hint:"Fließt von Sambia bis Mosambik.",emoji:"🌊"}
-];
-
+,
   {q:"Wie lang ist der Amazonas-Fluss in km?",a:6400,unit:"km",hint:"Einer der längsten Flüsse der Welt.",emoji:"🌿"},
   {q:"Wie viele Einwohner hat Tokio?",a:14000000,unit:"Einwohner",hint:"Eine der größten Städte der Welt.",emoji:"🏙️"},
   {q:"Wie hoch ist die Zugspitze in Metern?",a:2962,unit:"Meter",hint:"Der höchste Berg Deutschlands.",emoji:"🏔️"},
