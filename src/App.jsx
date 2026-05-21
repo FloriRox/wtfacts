@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import QUESTIONS_RAW from "./questions/index.js";
+import FRAGES_RAW from "./Fragen/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
@@ -34,29 +34,29 @@ const KIDS = {
   radius:"20px", emoji:"🌈",
 };
 
-/* ─── QUESTION DATABASE ──────────────────────────── */
-// questions kommen aus src/questions/ – eine Datei pro Kategorie
-// Locked-Status wird in src/questions/index.js gesetzt
+/* ─── FRAGE DATABASE ──────────────────────────── */
+// Fragen kommen aus src/Fragen/ – eine Datei pro Kategorie
+// Locked-Status wird in src/Fragen/index.js gesetzt
 
 // Adapter: wandelt neues Format in App-kompatibles Format um
-let QUESTIONS = {};
+let FRAGES = {};
 try {
-  Object.keys(QUESTIONS_RAW).forEach(mode => {
-    QUESTIONS[mode] = {};
-    Object.entries(QUESTIONS_RAW[mode]).forEach(([cat, { questions, locked }]) => {
-      QUESTIONS[mode][cat] = questions.map(q => ({ ...q, locked }));
+  Object.keys(FRAGES_RAW).forEach(mode => {
+    FRAGES[mode] = {};
+    Object.entries(FRAGES_RAW[mode]).forEach(([cat, { Fragen, locked }]) => {
+      FRAGES[mode][cat] = Fragen.map(q => ({ ...q, locked }));
     });
   });
 } catch(e) {
-  console.error("QUESTIONS_RAW error:", e);
-  throw new Error("Failed to load questions: " + e.message);
+  console.error("FRAGES_RAW error:", e);
+  throw new Error("Failed to load Fragen: " + e.message);
 }
 
 // Gibt alle Kategorien zurück (mit locked-Info)
 export function getCategoryMeta(mode) {
-  return Object.entries(QUESTIONS_RAW[mode]).map(([name, { questions, locked }]) => ({
+  return Object.entries(FRAGES_RAW[mode]).map(([name, { Fragen, locked }]) => ({
     name,
-    count: questions.length,
+    count: Fragen.length,
     locked,
   }));
 }
@@ -108,10 +108,10 @@ input[type=number]{-moz-appearance:textfield}
 `;}
 
 function getQuestion(mode, selectedCats, usedIds){
-  const cats=QUESTIONS[mode];
+  const cats=FRAGES[mode];
   const available=selectedCats.filter(c=>cats[c]);
   if(!available.length)return null;
-  // gather all unused questions from selected categories
+  // gather all unused Fragen from selected categories
   let pool=[];
   available.forEach(cat=>{
     cats[cat].forEach((q,i)=>{
@@ -225,17 +225,17 @@ function HomeScreen({onHost,onJoin}){
   useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
 
   async function submit(){
-    if(!name.trim()){setError("Please enter your name.");return;}
+    if(!name.trim()){setError("Bitte gib deinen Namen ein.");return;}
     setError("");
     if(tab==="host"){onHost(name.trim(),mode);}
     else{
       const c=code.trim().toUpperCase();
-      if(!c){setError("Please enter a room code.");return;}
+      if(!c){setError("Bitte gib einen Raumcode ein.");return;}
       setBusy(true);
       const room=await dbGet(c);
       setBusy(false);
-      if(!room){setError("Room not found.");return;}
-      if(room.phase!=="lobby"){setError("Game already in progress.");return;}
+      if(!room){setError("Raum nicht gefunden.");return;}
+      if(room.phase!=="lobby"){setError("Das Spiel läuft bereits.");return;}
       onJoin(c,name.trim(),room.mode);
     }
   }
@@ -247,24 +247,24 @@ function HomeScreen({onHost,onJoin}){
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
         <Logo t={ADULT} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
-          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Create Room</Btn>
+          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Raum erstellen</Btn>
           <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Join</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {["1–15 players","330 questions","Real-time","Betting"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
+          {["1–15 Spieler","330 Fragen","Echtzeit","Betting"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
       </div>
     </div>;
   }
 
   return <div style={{...page,background:t.bg,animation:"fu .3s ease both"}}>
-    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Back</Btn>
+    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Zurück</Btn>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>GAME MODE</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>SPIELMODUS</p>
       <div style={{display:"flex",gap:10}}>
-        {[{id:"adult",icon:"🔥",label:"Adults",sub:"Funny · spicy"},{id:"kids",icon:"🌈",label:"Kids",sub:"Colorful · safe"}].map(m=>(
+        {[{id:"adult",icon:"🔥",label:"Erwachsene",sub:"Witzig · obszön"},{id:"kids",icon:"🌈",label:"Kinder",sub:"Bunt · sicher"}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
             <div style={{fontSize:22}}>{m.icon}</div>
             <div style={{fontWeight:800,fontSize:13,marginTop:3}}>{m.label}</div>
@@ -275,10 +275,10 @@ function HomeScreen({onHost,onJoin}){
     </Card>}
     <Card t={t}>
       <div style={col}>
-        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Your name 😊":"Your name"} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder="Room code (e.g. AB3XY)" t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Dein Name 😊":"Dein Name"} t={t} autoFocus/>
+        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder="Raumcode (z.B. AB3XY)" t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
-        <Btn t={t} onClick={submit} disabled={busy} full>{busy?"Searching...":tab==="host"?`${t.emoji} Create Room`:"Join →"}</Btn>
+        <Btn t={t} onClick={submit} disabled={busy} full>{busy?"Suche Raum...":tab==="host"?`${t.emoji} Raum erstellen`:"Beitreten →"}</Btn>
       </div>
     </Card>
   </div>;
@@ -286,7 +286,7 @@ function HomeScreen({onHost,onJoin}){
 
 /* ─── CATEGORY SELECTION ─────────────────────────── */
 function CategoryScreen({mode,onStart,t}){
-  const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
+  const catMeta=Object.entries(FRAGES_RAW[mode]).map(([name,{Fragen,locked}])=>({name,count:Fragen.length,locked}));
   const freeKey="🎯 Gratis-Test";
   const [selected,setSelected]=useState([freeKey]);
 
@@ -297,11 +297,11 @@ function CategoryScreen({mode,onStart,t}){
 
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
-    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>CHOOSE CATEGORIES</Pill></div>
+    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>KATEGORIEN WÄHLEN</Pill></div>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:6}}>
-      {t.id==="kids"?"What do you want to play?":"What are we playing?"}
+      {t.id==="kids"?"Was wollt ihr spielen?":"What are we playing?"}
     </h2>
-    <p style={{color:t.muted,fontSize:14,marginBottom:18}}>Choose at least one category</p>
+    <p style={{color:t.muted,fontSize:14,marginBottom:18}}>Wähle mindestens eine Kategorie</p>
     <div style={{...col,marginBottom:18}}>
       {catMeta.map(({name,count,locked})=>{
         const isFree=name===freeKey;
@@ -318,15 +318,15 @@ function CategoryScreen({mode,onStart,t}){
           </div>
           <div style={{flex:1}}>
             <div style={{fontWeight:700,fontSize:15}}>{name}</div>
-            {isFree&&<div style={{fontSize:12,color:t.green,fontWeight:700,marginTop:2}}>✓ Free – perfect for trying out!</div>}
-            {locked&&<div style={{fontSize:12,color:t.muted,fontWeight:700,marginTop:2}}>🔒 Coming soon – paid pack</div>}
-            <div style={{fontSize:12,color:t.muted,marginTop:1}}>{count} questions</div>
+            {isFree&&<div style={{fontSize:12,color:t.green,fontWeight:700,marginTop:2}}>✓ Kostenlos – perfekt zum Testen!</div>}
+            {locked&&<div style={{fontSize:12,color:t.muted,fontWeight:700,marginTop:2}}>🔒 Kommt bald – kostenpflichtiges Paket</div>}
+            <div style={{fontSize:12,color:t.muted,marginTop:1}}>{count} Fragen</div>
           </div>
         </div>;
       })}
     </div>
     <Btn t={t} full disabled={selected.length===0} onClick={()=>onStart(selected)}>
-      {t.id==="kids"?`Start game mit ${selected.length} category/ies 🎮`:`Start game (${selected.length} category/ies →`}
+      {t.id==="kids"?`Spiel starten mit ${selected.length} category/ies 🎮`:`Spiel starten (${selected.length} category/ies →`}
     </Btn>
   </div>;
 }
@@ -341,13 +341,13 @@ function LobbyScreen({room,code,myId,t,onGoCategories}){
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{t.id==="kids"?"Waiting for everyone!":"Waiting for players"}</h2>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{t.id==="kids"?"Warte auf alle!":"Warte auf Mitspieler"}</h2>
     <div style={{...row,marginBottom:16}}>
       <span style={{fontFamily:t.fontMono,fontSize:28,letterSpacing:5,color:t.accent,fontWeight:800}}>{code}</span>
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
     </div>
     <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>PLAYERS ({pl.length}/15)</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>SPIELER ({pl.length}/15)</p>
       <div style={col}>
         {pl.map(p=>(
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
@@ -361,12 +361,12 @@ function LobbyScreen({room,code,myId,t,onGoCategories}){
       <QRCode url={link} t={t}/>
     </Card>
     {isHost
-      ?<Btn t={t} onClick={onGoCategories} full>{t.id==="kids"?"Choose categories 🎮":"Choose categories →"}</Btn>
-      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Waiting for the host 🙂":"Waiting for the host..."}</p>}
+      ?<Btn t={t} onClick={onGoCategories} full>{t.id==="kids"?"Kategorien wählen 🎮":"Kategorien wählen →"}</Btn>
+      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Warte auf den Spielleiter 🙂":"Waiting for the host..."}</p>}
   </div>;
 }
 
-/* ─── QUESTION ───────────────────────────────────── */
+/* ─── FRAGE ───────────────────────────────────── */
 function QuestionScreen({room,myId,t,onGuess}){
   const[val,setVal]=useState("");
   const q=room.q;
@@ -378,28 +378,28 @@ function QuestionScreen({room,myId,t,onGuess}){
   function submit(){const n=parseFloat(val.replace(",","."));if(isNaN(n))return;onGuess(n);}
   return <div style={page}>
     <div style={{...row,justifyContent:"space-between",marginBottom:18,animation:"fu .3s ease both"}}>
-      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Question ${(room.qIdx||0)+1}`:`QUESTION ${(room.qIdx||0)+1}`}</Pill>
+      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Question ${(room.qIdx||0)+1}`:`FRAGE ${(room.qIdx||0)+1}`}</Pill>
       <span style={{fontSize:13,color:t.muted,fontFamily:t.fontMono}}>{doneCount}/{pl.length} ✓</span>
     </div>
     <Card t={t} glow style={{marginBottom:14,animation:"fu .3s .05s ease both"}}>
       <div style={{fontSize:26,marginBottom:8}}>{q.emoji||"❓"}</div>
       <Pill t={t} color={t.muted}>{q.cat}</Pill>
       <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
-      <p style={{marginTop:12,color:t.muted,fontSize:14}}>Answer in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
+      <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
     </Card>
     {myGuess==null
       ?<Card t={t} style={{animation:"fu .3s .1s ease both"}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.6,marginBottom:10}}>{t.id==="kids"?`YOUR GUESS (${q.unit}) 🤔`:`YOUR GUESS (${q.unit})`}</p>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.6,marginBottom:10}}>{t.id==="kids"?`DEIN TIPP (${q.unit}) 🤔`:`DEIN TIPP (${q.unit})`}</p>
         <div style={row}>
-          <Inp type="number" value={val} onChange={setVal} placeholder="e.g. 42" t={t} autoFocus style={{fontSize:22,fontWeight:700,fontFamily:t.fontMono}}/>
+          <Inp type="number" value={val} onChange={setVal} placeholder="z.B. 42" t={t} autoFocus style={{fontSize:22,fontWeight:700,fontFamily:t.fontMono}}/>
           <Btn t={t} onClick={submit} disabled={!val} style={{flexShrink:0}}>OK ✓</Btn>
         </div>
-        <p style={{marginTop:11,color:t.muted,fontSize:13,lineHeight:1.5}}>{t.id==="kids"?"💬 Talk – but don't show your number!":"💬 Discuss – but don't show your guess!"}</p>
+        <p style={{marginTop:11,color:t.muted,fontSize:13,lineHeight:1.5}}>{t.id==="kids"?"💬 Talk – but don't show your number!":"💬 Diskutiert – zeigt euren Tipp aber nicht!"}</p>
       </Card>
       :<Card t={t} style={{textAlign:"center",animation:"fu .3s .1s ease both"}}>
         <div style={{fontSize:42,fontFamily:t.fontMono,color:t.accent,fontWeight:800,marginBottom:6}}>{fmtNum(myGuess)} {q.unit}</div>
-        <p style={{color:t.green,fontWeight:700,marginBottom:14}}>✓ Guess submitted!</p>
-        <div style={{fontSize:12,color:t.muted,display:"flex",justifyContent:"space-between",marginBottom:5}}><span>Waiting for everyone...</span><span>{doneCount}/{pl.length}</span></div>
+        <p style={{color:t.green,fontWeight:700,marginBottom:14}}>✓ Tipp abgegeben!</p>
+        <div style={{fontSize:12,color:t.muted,display:"flex",justifyContent:"space-between",marginBottom:5}}><span>Warte auf alle...</span><span>{doneCount}/{pl.length}</span></div>
         <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${(doneCount/pl.length)*100}%`,background:`linear-gradient(90deg,${t.accent},${t.gold})`,borderRadius:3,transition:"width .4s ease"}}/></div>
       </Card>}
     <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:14}}>
@@ -425,16 +425,16 @@ function BettingScreen({room,myId,t,onBet}){
   const canSubmit=soloOther?!!closest:!!(closest&&farthest&&closest!==farthest);
   function submitBet(){onBet(closest,soloOther?closest:farthest);}
   return <div style={{...page,animation:"fu .3s ease both"}}>
-    <Pill t={t} color={t.gold}>{t.id==="kids"?"🎲 BETS":"BETS"}</Pill>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>{t.id==="kids"?"Who's closest?":"Who's where?"}</h2>
-    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Correct bet = +1 extra point</p>
+    <Pill t={t} color={t.gold}>{t.id==="kids"?"🎲 WETTEN":"WETTEN"}</Pill>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>{t.id==="kids"?"Wer trifft's am besten?":"Who's where?"}</h2>
+    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Richtige Wette = +1 Punkt extra</p>
     {myBet
-      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Bet placed!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Waiting for reveal...</p></Card>
+      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
       :<>
-        <RG label={t.id==="kids"?"🎯 Who's CLOSEST?":"🎯 CLOSEST guess"} color={t.green} val={closest} setVal={setClosest}/>
-        {!soloOther&&<RG label={t.id==="kids"?"🙈 Who's FURTHEST off?":"💀 FURTHEST off"} color={t.danger} val={farthest} setVal={setFarthest}/>}
-        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>With 2 players one choice is enough 👆</p>}
-        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Place bet 🎲</Btn>
+        <RG label={t.id==="kids"?"🎯 Wer liegt AM NÄCHSTEN?":"🎯 AM NÄCHSTEN dran"} color={t.green} val={closest} setVal={setClosest}/>
+        {!soloOther&&<RG label={t.id==="kids"?"🙈 Wer liegt AM WEITESTEN?":"💀 AM WEITESTEN daneben"} color={t.danger} val={farthest} setVal={setFarthest}/>}
+        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
+        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
       </>}
   </div>;
 }
@@ -451,16 +451,16 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
   return <div style={page}>
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
       <div style={{fontSize:30,marginBottom:6}}>{q.emoji||"❓"}</div>
-      <Pill t={t}>ANSWER</Pill>
+      <Pill t={t}>AUFLÖSUNG</Pill>
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:8,animation:"pop .5s ease both",textShadow:t.id==="adult"?"0 0 32px rgba(232,54,10,.35)":undefined}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"GUESSES 📊":"THIS ROUND'S GUESSES"}</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"TIPPS 📊":"TIPPS DIESER RUNDE"}</p>
       {ranked.map((p,i)=>{const exact=p.diff===0,win=i===0&&!exact,pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>BETS</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>WETTEN</p>
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
@@ -487,10 +487,10 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
       })}
     </Card>}
     <Card t={t} style={{marginBottom:18}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"POINTS 🏆":"TOTAL POINTS"}</p>
-      {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (You)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{t.id==="kids"?"PUNKTE 🏆":"GESAMTPUNKTE"}</p>
+      {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
-    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>Nächste Question →</Btn><Btn t={t} variant="secondary" onClick={onEnd}>End game</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Waiting for the host 🙂":"Waiting for the host..."}</p>}
+    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>Nächste Question →</Btn><Btn t={t} variant="secondary" onClick={onEnd}>Beenden</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{t.id==="kids"?"Warte auf den Spielleiter 🙂":"Waiting for the host..."}</p>}
   </div>;
 }
 
@@ -569,31 +569,31 @@ function FinalScreen({room,myId,t,onRestart}){
   const worstAvg=worstId&&diffCount[worstId]?Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10:null;
 
   const statCards=[
-    betKing&&{icon:"🎲",label:"Bet King",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} bets correct (${betKingRate}%)`,color:t.gold},
-    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Best Guesser",name:bestPlayer.name,sub:`avg. ${fmtNum(bestAvg)} ${totalRounds>0?"deviation":""}`,color:t.green},
-    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Worst Guesser",name:worstPlayer.name,sub:`avg. ${fmtNum(worstAvg)} deviation`,color:t.danger},
-    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Bull's-eyes",name:exactKing.name,sub:`${exactHits[exactKingId]} exact hits`,color:t.accent},
+    betKing&&{icon:"🎲",label:"Wettkönig",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten richtig (${betKingRate}%)`,color:t.gold},
+    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Bester Schätzer",name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} ${totalRounds>0?"Abweichung":""}`,color:t.green},
+    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>{t.id==="kids"?`wins with ${scores[winner?.id]||0} points! 🎊`:`wins with ${scores[winner?.id]||0} points.`}</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>{t.id==="kids"?`gewinnt mit ${scores[winner?.id]||0} Punkten! 🎊`:`gewinnt mit ${scores[winner?.id]||0} points.`}</p>
 
     {/* Endstand */}
     <Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>FINAL SCORE</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>ENDSTAND</p>
       {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
         <span style={{fontSize:20,minWidth:26}}>{medals[i]||`${i+1}.`}</span>
         <Avatar name={p.name} t={t}/>
-        <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (You)</span>}</span>
+        <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (Du)</span>}</span>
         <span style={{fontFamily:t.fontTitle,fontSize:36,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span>
       </div>)}
     </Card>
 
     {/* Stats */}
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATS</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATISTIKEN</p>
       {statCards.map((s,i)=><div key={i} style={{...row,padding:"10px 12px",borderRadius:t.radius,background:s.color+"14",border:`1px solid ${s.color}33`,marginBottom:8}}>
         <div style={{fontSize:26,minWidth:34}}>{s.icon}</div>
         <div style={{flex:1}}>
@@ -604,7 +604,7 @@ function FinalScreen({room,myId,t,onRestart}){
       </div>)}
     </Card>}
 
-    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{t.id==="kids"?"🔄 Play again!":"Start new round"}</Btn>
+    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{t.id==="kids"?"🔄 Nochmal spielen!":"Start new round"}</Btn>
   </div>;
 }
 
@@ -732,7 +732,7 @@ export default function App(){
 
   async function handleNext(){
     const r=await dbGet(code);
-    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
+    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(FRAGES[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1});
@@ -751,7 +751,7 @@ export default function App(){
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoCategories={handleGoCategories}/>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t}/>}
-    {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host is choosing categories...</p></div>}
+    {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess}/>}
     {screen==="betting"&&room&&(room.order||[]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
