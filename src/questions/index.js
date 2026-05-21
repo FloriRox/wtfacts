@@ -1,32 +1,34 @@
 // ─────────────────────────────────────────────────────────
 // ESTIMATESS – FRAGEN-INDEX
+// Sprache: DE (Deutsch)
+// Für Englisch: Pfade auf "./en/" ändern
 // ─────────────────────────────────────────────────────────
 
-import adultTest         from "./adult_test.js";
-import adultKoerper      from "./adult_koerper.js";
-import adultRekorde      from "./adult_rekorde.js";
-import adultTiere        from "./adult_tiere.js";
-import adultEssen        from "./adult_essen.js";
-import adultHistory      from "./adult_history.js";
-import adultAstro        from "./adult_astro.js";
-import adultGeld         from "./adult_geld.js";
-import adultFilm         from "./adult_film.js";
-import adultSex          from "./adult_sex.js";
-import adultWissenschaft from "./adult_wissenschaft.js";
-import adultPolitik      from "./adult_politik.js";
-import adultDrogen       from "./adult_drogen.js";
-import adultEkel         from "./adult_ekel.js";
-import adultTiersex      from "./adult_tiersex.js";
+import adultTest         from "./de/adult_test.js";
+import adultKoerper      from "./de/adult_koerper.js";
+import adultRekorde      from "./de/adult_rekorde.js";
+import adultTiere        from "./de/adult_tiere.js";
+import adultEssen        from "./de/adult_essen.js";
+import adultHistory      from "./de/adult_history.js";
+import adultAstro        from "./de/adult_astro.js";
+import adultGeld         from "./de/adult_geld.js";
+import adultFilm         from "./de/adult_film.js";
+import adultSex          from "./de/adult_sex.js";
+import adultWissenschaft from "./de/adult_wissenschaft.js";
+import adultPolitik      from "./de/adult_politik.js";
+import adultDrogen       from "./de/adult_drogen.js";
+import adultEkel         from "./de/adult_ekel.js";
+import adultTiersex      from "./de/adult_tiersex.js";
 
-import kidsTest     from "./kids_test.js";
-import kidsTiere    from "./kids_tiere.js";
-import kidsGeo      from "./kids_geo.js";
-import kidsDinos    from "./kids_dinos.js";
-import kidsWeltraum from "./kids_weltraum.js";
-import kidsSport    from "./kids_sport.js";
-import kidsMaerchen from "./kids_maerchen.js";
-import kidsOzeane   from "./kids_ozeane.js";
-import kidsKunst    from "./kids_kunst.js";
+import kidsTest     from "./de/kids_test.js";
+import kidsTiere    from "./de/kids_tiere.js";
+import kidsGeo      from "./de/kids_geo.js";
+import kidsDinos    from "./de/kids_dinos.js";
+import kidsWeltraum from "./de/kids_weltraum.js";
+import kidsSport    from "./de/kids_sport.js";
+import kidsMaerchen from "./de/kids_maerchen.js";
+import kidsOzeane   from "./de/kids_ozeane.js";
+import kidsKunst    from "./de/kids_kunst.js";
 
 const QUESTIONS = {
   adult: {
