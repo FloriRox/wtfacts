@@ -1,4 +1,4 @@
-// 🎯 GRATIS-TEST – Erwachsene (immer kostenlos)
+// 🎯 GRATIS-TEST – Erwachsene (immer kostenlos) – 25 Fragen
 export default [
   {q:"Wie viele Liter Blut pumpt das menschliche Herz pro Tag?",a:7200,unit:"Liter",hint:"Das Herz schlägt ~100.000 Mal/Tag und pumpt ~70ml pro Schlag.",emoji:"❤️"},
   {q:"Wie viele kg wiegen die Hoden eines Blauwals?",a:70,unit:"kg",hint:"Der Blauwal ist das größte Tier der Erde – da passt das.",emoji:"🐋"},
@@ -15,4 +15,14 @@ export default [
   {q:"Wie viele Tonnen Schokolade isst Deutschland pro Jahr?",a:900000,unit:"Tonnen",hint:"Deutschland ist Weltmeister im Schokoladenkonsum pro Kopf.",emoji:"🍫"},
   {q:"Wie hoch ist der Wasseranteil in einer Gurke in Prozent?",a:97,unit:"%",hint:"Gurken bestehen fast nur aus Wasser und haben kaum Kalorien.",emoji:"🥒"},
   {q:"Wie alt wurde der älteste jemals lebende Mensch in Jahren?",a:122,unit:"Jahre",hint:"Jeanne Calment aus Frankreich lebte von 1875 bis 1997.",emoji:"👴"},
+  {q:"Wie viele km/h erreicht ein Wanderfalke im Sturzflug?",a:320,unit:"km/h",hint:"Das schnellste Tier der Welt im Sturzflug.",emoji:"🦅"},
+  {q:"Wie viele Liter Wasser braucht man für 1 kg Rindfleisch?",a:15000,unit:"Liter",hint:"Rindfleisch hat den größten Wasserverbrauch aller Nahrungsmittel.",emoji:"🥩"},
+  {q:"Wie viele Stockwerke hat der Burj Khalifa?",a:163,unit:"Stockwerke",hint:"828 Meter hoch, steht in Dubai.",emoji:"🏙️"},
+  {q:"Wie viele Minuten dauerte der kürzeste Krieg der Geschichte?",a:38,unit:"Minuten",hint:"Der Anglo-Sansibar-Krieg von 1896.",emoji:"⚔️"},
+  {q:"Wie viele Grad Celsius beträgt die Oberflächentemperatur der Sonne?",a:5500,unit:"°C",hint:"Im Kern sind es sogar 15 Millionen Grad.",emoji:"☀️"},
+  {q:"Wie viele Gramm Salz isst ein Deutscher täglich?",a:10,unit:"Gramm",hint:"Empfohlen werden maximal 6 Gramm.",emoji:"🧂"},
+  {q:"Wie viele Tage trägt ein Elefant sein Junges?",a:645,unit:"Tage",hint:"Fast 2 Jahre – längste Schwangerschaft aller Landsäugetiere.",emoji:"🐘"},
+  {q:"Wie viele Jahre saß Nelson Mandela im Gefängnis?",a:27,unit:"Jahre",hint:"Von 1964 bis 1990 auf Robben Island.",emoji:"✊"},
+  {q:"Wie viele Körner Kaffee braucht man für einen Espresso?",a:50,unit:"Körner",hint:"Ein Kaffeebaum produziert pro Jahr ~500g Kaffee.",emoji:"☕"},
+  {q:"Wie viele Schweißdrüsen hat ein Mensch am ganzen Körper?",a:3000000,unit:"Drüsen",hint:"Am dichtesten sitzen sie an Fußsohlen und Handflächen.",emoji:"💦"},
 ];
