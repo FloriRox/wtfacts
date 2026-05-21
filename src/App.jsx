@@ -772,5 +772,5 @@ export default function App(){
     {screen==="betting"&&room&&(room.order||[]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart}/>}
-  </>;
+  </ErrorBoundary>;
 }
