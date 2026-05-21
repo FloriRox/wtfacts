@@ -5,10 +5,10 @@ import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4ylsGv34UhkQJsxSWhmPx2eb5IPhI7SA",
-  authDomain: "estimates-958c6.firebaseapp.com",
-  databaseURL: "https://estimates-958c6-default-rtdb.firebaseio.com",
-  projectId: "estimates-958c6",
-  storageBucket: "estimates-958c6.firebasestorage.app",
+  authDomain: "wtfacts-958c6.firebaseapp.com",
+  databaseURL: "https://wtfacts-958c6-default-rtdb.firebaseio.com",
+  projectId: "wtfacts-958c6",
+  storageBucket: "wtfacts-958c6.firebasestorage.app",
   messagingSenderId: "504687472282",
   appId: "1:504687472282:web:d129a0ddb9b209f2c13923",
 };
@@ -39,13 +39,18 @@ const KIDS = {
 // Locked-Status wird in src/questions/index.js gesetzt
 
 // Adapter: wandelt neues Format in App-kompatibles Format um
-const QUESTIONS = {};
-Object.keys(QUESTIONS_RAW).forEach(mode => {
-  QUESTIONS[mode] = {};
-  Object.entries(QUESTIONS_RAW[mode]).forEach(([cat, { questions, locked }]) => {
-    QUESTIONS[mode][cat] = questions.map(q => ({ ...q, locked }));
+let QUESTIONS = {};
+try {
+  Object.keys(QUESTIONS_RAW).forEach(mode => {
+    QUESTIONS[mode] = {};
+    Object.entries(QUESTIONS_RAW[mode]).forEach(([cat, { questions, locked }]) => {
+      QUESTIONS[mode][cat] = questions.map(q => ({ ...q, locked }));
+    });
   });
-});
+} catch(e) {
+  console.error("QUESTIONS_RAW error:", e);
+  throw new Error("Failed to load questions: " + e.message);
+}
 
 // Gibt alle Kategorien zurück (mit locked-Info)
 export function getCategoryMeta(mode) {
@@ -604,6 +609,22 @@ function FinalScreen({room,myId,t,onRestart}){
 }
 
 /* ─── ROOT APP ───────────────────────────────────── */
+function ErrorBoundary({children}){
+  const[err,setErr]=React.useState(null);
+  React.useEffect(()=>{
+    const handler=(e)=>setErr(e.message||String(e));
+    window.addEventListener("error",handler);
+    window.addEventListener("unhandledrejection",(e)=>setErr(e.reason?.message||String(e.reason)));
+    return()=>{window.removeEventListener("error",handler);};
+  },[]);
+  if(err)return <div style={{padding:24,background:"#1a0000",color:"#ff6b6b",fontFamily:"monospace",fontSize:13,lineHeight:1.6,minHeight:"100vh"}}>
+    <div style={{fontSize:20,fontWeight:700,marginBottom:16}}>🔴 App Error</div>
+    <div style={{background:"#2a0000",padding:16,borderRadius:8,wordBreak:"break-all"}}>{err}</div>
+    <div style={{marginTop:16,color:"#888"}}>Check browser console for full stack trace</div>
+  </div>;
+  return children;
+}
+
 export default function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
@@ -741,7 +762,7 @@ export default function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];
   }
 
-  return <>
+  return <ErrorBoundary><>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoCategories={handleGoCategories}/>}
