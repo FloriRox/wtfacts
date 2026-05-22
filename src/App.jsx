@@ -58,6 +58,16 @@ try {
 }
 
 /* ─── SHARING ────────────────────────────────────── */
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
 async function shareResult(room, t) {
   const pl = (room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const scores = room.scores||{};
@@ -66,88 +76,224 @@ async function shareResult(room, t) {
   const history = room.history||[];
   const sabotageStats = room.sabotageStats||{};
   const jokerStats = room.jokerStats||{};
-
-  // Build share card as canvas
-  const canvas = document.createElement('canvas');
-  canvas.width = 600; canvas.height = 400;
-  const ctx = canvas.getContext('2d');
   const isDark = t.id === 'adult';
 
-  // Background
-  ctx.fillStyle = isDark ? '#0d0b0a' : '#fffaf2';
-  ctx.fillRect(0, 0, 600, 400);
-
-  // Accent bar top
-  ctx.fillStyle = t.accent;
-  ctx.fillRect(0, 0, 600, 6);
-
-  // Logo
-  ctx.fillStyle = t.accent;
-  ctx.font = 'bold 42px sans-serif';
-  ctx.fillText('Esti', 30, 60);
-  ctx.fillStyle = t.gold;
-  ctx.fillText('Mates', 102, 60);
-
-  // Tagline
-  ctx.fillStyle = isDark ? '#6e5e54' : '#b0a090';
-  ctx.font = '13px sans-serif';
-  ctx.fillText('The pocket party game to prove your mates wrong.', 30, 82);
-
-  // Winner
-  ctx.fillStyle = t.gold;
-  ctx.font = 'bold 28px sans-serif';
-  ctx.fillText(`🏆 ${winner?.name || '?'} gewinnt!`, 30, 130);
-  ctx.fillStyle = isDark ? '#f2ece6' : '#1e1e1e';
-  ctx.font = '18px sans-serif';
-  ctx.fillText(`${scores[winner?.id]||0} Punkte · ${history.length} Runden`, 30, 158);
-
-  // Divider
-  ctx.strokeStyle = isDark ? '#32261e' : '#ffd58a';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(30,175); ctx.lineTo(570,175); ctx.stroke();
-
-  // Scoreboard
-  const medals = ['🥇','🥈','🥉'];
-  sorted.slice(0,5).forEach((p,i) => {
-    const y = 205 + i*36;
-    ctx.fillStyle = i===0 ? t.gold : isDark ? '#6e5e54' : '#b0a090';
-    ctx.font = `${i===0?'bold ':''  }16px sans-serif`;
-    ctx.fillText(`${medals[i]||`${i+1}.`}  ${p.name}`, 30, y);
-    ctx.fillStyle = i===0 ? t.gold : isDark ? '#f2ece6' : '#1e1e1e';
-    ctx.font = `bold ${i===0?22:18}px sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.fillText(`${scores[p.id]||0}P`, 570, y);
-    ctx.textAlign = 'left';
+  // ── Compute all stats ──
+  const betWins={}, betTotal={};
+  pl.forEach(p=>{betWins[p.id]=0; betTotal[p.id]=0;});
+  history.forEach(r=>{
+    if(!r.bets||!r.closestId) return;
+    Object.entries(r.bets).forEach(([pid,bet])=>{
+      if(!bet) return;
+      betTotal[pid]=(betTotal[pid]||0)+2;
+      if(bet.closest===r.closestId) betWins[pid]=(betWins[pid]||0)+1;
+      if(bet.farthest===r.farthestId) betWins[pid]=(betWins[pid]||0)+1;
+    });
   });
+  const avgDiff={}, diffCount={};
+  history.forEach(r=>{
+    if(!r.guesses||!r.answer) return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g==null||g===-999999) return;
+      avgDiff[pid]=(avgDiff[pid]||0)+Math.abs(g-r.answer);
+      diffCount[pid]=(diffCount[pid]||0)+1;
+    });
+  });
+  const exactHits={};
+  history.forEach(r=>{
+    if(!r.guesses||!r.answer) return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g!=null&&Math.abs(g-r.answer)===0) exactHits[pid]=(exactHits[pid]||0)+1;
+    });
+  });
+  const betKingId=pl.reduce((b,p)=>(betWins[p.id]||0)>(betWins[b]||0)&&(betTotal[p.id]||0)>0?p.id:b,null);
+  const bestId=pl.reduce((b,p)=>{if(!diffCount[p.id])return b;if(!b)return p.id;return avgDiff[p.id]/diffCount[p.id]<avgDiff[b]/diffCount[b]?p.id:b;},null);
+  const worstId=pl.reduce((b,p)=>{if(!diffCount[p.id])return b;if(!b)return p.id;return avgDiff[p.id]/diffCount[p.id]>avgDiff[b]/diffCount[b]?p.id:b;},null);
+  const exactKingId=pl.reduce((b,p)=>(exactHits[p.id]||0)>(exactHits[b]||0)?p.id:b,pl[0]?.id);
+  const sabKingId=pl.reduce((b,p)=>(sabotageStats[p.id]||0)>(sabotageStats[b]||0)?p.id:b,null);
+  const jokerTotals={};
+  pl.forEach(p=>{jokerTotals[p.id]=Object.values(jokerStats[p.id]||{}).reduce((a,x)=>a+x,0);});
+  const jokerKingId=pl.reduce((b,p)=>(jokerTotals[p.id]||0)>(jokerTotals[b]||0)?p.id:b,pl[0]?.id);
+  const name=n=>pl.find(p=>p.id===n)?.name||'?';
 
-  // Fun facts row
-  const sabKing = pl.reduce((b,p)=>(sabotageStats[p.id]||0)>(sabotageStats[b?.id]||0)?p:b, null);
-  const jokKing = pl.reduce((b,p)=>{
-    const tot=Object.values(jokerStats[p.id]||{}).reduce((a,x)=>a+x,0);
-    const btot=Object.values(jokerStats[b?.id]||{}).reduce((a,x)=>a+x,0);
-    return tot>btot?p:b;
-  }, null);
+  // ── Canvas setup ──
+  const W=620, PAD=28;
+  // Calculate dynamic height
+  const statsRows=[
+    betKingId&&betTotal[betKingId]>0,
+    bestId&&pl.length>1,
+    worstId&&pl.length>1&&bestId!==worstId,
+    exactKingId&&(exactHits[exactKingId]||0)>0,
+    jokerKingId&&jokerTotals[jokerKingId]>0,
+    sabKingId&&(sabotageStats[sabKingId]||0)>0,
+  ].filter(Boolean).length;
+  const H = 120 + 30 + sorted.length*44 + 20 + (statsRows>0?30+statsRows*40+16:0) + 64;
 
-  ctx.fillStyle = isDark ? '#32261e' : '#ffd58a';
-  ctx.fillRect(0, 350, 600, 50);
-  ctx.fillStyle = isDark ? '#6e5e54' : '#b0a090';
-  ctx.font = '13px sans-serif';
-  const facts = [
-    sabKing&&sabotageStats[sabKing.id]>0?`💣 ${sabKing.name} sabotierte ${sabotageStats[sabKing.id]}x`:null,
-    jokKing&&Object.values(jokerStats[jokKing.id]||{}).reduce((a,x)=>a+x,0)>0?`🃏 ${jokKing.name} zockte die meisten Joker`:null,
-    `Jetzt spielen: playestimates.app`
+  const canvas = document.createElement('canvas');
+  canvas.width = W*2; canvas.height = H*2; // retina
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2,2);
+
+  // ── Background gradient ──
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  if(isDark){
+    bg.addColorStop(0,'#181310');
+    bg.addColorStop(1,'#0d0b0a');
+  } else {
+    bg.addColorStop(0,'#fffaf2');
+    bg.addColorStop(1,'#fff4e0');
+  }
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // ── Top accent bar (gradient) ──
+  const barGrad = ctx.createLinearGradient(0,0,W,0);
+  barGrad.addColorStop(0, t.accent);
+  barGrad.addColorStop(1, t.gold);
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0,0,W,5);
+
+  // ── Logo ──
+  ctx.font = 'bold 36px system-ui, sans-serif';
+  ctx.fillStyle = t.accent;
+  ctx.fillText('Esti', PAD, 46);
+  const estiW = ctx.measureText('Esti').width;
+  ctx.fillStyle = t.gold;
+  ctx.fillText('Mates', PAD+estiW, 46);
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillStyle = isDark?'#6e5e54':'#b0a090';
+  ctx.fillText('The pocket party game to prove your mates wrong.', PAD, 64);
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillStyle = isDark?'#32261e':'#ffd58a';
+  ctx.fillText(`${history.length} Runden gespielt`, W-PAD-ctx.measureText(`${history.length} Runden gespielt`).width, 64);
+
+  // ── Divider ──
+  ctx.strokeStyle = isDark?'#32261e':'#ffd58a';
+  ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,76); ctx.lineTo(W-PAD,76); ctx.stroke();
+
+  // ── Winner banner ──
+  const winGrad=ctx.createLinearGradient(PAD,78,W-PAD,78);
+  winGrad.addColorStop(0,t.gold+'33');
+  winGrad.addColorStop(1,t.gold+'08');
+  ctx.fillStyle=winGrad;
+  roundRect(ctx,PAD,82,W-PAD*2,46,8);
+  ctx.fill();
+  ctx.strokeStyle=t.gold+'55';
+  ctx.lineWidth=1;
+  roundRect(ctx,PAD,82,W-PAD*2,46,8);
+  ctx.stroke();
+
+  ctx.font='bold 15px system-ui, sans-serif';
+  ctx.fillStyle=t.gold;
+  ctx.fillText('🏆', PAD+12, 111);
+  ctx.font='bold 18px system-ui, sans-serif';
+  ctx.fillText(`${winner?.name||'?'} gewinnt!`, PAD+36, 111);
+  ctx.font='13px system-ui, sans-serif';
+  ctx.fillStyle=isDark?'#f2ece6':'#1e1e1e';
+  const winPts=`${scores[winner?.id]||0} Punkte`;
+  ctx.fillText(winPts, W-PAD-ctx.measureText(winPts).width, 111);
+
+  // ── Scoreboard ──
+  const medals=['🥇','🥈','🥉'];
+  let y=146;
+  ctx.font='bold 11px system-ui, sans-serif';
+  ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
+  ctx.fillText('ENDSTAND', PAD, y); y+=16;
+
+  sorted.forEach((p,i)=>{
+    const rowBg = i===0 ? t.gold+'18' : isDark?'#181310':'#fff4e0';
+    ctx.fillStyle=rowBg;
+    roundRect(ctx,PAD,y,W-PAD*2,36,6);
+    ctx.fill();
+    if(i===0){ctx.strokeStyle=t.gold+'44';ctx.lineWidth=1;roundRect(ctx,PAD,y,W-PAD*2,36,6);ctx.stroke();}
+
+    ctx.font=`${i===0?'bold ':''}14px system-ui, sans-serif`;
+    ctx.fillStyle=i===0?t.gold:isDark?'#6e5e54':'#b0a090';
+    ctx.fillText(medals[i]||`${i+1}.`, PAD+10, y+23);
+
+    ctx.font=`${i===0?'bold ':''}15px system-ui, sans-serif`;
+    ctx.fillStyle=i===0?t.gold:isDark?'#f2ece6':'#1e1e1e';
+    ctx.fillText(p.name, PAD+36, y+23);
+
+    const pts=`${scores[p.id]||0}P`;
+    ctx.font=`bold ${i===0?20:16}px system-ui, sans-serif`;
+    ctx.fillStyle=i===0?t.gold:isDark?'#f2ece6':'#1e1e1e';
+    ctx.fillText(pts, W-PAD-ctx.measureText(pts).width, y+24);
+    y+=44;
+  });
+  y+=8;
+
+  // ── Stats section ──
+  const statItems=[
+    betKingId&&betTotal[betKingId]>0&&{icon:'🎲',label:'Wettkönig',val:name(betKingId),sub:`${betWins[betKingId]}/${betTotal[betKingId]} Wetten`},
+    bestId&&pl.length>1&&{icon:'🎯',label:'Bester Schätzer',val:name(bestId),sub:`Ø ${Math.round(avgDiff[bestId]/diffCount[bestId]*10)/10} Abw.`},
+    worstId&&pl.length>1&&bestId!==worstId&&{icon:'🙈',label:'Schlechtester Schätzer',val:name(worstId),sub:`Ø ${Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10} Abw.`},
+    exactKingId&&(exactHits[exactKingId]||0)>0&&{icon:'💥',label:'Punktlandungen',val:name(exactKingId),sub:`${exactHits[exactKingId]}× exakt`},
+    jokerKingId&&jokerTotals[jokerKingId]>0&&{icon:'🃏',label:'Joker-König',val:name(jokerKingId),sub:`${jokerTotals[jokerKingId]} Joker gespielt`},
+    sabKingId&&(sabotageStats[sabKingId]||0)>0&&{icon:'💣',label:'Sabotage-König',val:name(sabKingId),sub:`${sabotageStats[sabKingId]}× sabotiert`},
   ].filter(Boolean);
-  ctx.fillText(facts.join('  ·  '), 20, 380);
 
-  // Convert to blob and share
+  if(statItems.length>0){
+    ctx.font='bold 11px system-ui, sans-serif';
+    ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
+    ctx.fillText('STATISTIKEN', PAD, y); y+=14;
+
+    // two columns
+    const colW=(W-PAD*2-10)/2;
+    statItems.forEach((s,i)=>{
+      const cx = PAD + (i%2)*(colW+10);
+      const cy = y + Math.floor(i/2)*40;
+      ctx.fillStyle=isDark?'#211c18':'#ffffff';
+      roundRect(ctx,cx,cy,colW,34,6); ctx.fill();
+      ctx.strokeStyle=isDark?'#32261e':'#ffd58a';
+      ctx.lineWidth=1;
+      roundRect(ctx,cx,cy,colW,34,6); ctx.stroke();
+
+      ctx.font='14px system-ui,sans-serif';
+      ctx.fillStyle=isDark?'#f2ece6':'#1e1e1e';
+      ctx.fillText(s.icon, cx+8, cy+22);
+      ctx.font='bold 12px system-ui,sans-serif';
+      ctx.fillStyle=isDark?'#f2ece6':'#1e1e1e';
+      ctx.fillText(s.val, cx+28, cy+16);
+      ctx.font='10px system-ui,sans-serif';
+      ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
+      ctx.fillText(`${s.label} · ${s.sub}`, cx+28, cy+28);
+    });
+    y += Math.ceil(statItems.length/2)*40 + 10;
+  }
+
+  // ── Footer ──
+  const footerGrad=ctx.createLinearGradient(0,y,W,y);
+  footerGrad.addColorStop(0,t.accent+'33');
+  footerGrad.addColorStop(1,t.gold+'22');
+  ctx.fillStyle=footerGrad;
+  ctx.fillRect(0,y,W,H-y);
+  ctx.strokeStyle=isDark?'#32261e':'#ffd58a';
+  ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+
+  ctx.font='bold 14px system-ui, sans-serif';
+  ctx.fillStyle=t.accent;
+  const logoText='EstiMates';
+  ctx.fillText(logoText, PAD, y+22);
+  ctx.font='12px system-ui, sans-serif';
+  ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
+  ctx.fillText('playestimates.app', PAD, y+38);
+  ctx.font='bold 12px system-ui, sans-serif';
+  ctx.fillStyle=t.gold;
+  const cta='Jetzt mitspielen →';
+  ctx.fillText(cta, W-PAD-ctx.measureText(cta).width, y+30);
+
+  // ── Share or download ──
   return new Promise(resolve => {
     canvas.toBlob(async blob => {
-      const file = new File([blob], 'estimateess-ergebnis.png', {type:'image/png'});
+      const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
       if(navigator.share && navigator.canShare?.({files:[file]})) {
         try {
           await navigator.share({
             title: 'EstiMates Ergebnis',
-            text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spiel mit uns: playestimates.app`,
+            text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
             files: [file]
           });
         } catch(e) { downloadCanvas(canvas); }
@@ -357,7 +503,6 @@ function JokerBar({room, myId, code, t}){
   const afk=(room.afkPlayers||{})[myId];
   const [sabotageTarget,setSabotageTarget]=useState("");
   const [showSabotage,setShowSabotage]=useState(false);
-  const [showSkipVote,setShowSkipVote]=useState(false);
   const skipVotes=room.skipVotes||{};
   const order=room.order||[];
   const activePlayers=order.filter(id=>!(room.afkPlayers||{})[id]);
@@ -365,70 +510,96 @@ function JokerBar({room, myId, code, t}){
   const skipNeeded=Math.ceil(activePlayers.length/2);
   const usedThisRound=room.usedJokerThisRound;
 
+  // Short descriptions for table view
+  const shortDesc={
+    skip:    "Frage wird übersprungen (Mehrheit)",
+    hint:    "Hinweis wird sofort angezeigt",
+    double:  "Alle Punkte dieser Runde ×2",
+    sabotage:"Tipp eines Mitspielers ±20%",
+    change:  "Deinen Tipp einmal korrigieren",
+    extra:   "Antwort größer oder kleiner als X?",
+  };
+
   async function useJoker(type){
     if(usedThisRound||afk) return;
-    const newJokers=myJokers.filter((_,i)=>i!==myJokers.indexOf(type));
+    const idx=myJokers.indexOf(type);
+    if(idx===-1) return;
+    const newJokers=[...myJokers];
+    newJokers.splice(idx,1);
     await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
     await dbPatch(code,{usedJokerThisRound:type,jokerUsedBy:myId});
-    // track usage stats
-    const prev=(room.jokerStats||{})[myId]||{};
-    const key=`jokerStats/${myId}/${type}`;
-    await update(ref(db,`rooms/${code}`),{[key.replace(/\//g,".")]: ((room.jokerStats||{})[myId]?.[type]||0)+1});
-    if(type==="double"){
-      // no further action needed, calcRound checks usedJokerThisRound
-    }
-    if(type==="hint"){
-      await dbPatch(code,{hintVisible:true});
-    }
+    await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.${type}`]:((room.jokerStats||{})[myId]?.[type]||0)+1});
+    if(type==="hint") await dbPatch(code,{hintVisible:true});
     if(type==="extra"){
-      // reveal bigger/smaller hint
       const guesses=room.guesses||{};
-      const vals=Object.values(guesses).filter(v=>v!=null);
-      const median=vals.sort((a,b)=>a-b)[Math.floor(vals.length/2)]||0;
-      const answer=room.q?.a||0;
-      const direction=answer>median?"größer":"kleiner";
+      const vals=Object.values(guesses).filter(v=>v!=null&&v!==-999999).map(Number).sort((a,b)=>a-b);
+      const median=vals[Math.floor(vals.length/2)]||0;
+      const direction=(room.q?.a||0)>median?"größer":"kleiner";
       await dbPatch(code,{extraHint:`Die Antwort ist ${direction} als ${fmtNum(median)}`});
     }
-    if(type==="sabotage"){
-      setShowSabotage(true);
-    }
-    if(type==="skip"){
-      setShowSkipVote(true);
-      await update(ref(db,`rooms/${code}/skipVotes`),{[myId]:true});
-    }
-    if(type==="change"){
-      await dbPatch(code,{changeAllowed:myId});
-    }
+    if(type==="sabotage") setShowSabotage(true);
+    if(type==="skip") await update(ref(db,`rooms/${code}/skipVotes`),{[myId]:true});
+    if(type==="change") await dbPatch(code,{changeAllowed:myId});
   }
 
   async function submitSabotage(){
     if(!sabotageTarget) return;
-    // shift target's guess by ±20%
     const guesses=room.guesses||{};
     const targetGuess=guesses[sabotageTarget];
-    if(targetGuess==null){setShowSabotage(false);return;}
+    if(targetGuess==null||targetGuess===-999999){setShowSabotage(false);return;}
     const shift=Math.random()<0.5?1.2:0.8;
-    const newGuess=Math.round(targetGuess*shift);
-    await update(ref(db,`rooms/${code}/guesses`),{[sabotageTarget]:newGuess});
-    // track sabotage stats
-    await update(ref(db,`rooms/${code}`),{[`sabotageStats/${myId}`]:((room.sabotageStats||{})[myId]||0)+1});
+    await update(ref(db,`rooms/${code}/guesses`),{[sabotageTarget]:Math.round(targetGuess*shift)});
+    await update(ref(db,`rooms/${code}`),{[`sabotageStats.${myId}`]:((room.sabotageStats||{})[myId]||0)+1});
     setShowSabotage(false);
   }
 
-  if(!enabledJokers.length||!myJokers.length) return null;
+  if(!enabledJokers.length) return null;
 
-  return <Card t={t} style={{marginTop:12,marginBottom:4}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:8}}>🃏 DEINE JOKER {usedThisRound?<span style={{color:t.muted}}>(diese Runde verbraucht)</span>:""}</p>
-    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-      {myJokers.slice(0,5).map((jk,i)=>{
+  // Build full joker list: all enabled jokers, with count from myJokers
+  const jokerCounts={};
+  myJokers.forEach(jk=>{jokerCounts[jk]=(jokerCounts[jk]||0)+1;});
+
+  return <Card t={t} style={{marginTop:12,marginBottom:4,padding:"14px 16px"}}>
+    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
+      🃏 JOKER {usedThisRound&&<span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
+    </p>
+    {/* Joker table */}
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {enabledJokers.map(jk=>{
         const def=JOKER_DEFS[jk];
         if(!def) return null;
-        return <button key={i} onClick={()=>!usedThisRound&&useJoker(jk)} disabled={!!usedThisRound||!!afk} title={def.desc}
-          style={{padding:"8px 14px",borderRadius:t.radius,background:usedThisRound?t.surface:t.gold+"22",border:`1.5px solid ${usedThisRound?t.border:t.gold}`,color:usedThisRound?t.muted:t.gold,fontSize:13,fontWeight:700,cursor:usedThisRound?"not-allowed":"pointer",opacity:usedThisRound?.5:1}}>
-          {def.icon} {def.name}
-        </button>;
+        const count=jokerCounts[jk]||0;
+        const hasJoker=count>0;
+        const canUse=hasJoker&&!usedThisRound&&!afk;
+        return <div key={jk} onClick={()=>canUse&&useJoker(jk)}
+          style={{
+            display:"flex",alignItems:"center",gap:10,
+            padding:"9px 12px",borderRadius:t.radius,
+            background:canUse?t.gold+"18":t.surface,
+            border:`1.5px solid ${canUse?t.gold:t.border}`,
+            opacity:hasJoker?1:0.35,
+            cursor:canUse?"pointer":"default",
+            transition:"all .15s",
+          }}>
+          {/* Icon + name */}
+          <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>{def.icon}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:13,color:canUse?t.gold:t.text,lineHeight:1.2}}>{def.name}</div>
+            <div style={{fontSize:11,color:t.muted,marginTop:2,lineHeight:1.3}}>{shortDesc[jk]}</div>
+          </div>
+          {/* Count badge */}
+          <div style={{
+            minWidth:22,height:22,borderRadius:100,
+            background:hasJoker?t.gold:t.border,
+            color:hasJoker?t.bg:t.muted,
+            fontSize:12,fontWeight:800,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            flexShrink:0,
+          }}>{count}</div>
+        </div>;
       })}
     </div>
+
     {/* Skip vote status */}
     {Object.keys(skipVotes).length>0&&<div style={{marginTop:10,padding:"8px 12px",background:t.surface,borderRadius:t.radius,fontSize:13,color:t.muted}}>
       ⏭️ Skip-Abstimmung: <strong style={{color:t.accent}}>{skipCount}/{skipNeeded}</strong> Stimmen nötig
@@ -442,7 +613,10 @@ function JokerBar({room, myId, code, t}){
       <p style={{fontSize:13,color:t.danger,fontWeight:700,marginBottom:8}}>💣 Wen sabotieren?</p>
       {order.filter(id=>id!==myId&&!(room.afkPlayers||{})[id]).map(id=>{
         const p=room.players?.[id];
-        return <div key={id} onClick={()=>setSabotageTarget(id)} style={{...row,padding:"9px 12px",borderRadius:t.radius,cursor:"pointer",background:sabotageTarget===id?t.danger+"22":t.surface,border:`1.5px solid ${sabotageTarget===id?t.danger:t.border}`,marginBottom:6}}>
+        return <div key={id} onClick={()=>setSabotageTarget(id)}
+          style={{...row,padding:"9px 12px",borderRadius:t.radius,cursor:"pointer",
+          background:sabotageTarget===id?t.danger+"22":t.surface,
+          border:`1.5px solid ${sabotageTarget===id?t.danger:t.border}`,marginBottom:6}}>
           <Avatar name={p?.name} t={t} size={28}/>
           <span style={{fontWeight:600}}>{p?.name}</span>
         </div>;
