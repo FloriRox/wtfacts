@@ -538,7 +538,14 @@ function JokerBar({room, myId, code, t}){
       await dbPatch(code,{extraHint:`Die Antwort ist ${direction} als ${fmtNum(median)}`});
     }
     if(type==="sabotage") setShowSabotage(true);
-    if(type==="skip") await update(ref(db,`rooms/${code}/skipVotes`),{[myId]:true});
+    if(type==="skip"){
+      // Don't consume joker yet – consume when skip actually triggers
+      // Just add the vote
+      await update(ref(db,`rooms/${code}/skipVotes`),{[myId]:true});
+      // Put joker back for now (will be consumed when skip fires)
+      await update(ref(db,`rooms/${code}/jokers`),{[myId]:myJokers});
+      await dbPatch(code,{usedJokerThisRound:null,jokerUsedBy:null});
+    }
     if(type==="change") await dbPatch(code,{changeAllowed:myId});
   }
 
@@ -1291,18 +1298,7 @@ export default function App(){
         const active=(r.order||[]).filter(id=>!afkP[id]);
         if(!active.every(id=>g[id]!=null)){await dbPatch(code,{advancing:false});return;}
 
-        // Check skip votes
-        const skipVotes=r.skipVotes||{};
-        const skipCount=Object.values(skipVotes).filter(Boolean).length;
-        const skipNeeded=Math.ceil(active.length/2);
-        if(skipCount>=skipNeeded){
-          // skip this question
-          const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
-          const newQ=getQuestion(mode,cats,usedIdsRef.current);
-          if(newQ)usedIdsRef.current.push(newQ.id);
-          await dbPatch(code,{phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null});
-          return;
-        }
+        // Skip check moved to separate useEffect below
 
         if(active.length<3){
           const merged={...r,guesses:g};
@@ -1322,6 +1318,51 @@ export default function App(){
   async function handleBet(closest,farthest){
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
   }
+
+  // Skip vote check – fires immediately when skipVotes changes
+  useEffect(()=>{
+    if(!room||room.phase!=="question")return;
+    const order=room.order||[];
+    const afk=room.afkPlayers||{};
+    const active=order.filter(id=>!afk[id]);
+    const skipVotes=room.skipVotes||{};
+    const skipCount=Object.values(skipVotes).filter(Boolean).length;
+    const skipNeeded=Math.ceil(active.length/2);
+    if(skipCount<skipNeeded||skipCount===0)return;
+    if(room.hostId!==myId)return;
+    if(room.advancing)return;
+    const doSkip=async()=>{
+      const r=await dbGet(code);
+      if(r.phase!=="question")return;
+      if(r.advancing)return;
+      await dbPatch(code,{advancing:true});
+      const sv=r.skipVotes||{};
+      const act=(r.order||[]).filter(id=>!(r.afkPlayers||{})[id]);
+      const sc=Object.values(sv).filter(Boolean).length;
+      const sn=Math.ceil(act.length/2);
+      if(sc<sn){await dbPatch(code,{advancing:false});return;}
+      const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
+      const newQ=getQuestion(mode,cats,usedIdsRef.current);
+      if(newQ)usedIdsRef.current.push(newQ.id);
+      // Consume skip jokers from all voters
+      const skipVoterJokerUpdates={};
+      Object.keys(sv).forEach(pid=>{
+        if(!sv[pid])return;
+        const pJokers=(r.jokers||{})[pid]||[];
+        const idx=pJokers.indexOf('skip');
+        if(idx!==-1){
+          const updated=[...pJokers];
+          updated.splice(idx,1);
+          skipVoterJokerUpdates[pid]=updated;
+        }
+      });
+      if(Object.keys(skipVoterJokerUpdates).length){
+        await update(ref(db,`rooms/${code}/jokers`),skipVoterJokerUpdates);
+      }
+      await dbPatch(code,{phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    };
+    doSkip();
+  },[room?.skipVotes,room?.phase]);
 
   // Auto-advance: all bets in → results
   useEffect(()=>{
