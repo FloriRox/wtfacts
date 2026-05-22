@@ -233,7 +233,7 @@ export default [
   {q:"In welchem Jahr erschien das erste Lehrbuch der Chemie?",a:1789,unit:"Jahr",hint:"Lavoisiers Traité élémentaire de chimie.",emoji:"📚"},
   {q:"Wie viele Grad Celsius schmilzt Aluminium?",a:660,unit:"°C",hint:"Deutlich niedrigerer Schmelzpunkt als Stahl.",emoji:"🌡️"},
   {q:"In welchem Jahr entdeckte Banting und Best Insulin?",a:1921,unit:"Jahr",hint:"Lebensrettend für Millionen Diabetiker.",emoji:"💉"},
-  {q:"Wie viele Kilogramm Sauerstoff enthält die Erdatmosphäre?",a:1200000000000000,unit:"kg",hint:"1,2 × 10¹⁵ kg Sauerstoff.",emoji:"💨"},
+  {q:"Wie viele Billionen Tonnen Sauerstoff enthält die Erdatmosphäre?",a:1200,unit:"Billionen Tonnen",hint:"1,2 × 10¹⁵ kg Sauerstoff.",emoji:"💨"},
   {q:"In welchem Jahr entdeckte Rutherford den Atomkern?",a:1909,unit:"Jahr",hint:"Goldfolienexperiment – der Kern ist klein und dicht.",emoji:"⚛️"},
   {q:"Wie viele Protonen hat Kobalt?",a:27,unit:"Protonen",hint:"Co – Ordnungszahl 27.",emoji:"⚗️"},
   {q:"In welchem Jahr erfand Pascal die Rechenmaschine Pascaline?",a:1642,unit:"Jahr",hint:"Konnte addieren und subtrahieren.",emoji:"🔢"},

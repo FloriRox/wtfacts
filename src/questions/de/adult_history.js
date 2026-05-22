@@ -8,7 +8,7 @@ export default [
   {q:"Wie viele Jahre war die Berliner Mauer in Betrieb?",a:28,unit:"Jahre",hint:"Von 1961 bis zum Fall am 9. November 1989.",emoji:"🧱"},
   {q:"In welchem Jahr wurde das erste Telefon von Bell patentiert?",a:1876,unit:"Jahr",hint:"Bell erhielt das Patent am 7. März 1876.",emoji:"📞"},
   {q:"Wie viele Arbeiter bauten schätzungsweise die Cheops-Pyramide?",a:20000,unit:"Arbeiter",hint:"Neuere Forschung: bezahlte Arbeiter, keine Sklaven.",emoji:"🏛️"},
-  {q:"Wie viele Tonnen Gold sind schätzungsweise im Meer gelöst?",a:20000000,unit:"Tonnen",hint:"Genug für 9 Pfund Gold pro Person auf der Erde.",emoji:"⚱️"},
+  {q:"Wie viele Millionen Tonnen Gold sind schätzungsweise im Meer gelöst?",a:20,unit:"Millionen Tonnen",hint:"Genug für 9 Pfund Gold pro Person auf der Erde.",emoji:"⚱️"},
   {q:"In welchem Jahr wurde die erste Kondom-Fabrik eröffnet?",a:1844,unit:"Jahr",hint:"Nach Goodyears Vulkanisierung von Gummi.",emoji:"💊"},
   {q:"Wie viele Konkubinen hatte Kaiser Qianlong von China?",a:3000,unit:"Konkubinen",hint:"Er regierte von 1735 bis 1796.",emoji:"👑"},
   {q:"Wie viele Jahre dauerte der Hundertjährige Krieg tatsächlich?",a:116,unit:"Jahre",hint:"Von 1337 bis 1453 – also 116 Jahre, nicht 100.",emoji:"⚔️"},

@@ -142,7 +142,7 @@ export default [
   {q:"Wie viele Liter Schweiß produziert man in einer Sauna (Stunde)?",a:1.5,unit:"Liter",hint:"Bei 80-90°C.",emoji:"🧖"},
   {q:"Wie viele Millionen Pilzsporen produziert ein Schimmelpilz pro Sekunde?",a:1,unit:"Millionen",hint:"Schimmel verbreitet sich extrem schnell.",emoji:"🍄"},
   {q:"Wie viele Gramm Schleim werden bei einer Erkältung täglich produziert?",a:100,unit:"Gramm",hint:"100ml Schleim – viel davon geschluckt.",emoji:"🤧"},
-  {q:"Wie viele Liter Urin werden täglich in deutschen WCs gespült?",a:20000000000,unit:"Liter",hint:"Enorme Wasserverschwendung.",emoji:"🚽"},
+  {q:"Wie viele Milliarden Liter Urin werden täglich in deutschen WCs gespült?",a:20,unit:"Milliarden Liter",hint:"Enorme Wasserverschwendung.",emoji:"🚽"},
   {q:"Wie viele Millionen Bakterien sind in 1g frischer Erde?",a:1000,unit:"Millionen",hint:"1 Milliarde Bakterien pro Gramm Erde.",emoji:"🌱"},
   {q:"Wie viele Gramm Schmutz sammeln sich pro Jahr im Bauchnabel?",a:0.5,unit:"Gramm",hint:"Flusen, Öl und Bakterien.",emoji:"🔘"},
   {q:"Wie viele Liter Blut verliert man bei einer normalen Menstruation?",a:0.05,unit:"Liter",hint:"50ml pro Periode.",emoji:"🩸"},
