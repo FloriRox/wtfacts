@@ -263,7 +263,7 @@ async function shareResult(room, t) {
     y += Math.ceil(statItems.length/2)*40 + 10;
   }
 
-  // ── Footer ──
+  // ── Footer with QR Code ──
   const footerGrad=ctx.createLinearGradient(0,y,W,y);
   footerGrad.addColorStop(0,t.accent+'33');
   footerGrad.addColorStop(1,t.gold+'22');
@@ -273,35 +273,74 @@ async function shareResult(room, t) {
   ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
 
-  ctx.font='bold 14px system-ui, sans-serif';
+  // Logo + URL left side
+  ctx.font='bold 16px system-ui, sans-serif';
   ctx.fillStyle=t.accent;
-  const logoText='EstiMates';
-  ctx.fillText(logoText, PAD, y+22);
+  ctx.fillText('Esti', PAD, y+24);
+  const ew=ctx.measureText('Esti').width;
+  ctx.fillStyle=t.gold;
+  ctx.fillText('Mates', PAD+ew, y+24);
   ctx.font='12px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
-  ctx.fillText('playestimates.app', PAD, y+38);
-  ctx.font='bold 12px system-ui, sans-serif';
-  ctx.fillStyle=t.gold;
-  const cta='Jetzt mitspielen →';
-  ctx.fillText(cta, W-PAD-ctx.measureText(cta).width, y+30);
+  ctx.fillText('playestimates.app', PAD, y+40);
+  ctx.font='11px system-ui, sans-serif';
+  ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
+  ctx.fillText('Scan & mitspielen!', PAD, y+55);
 
-  // ── Share or download ──
+  // ── Share or download (QR drawn async after image loads) ──
   return new Promise(resolve => {
-    canvas.toBlob(async blob => {
-      const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
-      if(navigator.share && navigator.canShare?.({files:[file]})) {
-        try {
-          await navigator.share({
-            title: 'EstiMates Ergebnis',
-            text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
-            files: [file]
-          });
-        } catch(e) { downloadCanvas(canvas); }
-      } else {
-        downloadCanvas(canvas);
-      }
-      resolve();
-    }, 'image/png');
+    // Draw QR code from API
+    const qrSize=64;
+    const qrX=W-PAD-qrSize;
+    const qrY=y+4;
+    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://playestimates.app&bgcolor=${isDark?'211c18':'fffaf2'}&color=${isDark?'e8360a':'e8360a'}`;
+    const qrImg=new Image();
+    qrImg.crossOrigin='anonymous';
+    qrImg.onload=()=>{
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx,qrX-4,qrY-4,qrSize+8,qrSize+8,6);
+      ctx.fillStyle=isDark?'#211c18':'#ffffff';
+      ctx.fill();
+      ctx.strokeStyle=isDark?'#32261e':'#ffd58a';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      ctx.drawImage(qrImg,qrX,qrY,qrSize,qrSize);
+      ctx.restore();
+        const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
+        if(navigator.share && navigator.canShare?.({files:[file]})) {
+          try {
+            await navigator.share({
+              title: 'EstiMates Ergebnis',
+              text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
+              files: [file]
+            });
+          } catch(e) { downloadCanvas(canvas); }
+        } else {
+          downloadCanvas(canvas);
+        }
+        resolve();
+      }, 'image/png');
+    };
+    qrImg.onerror=()=>{
+      // QR failed – share without it
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
+        if(navigator.share && navigator.canShare?.({files:[file]})) {
+          try {
+            await navigator.share({
+              title: 'EstiMates Ergebnis',
+              text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
+              files: [file]
+            });
+          } catch(e) { downloadCanvas(canvas); }
+        } else {
+          downloadCanvas(canvas);
+        }
+        resolve();
+      }, 'image/png');
+    };
+    qrImg.src=qrUrl;
   });
 }
 
@@ -457,7 +496,7 @@ function Btn({children,onClick,variant="primary",disabled,t,full,style:sx={}}){
 }
 function Inp({value,onChange,placeholder,type="text",t,autoFocus,style:sx={}}){
   const[foc,setFoc]=useState(false);
-  return <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus} inputMode={type==="number"?"decimal":undefined} onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)} style={{width:"100%",padding:"13px 15px",background:t.surface,border:`2px solid ${foc?t.accent:t.border}`,borderRadius:t.radius,color:t.text,fontSize:16,outline:"none",transition:"border-color .2s",...sx}}/>;
+  return <input type="text" inputMode={type==="number"?"text":undefined} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus} onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)} style={{width:"100%",padding:"13px 15px",background:t.surface,border:`2px solid ${foc?t.accent:t.border}`,borderRadius:t.radius,color:t.text,fontSize:16,outline:"none",transition:"border-color .2s",...sx}}/>;
 }
 function Card({children,t,glow,style:sx={}}){
   return <div style={{background:t.card,border:`1.5px solid ${glow?t.accent+"77":t.border}`,borderRadius:t.radius,padding:20,boxShadow:glow?`0 0 20px ${t.accent}18`:undefined,...sx}}>{children}</div>;
@@ -807,7 +846,8 @@ function JokerSetupScreen({mode, onDone, t}){
 function CategoryScreen({mode,onStart,t}){
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
   const freeKey="🎯 Gratis-Test";
-  const[selected,setSelected]=useState([freeKey]);
+  const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
+  const[selected,setSelected]=useState(allCats);
   function toggle(c,locked){
     if(locked) return;
     setSelected(prev=>prev.includes(c)?prev.filter(x=>x!==c):[...prev,c]);
@@ -897,8 +937,8 @@ function QuestionScreen({room,myId,t,onGuess,code}){
       setTimeLeft(prev=>{
         if(prev<=1){
           clearInterval(iv);
-          // time's up – submit 0 if no answer given
-          onGuess(-999999); // sentinel for "no answer"
+          // time's up – submit sentinel
+          onGuess(-999999);
           return 0;
         }
         return prev-1;
@@ -968,11 +1008,8 @@ function QuestionScreen({room,myId,t,onGuess,code}){
         <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${activePl.length?doneCount/activePl.length*100:0}%`,background:`linear-gradient(90deg,${t.accent},${t.gold})`,borderRadius:3,transition:"width .4s ease"}}/></div>
       </Card>}
 
-    {/* Joker bar */}
-    {room.enabledJokers?.length>0&&<JokerBar room={room} myId={myId} code={code} t={t}/>}
-
-    {/* Player status chips */}
-    <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:14}}>
+    {/* Player status chips – right below timer/progress */}
+    <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:8,marginBottom:4}}>
       {pl.map(p=>{
         const done=guesses[p.id]!=null;
         const isAfk=afkPlayers[p.id];
@@ -981,6 +1018,9 @@ function QuestionScreen({room,myId,t,onGuess,code}){
         </div>;
       })}
     </div>
+
+    {/* Joker bar */}
+    {room.enabledJokers?.length>0&&<JokerBar room={room} myId={myId} code={code} t={t}/>}
 
     {/* AFK button */}
     <AfkButton myId={myId} code={code} room={room} t={t}/>
@@ -1285,7 +1325,8 @@ export default function App(){
     const afk=room.afkPlayers||{};
     const activePlayers=order.filter(id=>!afk[id]);
     const guesses=room.guesses||{};
-    const allDone=activePlayers.length>0&&activePlayers.every(id=>guesses[id]!=null);
+    const allDone=activePlayers.length>0&&activePlayers.every(id=>guesses[id]!=null||afk[id]);
+    // -999999 counts as answered (timer expired)
     if(allDone&&room.hostId===myId&&!advanceGuessPhaseRef.current){
       advanceGuessPhaseRef.current=true;
       const advance=async()=>{
@@ -1297,6 +1338,7 @@ export default function App(){
         const afkP=r.afkPlayers||{};
         const active=(r.order||[]).filter(id=>!afkP[id]);
         if(!active.every(id=>g[id]!=null)){await dbPatch(code,{advancing:false});return;}
+        // Treat -999999 (timer expired) as answered
 
         // Skip check moved to separate useEffect below
 
