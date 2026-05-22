@@ -41,7 +41,7 @@ const JOKER_DEFS = {
   double:   { id:"double",   icon:"🎯", name:"Doppelte Punkte",    desc:"Diese Runde zählen alle Punkte doppelt." },
   sabotage: { id:"sabotage", icon:"💣", name:"Sabotage",           desc:"Verschiebe einen Mitspieler um ±20% vom richtigen Wert." },
   change:   { id:"change",   icon:"🔄", name:"Tipp ändern",        desc:"Darf nach Abgabe einmal den Tipp korrigieren." },
-  extra:    { id:"extra",    icon:"📊", name:"50/50",              desc:"Zeigt ob die Antwort größer oder kleiner als X ist." },
+  extra:    { id:"extra",    icon:"📊", name:"50/50",              desc:"Zeigt ob die richtige Antwort größer oder kleiner als eine zufällige Zahl in der Nähe ist." },
 };
 
 /* ─── QUESTIONS ───────────────────────────────────── */
@@ -557,7 +557,7 @@ function JokerBar({room, myId, code, t}){
     double:  "Alle Punkte dieser Runde ×2",
     sabotage:"Tipp eines Mitspielers ±20%",
     change:  "Deinen Tipp einmal korrigieren",
-    extra:   "Antwort größer oder kleiner als X?",
+    extra:   "Zeigt: Antwort größer oder kleiner als [Zahl]?",
   };
 
   async function useJoker(type){
@@ -571,11 +571,17 @@ function JokerBar({room, myId, code, t}){
     await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.${type}`]:((room.jokerStats||{})[myId]?.[type]||0)+1});
     if(type==="hint") await dbPatch(code,{hintVisible:true});
     if(type==="extra"){
-      const guesses=room.guesses||{};
-      const vals=Object.values(guesses).filter(v=>v!=null&&v!==-999999).map(Number).sort((a,b)=>a-b);
-      const median=vals[Math.floor(vals.length/2)]||0;
-      const direction=(room.q?.a||0)>median?"größer":"kleiner";
-      await dbPatch(code,{extraHint:`Die Antwort ist ${direction} als ${fmtNum(median)}`});
+      const answer=room.q?.a||0;
+      // Generate a random decoy: between 30% and 80% off the real answer
+      const factor=0.3+Math.random()*0.5; // 30-80% offset
+      const direction=Math.random()<0.5?1:-1;
+      const decoy=Math.round(answer*(1+direction*factor));
+      const hint=answer>decoy?"größer ↑":"kleiner ↓";
+      const hintColor=answer>decoy?"#39d98a":"#e8360a";
+      await dbPatch(code,{
+        extraHint:`Die Antwort ist ${hint} als ${fmtNum(decoy)}`,
+        extraHintColor:hintColor,
+      });
     }
     if(type==="sabotage") setShowSabotage(true);
     if(type==="skip"){
@@ -651,9 +657,10 @@ function JokerBar({room, myId, code, t}){
     {Object.keys(skipVotes).length>0&&<div style={{marginTop:10,padding:"8px 12px",background:t.surface,borderRadius:t.radius,fontSize:13,color:t.muted}}>
       ⏭️ Skip-Abstimmung: <strong style={{color:t.accent}}>{skipCount}/{skipNeeded}</strong> Stimmen nötig
     </div>}
-    {/* Extra hint */}
-    {room.extraHint&&<div style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",border:`1px solid ${t.gold}44`,borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:700}}>
-      📊 {room.extraHint}
+    {/* Extra hint – prominent display */}
+    {room.extraHint&&<div style={{marginTop:10,padding:"12px 14px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
+      <div style={{fontSize:11,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:4}}>📊 50/50 JOKER</div>
+      <div style={{fontSize:16,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
     </div>}
     {/* Sabotage target picker */}
     {showSabotage&&<div style={{marginTop:10}}>
@@ -992,6 +999,10 @@ function QuestionScreen({room,myId,t,onGuess,code}){
       <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
       <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
       {(hintVisible||room.usedJokerThisRound==="hint")&&<p style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>💡 {q.hint}</p>}
+      {room.extraHint&&<div style={{marginTop:8,padding:"10px 12px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
+        <div style={{fontSize:10,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:3}}>📊 50/50</div>
+        <div style={{fontSize:15,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
+      </div>}
     </Card>
     {showInput
       ?<Card t={t} style={{animation:"fu .3s .1s ease both"}}>
@@ -1312,7 +1323,7 @@ export default function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleGuess(val){
@@ -1402,7 +1413,7 @@ export default function App(){
       if(Object.keys(skipVoterJokerUpdates).length){
         await update(ref(db,`rooms/${code}/jokers`),skipVoterJokerUpdates);
       }
-      await dbPatch(code,{phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+      await dbPatch(code,{phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
     };
     doSkip();
   },[room?.skipVotes,room?.phase]);
@@ -1476,7 +1487,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
