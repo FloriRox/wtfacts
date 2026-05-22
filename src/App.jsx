@@ -420,7 +420,7 @@ function JokerBar({room, myId, code, t}){
   return <Card t={t} style={{marginTop:12,marginBottom:4}}>
     <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:8}}>🃏 DEINE JOKER {usedThisRound?<span style={{color:t.muted}}>(diese Runde verbraucht)</span>:""}</p>
     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-      {myJokers.map((jk,i)=>{
+      {myJokers.slice(0,5).map((jk,i)=>{
         const def=JOKER_DEFS[jk];
         if(!def) return null;
         return <button key={i} onClick={()=>!usedThisRound&&useJoker(jk)} disabled={!!usedThisRound||!!afk} title={def.desc}
@@ -1089,7 +1089,7 @@ export default function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleGuess(val){
@@ -1108,10 +1108,13 @@ export default function App(){
       advanceGuessPhaseRef.current=true;
       const advance=async()=>{
         const r=await dbGet(code);
+        if(r.phase!=="question")return; // already advanced
+        if(r.advancing)return; // another client already processing
+        await dbPatch(code,{advancing:true}); // lock
         const g=r.guesses||{};
         const afkP=r.afkPlayers||{};
         const active=(r.order||[]).filter(id=>!afkP[id]);
-        if(!active.every(id=>g[id]!=null))return;
+        if(!active.every(id=>g[id]!=null)){await dbPatch(code,{advancing:false});return;}
 
         // Check skip votes
         const skipVotes=r.skipVotes||{};
@@ -1131,9 +1134,9 @@ export default function App(){
           const result=calcRound(merged);
           const newJokers=await distributeJokers(r,result,active);
           const histEntry={guesses:g,answer:r.q?.a,bets:{},closestId:result.closestId,farthestId:result.farthestId};
-          await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers});
+          await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers,advancing:false});
         } else {
-          await dbPatch(code,{phase:"betting"});
+          await dbPatch(code,{phase:"betting",advancing:false});
         }
       };
       advance();
@@ -1157,14 +1160,17 @@ export default function App(){
       advanceBetPhaseRef.current=true;
       const advance=async()=>{
         const r=await dbGet(code);
+        if(r.phase!=="betting")return; // already advanced
+        if(r.advancing)return; // lock
+        await dbPatch(code,{advancing:true});
         const b=r.bets||{};
         const afkP=r.afkPlayers||{};
         const act=(r.order||[]).filter(id=>!afkP[id]);
-        if(!act.every(id=>b[id]&&b[id].closest))return;
+        if(!act.every(id=>b[id]&&b[id].closest)){await dbPatch(code,{advancing:false});return;}
         const result=calcRound(r);
         const newJokers=await distributeJokers(r,result,act);
         const histEntry={guesses:r.guesses,answer:r.q?.a,bets:b,closestId:result.closestId,farthestId:result.farthestId};
-        await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers});
+        await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers,advancing:false});
       };
       advance();
     }
@@ -1174,6 +1180,10 @@ export default function App(){
   async function distributeJokers(r, roundResult, activePlayers){
     const enabledJokers=r.enabledJokers||[];
     if(!enabledJokers.length) return {};
+    // Guard: only distribute once per round using qIdx as key
+    if(r.jokersDistributedForRound===r.qIdx) return {};
+    // Mark as distributed immediately to prevent double-run
+    await dbPatch(code,{jokersDistributedForRound:r.qIdx});
     const newJokersThisRound={};
     const jokerUpdates={};
     const streakUpdates={};
@@ -1184,9 +1194,9 @@ export default function App(){
       if(joker){
         newJokersThisRound[pid]=joker;
         const existing=(r.jokers||{})[pid]||[];
-        jokerUpdates[pid]=[...existing,joker];
+        // Cap jokers per player at 5 to prevent infinite accumulation
+        if(existing.length<5) jokerUpdates[pid]=[...existing,joker];
       }
-      // update farthest streak
       if(pid===farthestId){
         streakUpdates[pid]=((r.farthestStreak||{})[pid]||0)+1;
       } else {
@@ -1207,7 +1217,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
