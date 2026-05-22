@@ -95,7 +95,7 @@ export default [
   {q:"In welchem Jahr wurde CRISPR-Cas9 entdeckt?",a:2012,unit:"Jahr",hint:"Charpentier und Doudna – Nobelpreis 2020.",emoji:"🧬"},
   {q:"Wie viele Bit hat 1 Gigabyte?",a:8589934592,unit:"Bit",hint:"8 Milliarden Bit.",emoji:"💻"},
   {q:"In welchem Jahr erfand Fleming den Transistor (Diode)?",a:1904,unit:"Jahr",hint:"John Ambrose Fleming erfand die Diode.",emoji:"⚡"},
-  {q:"Wie viele Grad Celsius friert Meerwasser?",a:-1.8,unit:"°C",hint:"Salzwasser friert bei niedrigeren Temperaturen.",emoji:"🌊"},
+  {q:"Bei wie viele Grad Celsius friert Meerwasser?",a:-1.8,unit:"°C",hint:"Salzwasser friert bei niedrigeren Temperaturen.",emoji:"🌊"},
   {q:"In welchem Jahr entdeckte Jenner den Impfstoff gegen Pocken?",a:1796,unit:"Jahr",hint:"Der erste Impfstoff in der Geschichte.",emoji:"💉"},
   {q:"Wie viele Protonen hat Stickstoff?",a:7,unit:"Protonen",hint:"N – Ordnungszahl 7.",emoji:"⚗️"},
   {q:"In welchem Jahr erfand Shockley den Transistor?",a:1947,unit:"Jahr",hint:"Bell Labs – Grundlage aller modernen Elektronik.",emoji:"⚡"},
