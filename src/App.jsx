@@ -296,7 +296,7 @@ async function shareResult(room, t) {
     const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://playestimates.app&bgcolor=${isDark?'211c18':'fffaf2'}&color=${isDark?'e8360a':'e8360a'}`;
     const qrImg=new Image();
     qrImg.crossOrigin='anonymous';
-    qrImg.onload=()=>{
+    qrImg.onload=async()=>{
       ctx.save();
       ctx.beginPath();
       roundRect(ctx,qrX-4,qrY-4,qrSize+8,qrSize+8,6);
@@ -307,6 +307,7 @@ async function shareResult(room, t) {
       ctx.stroke();
       ctx.drawImage(qrImg,qrX,qrY,qrSize,qrSize);
       ctx.restore();
+      canvas.toBlob(async blob => {
         const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
         if(navigator.share && navigator.canShare?.({files:[file]})) {
           try {
@@ -322,7 +323,7 @@ async function shareResult(room, t) {
         resolve();
       }, 'image/png');
     };
-    qrImg.onerror=()=>{
+    qrImg.onerror=async()=>{
       // QR failed – share without it
       canvas.toBlob(async blob => {
         const file = new File([blob], 'estimatess-ergebnis.png', {type:'image/png'});
