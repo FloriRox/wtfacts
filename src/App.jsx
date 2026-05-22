@@ -866,7 +866,8 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
       </div>
       {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 DOPPELTE PUNKTE aktiv!</Pill></div>}
       {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{JOKER_DEFS[room.usedJokerThisRound]?.icon} {jokerUsedName} nutzte: {JOKER_DEFS[room.usedJokerThisRound]?.name}</div>}
-      <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:8,animation:"pop .5s ease both"}}>{fmtNum(q.a)} {q.unit}</div>
+      <p style={{marginTop:14,fontSize:t.id==="kids"?17:15,lineHeight:1.55,color:t.muted,maxWidth:380,margin:"14px auto 6px"}}>{q.q}</p>
+      <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
