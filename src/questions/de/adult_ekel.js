@@ -16,7 +16,7 @@ export default [
   {q:"Wie viele Sekunden dauert ein Nieser von Einatmung bis Explosion?",a:0.5,unit:"Sekunden",hint:"Schleudert Partikel mit 160km/h.",emoji:"🤧"},
   {q:"Wie viele km/h fliegen Schleimpartikel beim Niesen?",a:160,unit:"km/h",hint:"Bis zu 8 Meter weit.",emoji:"🤧"},
   {q:"Wie viele Gramm Schweiß produziert ein Mensch pro Stunde beim Sport?",a:1000,unit:"Gramm",hint:"1 Liter Schweiß pro Stunde.",emoji:"💦"},
-  {q:"Wie viele Millionen Mikrobenwird in der Öffentlichkeit täglich ausgeatmet?",a:37,unit:"Millionen",hint:"Nur durch normales Atmen.",emoji:"💨"},
+  {q:"Wie viele Millionen Mikroben werden in der Öffentlichkeit täglich ausgeatmet?",a:37,unit:"Millionen",hint:"Nur durch normales Atmen.",emoji:"💨"},
   {q:"Wie viele Liter Urin produziert ein Mensch pro Tag?",a:1.5,unit:"Liter",hint:"1-2 Liter bei normaler Hydration.",emoji:"💛"},
   {q:"Wie viele Mal im Jahr bekommt ein Europäer Durchfall?",a:2,unit:"Mal",hint:"Gastroenteritis ist sehr häufig.",emoji:"🚽"},
   {q:"Wie viele Tonnen Kot produziert ein Mensch in seinem Leben?",a:8,unit:"Tonnen",hint:"Bei 150g pro Tag über 70 Jahre.",emoji:"💩"},
