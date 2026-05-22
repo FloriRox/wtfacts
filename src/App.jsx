@@ -36,7 +36,7 @@ const KIDS = {
 
 /* ─── JOKER DEFINITIONS ───────────────────────────── */
 const JOKER_DEFS = {
-  skip:     { id:"skip",     icon:"⏭️", name:"Frage überspringen", desc:"Mehrheitsvotum – bei Ja wird eine neue Frage gezogen." },
+  skip:     { id:"skip",     icon:"⏭️", name:"Frage überspringen", desc:"Sofort! Eine neue Frage wird gezogen – kein Voting nötig." },
   hint:     { id:"hint",     icon:"🔍", name:"Hinweis aufdecken",  desc:"Zeigt den Hinweis sofort an." },
   double:   { id:"double",   icon:"🎯", name:"Doppelte Punkte",    desc:"Diese Runde zählen alle Punkte doppelt." },
   sabotage: { id:"sabotage", icon:"💣", name:"Sabotage",           desc:"Verschiebe einen Mitspieler um ±20% vom richtigen Wert." },
@@ -552,7 +552,7 @@ function JokerBar({room, myId, code, t}){
 
   // Short descriptions for table view
   const shortDesc={
-    skip:    "Frage wird übersprungen (Mehrheit)",
+    skip:    "Sofort neue Frage ziehen – kein Voting",
     hint:    "Hinweis wird sofort angezeigt",
     double:  "Alle Punkte dieser Runde ×2",
     sabotage:"Tipp eines Mitspielers ±20%",
@@ -585,12 +585,8 @@ function JokerBar({room, myId, code, t}){
     }
     if(type==="sabotage") setShowSabotage(true);
     if(type==="skip"){
-      // Don't consume joker yet – consume when skip actually triggers
-      // Just add the vote
-      await update(ref(db,`rooms/${code}/skipVotes`),{[myId]:true});
-      // Put joker back for now (will be consumed when skip fires)
-      await update(ref(db,`rooms/${code}/jokers`),{[myId]:myJokers});
-      await dbPatch(code,{usedJokerThisRound:null,jokerUsedBy:null});
+      // Skip fires immediately – no vote needed, one joker = instant skip
+      await dbPatch(code,{skipImmediate:true,skipBy:myId});
     }
     if(type==="change") await dbPatch(code,{changeAllowed:myId});
   }
@@ -1286,6 +1282,15 @@ export default function App(){
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
       if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
+      // Safety: if advancing got stuck, reset it after 5s
+      if(r.advancing && r.phase==="question"){
+        setTimeout(async()=>{
+          const fresh=await dbGet(r.code);
+          if(fresh?.advancing && fresh?.phase==="question"){
+            await dbPatch(r.code,{advancing:false});
+          }
+        },5000);
+      }
       if(r.phase==="betting"){advanceBetPhaseRef.current=false;}
     });
   }
@@ -1323,7 +1328,7 @@ export default function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleGuess(val){
@@ -1337,8 +1342,8 @@ export default function App(){
     const afk=room.afkPlayers||{};
     const activePlayers=order.filter(id=>!afk[id]);
     const guesses=room.guesses||{};
-    const allDone=activePlayers.length>0&&activePlayers.every(id=>guesses[id]!=null||afk[id]);
-    // -999999 counts as answered (timer expired)
+    // -999999 = timer expired (counts as answered), null = not yet answered
+    const allDone=activePlayers.length>0&&activePlayers.every(id=>guesses[id]!=null||!!afk[id]);
     if(allDone&&room.hostId===myId&&!advanceGuessPhaseRef.current){
       advanceGuessPhaseRef.current=true;
       const advance=async()=>{
@@ -1373,50 +1378,41 @@ export default function App(){
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
   }
 
-  // Skip vote check – fires immediately when skipVotes changes
+  // Skip joker: fires immediately when skipImmediate is set
   useEffect(()=>{
-    if(!room||room.phase!=="question")return;
-    const order=room.order||[];
-    const afk=room.afkPlayers||{};
-    const active=order.filter(id=>!afk[id]);
-    const skipVotes=room.skipVotes||{};
-    const skipCount=Object.values(skipVotes).filter(Boolean).length;
-    const skipNeeded=Math.ceil(active.length/2);
-    if(skipCount<skipNeeded||skipCount===0)return;
+    if(!room||room.phase!=="question"||!room.skipImmediate)return;
     if(room.hostId!==myId)return;
     if(room.advancing)return;
     const doSkip=async()=>{
       const r=await dbGet(code);
-      if(r.phase!=="question")return;
+      if(r.phase!=="question"||!r.skipImmediate)return;
       if(r.advancing)return;
       await dbPatch(code,{advancing:true});
-      const sv=r.skipVotes||{};
-      const act=(r.order||[]).filter(id=>!(r.afkPlayers||{})[id]);
-      const sc=Object.values(sv).filter(Boolean).length;
-      const sn=Math.ceil(act.length/2);
-      if(sc<sn){await dbPatch(code,{advancing:false});return;}
+      const skipBy=r.skipBy;
       const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
       const newQ=getQuestion(mode,cats,usedIdsRef.current);
       if(newQ)usedIdsRef.current.push(newQ.id);
-      // Consume skip jokers from all voters
-      const skipVoterJokerUpdates={};
-      Object.keys(sv).forEach(pid=>{
-        if(!sv[pid])return;
-        const pJokers=(r.jokers||{})[pid]||[];
+      // Consume the skip joker from the player who used it
+      if(skipBy){
+        const pJokers=(r.jokers||{})[skipBy]||[];
         const idx=pJokers.indexOf('skip');
         if(idx!==-1){
           const updated=[...pJokers];
           updated.splice(idx,1);
-          skipVoterJokerUpdates[pid]=updated;
+          await update(ref(db,`rooms/${code}/jokers`),{[skipBy]:updated});
         }
-      });
-      if(Object.keys(skipVoterJokerUpdates).length){
-        await update(ref(db,`rooms/${code}/jokers`),skipVoterJokerUpdates);
       }
-      await dbPatch(code,{phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+      await dbPatch(code,{
+        phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},
+        qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,
+        hintVisible:false,extraHint:null,extraHintColor:null,
+        skipVotes:{},skipImmediate:false,skipBy:null,
+        newJokersThisRound:{},changeAllowed:null,
+        advancing:false,jokersDistributedForRound:-1,
+      });
     };
     doSkip();
-  },[room?.skipVotes,room?.phase]);
+  },[room?.skipImmediate,room?.phase]);
 
   // Auto-advance: all bets in → results
   useEffect(()=>{
@@ -1487,7 +1483,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
