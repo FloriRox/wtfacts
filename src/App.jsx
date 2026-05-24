@@ -446,29 +446,37 @@ function giveRandomJoker(enabledJokers){
 }
 
 function checkJokerReward(playerId, roundResult, room, enabledJokers){
-  // Returns joker type or null
-  const {closestId, farthestId, roundScores} = roundResult;
+  const {closestId, farthestId} = roundResult;
   const streak = (room.farthestStreak||{})[playerId]||0;
-  // Exact hit → always a joker
   const guesses=room.guesses||{};
   const q=room.q;
-  if(guesses[playerId]!=null && Math.abs(guesses[playerId]-q.a)===0){
-    return giveRandomJoker(enabledJokers);
+  // Max 1 of each joker type – filter out types player already has
+  const existingJokers=(room.jokers||{})[playerId]||[];
+  const available=enabledJokers.filter(jk=>!existingJokers.includes(jk));
+  if(!available.length) return null; // player has all joker types already
+
+  function giveAvailable(){
+    return available[Math.floor(Math.random()*available.length)];
+  }
+
+  // Exact hit → always a joker
+  if(guesses[playerId]!=null&&guesses[playerId]!==-999999&&Math.abs(guesses[playerId]-q.a)===0){
+    return giveAvailable();
   }
   // Closest → 25% chance
   if(playerId===closestId && Math.random()<0.25){
-    return giveRandomJoker(enabledJokers);
+    return giveAvailable();
   }
   // Correct bet → 25% chance
   const bets=room.bets||{};
   const bet=bets[playerId]||{};
   const betCorrect=bet.closest===closestId||bet.farthest===farthestId;
   if(betCorrect && Math.random()<0.25){
-    return giveRandomJoker(enabledJokers);
+    return giveAvailable();
   }
   // 3x in a row farthest → trost joker
   if(playerId===farthestId && streak>=2){
-    return giveRandomJoker(enabledJokers);
+    return giveAvailable();
   }
   return null;
 }
@@ -585,8 +593,9 @@ function JokerBar({room, myId, code, t}){
     }
     if(type==="sabotage") setShowSabotage(true);
     if(type==="skip"){
-      // Skip fires immediately – no vote needed, one joker = instant skip
-      await dbPatch(code,{skipImmediate:true,skipBy:myId});
+      // Skip fires immediately – no vote needed
+      // If I'm the host, handle it directly without Firebase roundtrip
+      await dbPatch(code,{skipImmediate:true,skipBy:myId,usedJokerThisRound:null});
     }
     if(type==="change") await dbPatch(code,{changeAllowed:myId});
   }
@@ -1378,27 +1387,24 @@ export default function App(){
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
   }
 
-  // Skip joker: fires immediately when skipImmediate is set
+  // Skip joker: host handles skip immediately when skipImmediate is set
   useEffect(()=>{
     if(!room||room.phase!=="question"||!room.skipImmediate)return;
-    if(room.hostId!==myId)return;
-    if(room.advancing)return;
+    if(room.hostId!==myId)return; // host executes
     const doSkip=async()=>{
       const r=await dbGet(code);
-      if(r.phase!=="question"||!r.skipImmediate)return;
-      if(r.advancing)return;
-      await dbPatch(code,{advancing:true});
+      if(!r||r.phase!=="question"||!r.skipImmediate)return;
       const skipBy=r.skipBy;
-      const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
-      const newQ=getQuestion(mode,cats,usedIdsRef.current);
+      const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[r.mode||mode]);
+      const newQ=getQuestion(r.mode||mode,cats,usedIdsRef.current);
       if(newQ)usedIdsRef.current.push(newQ.id);
-      // Consume the skip joker from the player who used it
+      // Consume skip joker from the player who used it
       if(skipBy){
         const pJokers=(r.jokers||{})[skipBy]||[];
-        const idx=pJokers.indexOf('skip');
-        if(idx!==-1){
+        const skipIdx=pJokers.indexOf('skip');
+        if(skipIdx!==-1){
           const updated=[...pJokers];
-          updated.splice(idx,1);
+          updated.splice(skipIdx,1);
           await update(ref(db,`rooms/${code}/jokers`),{[skipBy]:updated});
         }
       }
@@ -1458,10 +1464,21 @@ export default function App(){
     for(const pid of activePlayers){
       const joker=checkJokerReward(pid,roundResult,r,enabledJokers);
       if(joker){
-        newJokersThisRound[pid]=joker;
         const existing=(r.jokers||{})[pid]||[];
-        // Cap jokers per player at 5 to prevent infinite accumulation
-        if(existing.length<5) jokerUpdates[pid]=[...existing,joker];
+        // Max 1 of each joker type – no duplicates
+        if(!existing.includes(joker)){
+          newJokersThisRound[pid]=joker;
+          jokerUpdates[pid]=[...existing,joker];
+        } else {
+          // Already has this type – try a different one
+          const others=(r.enabledJokers||[]).filter(j=>!existing.includes(j));
+          if(others.length>0){
+            const alt=others[Math.floor(Math.random()*others.length)];
+            newJokersThisRound[pid]=alt;
+            jokerUpdates[pid]=[...existing,alt];
+          }
+          // If player has all types already, no new joker
+        }
       }
       if(pid===farthestId){
         streakUpdates[pid]=((r.farthestStreak||{})[pid]||0)+1;
