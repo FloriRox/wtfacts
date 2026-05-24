@@ -47,6 +47,7 @@ const QUESTIONS = {
     "💊 Drogen & Rausch":       { questions: adultDrogen,       locked: false },
     "💩 Körper & Ekel":         { questions: adultEkel,         locked: false },
     "🐾 Tiere & Sex":           { questions: adultTiersex,      locked: false },
+    "🤯 WTF Facts":             { questions: adultWtf,          locked: false },
   },
   kids: {
     "🎯 Gratis-Test":        { questions: kidsTest,     locked: false },
