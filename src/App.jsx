@@ -422,22 +422,39 @@ function calcRound(room){
     .filter(id=>guesses[id]!=null&&guesses[id]!==-999999&&!(room.afkPlayers||{})[id])
     .map(id=>({id,diff:Math.abs(guesses[id]-q.a)}))
     .sort((a,b)=>a.diff-b.diff);
-  const closestId=ranked[0]?.id, farthestId=ranked[ranked.length-1]?.id, anyExact=ranked.some(r=>r.diff===0);
+
+  const anyExact=ranked.some(r=>r.diff===0);
+  const minDiff=ranked[0]?.diff??Infinity;
+  const maxDiff=ranked[ranked.length-1]?.diff??Infinity;
+
+  // All players tied for closest (same diff as minimum)
+  const closestIds=ranked.filter(r=>r.diff===minDiff).map(r=>r.id);
+  // All players tied for farthest (same diff as maximum)
+  const farthestIds=ranked.filter(r=>r.diff===maxDiff).map(r=>r.id);
+
+  // For Firebase/history: use first closest and first farthest
+  const closestId=closestIds[0]||null;
+  const farthestId=farthestIds[farthestIds.length-1]||null;
+
   const roundScores={};
   order.forEach(id=>{
     let pts=0;
     if(guesses[id]==null||guesses[id]===-999999||(room.afkPlayers||{})[id]){roundScores[id]=0;return;}
     const diff=Math.abs(guesses[id]-q.a);
+    // Exact hit → 2 pts (all who hit exactly)
     if(diff===0) pts+=2;
-    else if(!anyExact&&id===closestId) pts+=1;
+    // Closest (not exact) → 1 pt for ALL who share the minimum diff
+    else if(!anyExact&&closestIds.includes(id)) pts+=1;
+    // Betting points
     const bet=bets[id]||{};
-    if(bet.closest===closestId) pts+=1;
-    if(bet.farthest===farthestId) pts+=1;
+    // Bet counts if the player picked ANY of the tied closest/farthest
+    if(closestIds.includes(bet.closest)) pts+=1;
+    if(farthestIds.includes(bet.farthest)) pts+=1;
     roundScores[id]=doubleActive?pts*2:pts;
   });
   const newScores={...room.scores};
   order.forEach(id=>{newScores[id]=(newScores[id]||0)+(roundScores[id]||0);});
-  return{roundScores,newScores,closestId,farthestId};
+  return{roundScores,newScores,closestId,farthestId,closestIds,farthestIds};
 }
 
 function giveRandomJoker(enabledJokers){
@@ -463,8 +480,9 @@ function checkJokerReward(playerId, roundResult, room, enabledJokers){
   if(guesses[playerId]!=null&&guesses[playerId]!==-999999&&Math.abs(guesses[playerId]-q.a)===0){
     return giveAvailable();
   }
-  // Closest → 25% chance
-  if(playerId===closestId && Math.random()<0.25){
+  // Closest → 25% chance (alle Gleichstand-Gewinner)
+  const closestIds=roundResult.closestIds||[closestId];
+  if(closestIds.includes(playerId) && Math.random()<0.25){
     return giveAvailable();
   }
   // Correct bet → 25% chance
@@ -1087,6 +1105,8 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
   const afkPlayers=room.afkPlayers||{};
   const ranked=pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id]).map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)})).sort((a,b)=>a.diff-b.diff);
   const noAnswer=pl.filter(p=>guesses[p.id]===-999999&&!afkPlayers[p.id]);
+  const minDiffR=ranked[0]?.diff??Infinity;
+  const closestIdsR=ranked.filter(r=>r.diff===minDiffR).map(r=>r.id);
   const closestId=ranked[0]?.id,farthestId=ranked[ranked.length-1]?.id;
   const doubleActive=room.usedJokerThisRound==="double";
   const jokerUsedBy=room.jokerUsedBy;
@@ -1110,7 +1130,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
     </div>
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>TIPPS DIESER RUNDE</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=i===0&&!exact,pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
       {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>Zu langsam!</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
