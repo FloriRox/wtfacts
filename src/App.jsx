@@ -590,6 +590,20 @@ function JokerBar({room, myId, code, t}){
     if(usedThisRound||afk) return;
     const idx=myJokers.indexOf(type);
     if(idx===-1) return;
+
+    // SKIP: handle completely separately – don't touch usedJokerThisRound
+    if(type==="skip"){
+      // Remove joker from inventory immediately
+      const newJokers=[...myJokers];
+      newJokers.splice(idx,1);
+      await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
+      await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.skip`]:((room.jokerStats||{})[myId]?.skip||0)+1});
+      // Set skipImmediate – host useEffect will fire new question
+      await dbPatch(code,{skipImmediate:true,skipBy:myId});
+      return;
+    }
+
+    // All other jokers: mark as used this round
     const newJokers=[...myJokers];
     newJokers.splice(idx,1);
     await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
@@ -598,8 +612,7 @@ function JokerBar({room, myId, code, t}){
     if(type==="hint") await dbPatch(code,{hintVisible:true});
     if(type==="extra"){
       const answer=room.q?.a||0;
-      // Generate a random decoy: between 30% and 80% off the real answer
-      const factor=0.3+Math.random()*0.5; // 30-80% offset
+      const factor=0.3+Math.random()*0.5;
       const direction=Math.random()<0.5?1:-1;
       const decoy=Math.round(answer*(1+direction*factor));
       const hint=answer>decoy?"größer ↑":"kleiner ↓";
@@ -611,11 +624,6 @@ function JokerBar({room, myId, code, t}){
       });
     }
     if(type==="sabotage") setShowSabotage(true);
-    if(type==="skip"){
-      // Skip fires immediately – no vote needed
-      // If I'm the host, handle it directly without Firebase roundtrip
-      await dbPatch(code,{skipImmediate:true,skipBy:myId,usedJokerThisRound:null});
-    }
     if(type==="change") await dbPatch(code,{changeAllowed:myId});
   }
 
@@ -1454,27 +1462,19 @@ export default function App(){
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
   }
 
-  // Skip joker: host handles skip immediately when skipImmediate is set
+  // Skip joker: fires immediately when skipImmediate is set
+  // Host writes new question; non-hosts just wait for phase change
   useEffect(()=>{
     if(!room||room.phase!=="question"||!room.skipImmediate)return;
-    if(room.hostId!==myId)return; // host executes
+    // Only host executes the skip
+    if(room.hostId!==myId)return;
     const doSkip=async()=>{
+      // Re-fetch to avoid stale closure
       const r=await dbGet(code);
-      if(!r||r.phase!=="question"||!r.skipImmediate)return;
-      const skipBy=r.skipBy;
+      if(!r||!r.skipImmediate)return; // already handled
       const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[r.mode||mode]);
       const newQ=getQuestion(r.mode||mode,cats,usedIdsRef.current);
       if(newQ)usedIdsRef.current.push(newQ.id);
-      // Consume skip joker from the player who used it
-      if(skipBy){
-        const pJokers=(r.jokers||{})[skipBy]||[];
-        const skipIdx=pJokers.indexOf('skip');
-        if(skipIdx!==-1){
-          const updated=[...pJokers];
-          updated.splice(skipIdx,1);
-          await update(ref(db,`rooms/${code}/jokers`),{[skipBy]:updated});
-        }
-      }
       await dbPatch(code,{
         phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},
         qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,
@@ -1485,7 +1485,7 @@ export default function App(){
       });
     };
     doSkip();
-  },[room?.skipImmediate,room?.phase]);
+  },[room?.skipImmediate]);
 
   // Auto-advance: all bets in → results
   useEffect(()=>{
