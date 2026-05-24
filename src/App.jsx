@@ -802,11 +802,12 @@ function HomeScreen({onHost,onJoin}){
 }
 
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
-function JokerSetupScreen({mode, onDone, t}){
+function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit}){
   const[withJokers,setWithJokers]=useState(false);
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
+  const[debugModeLocal,setDebugModeLocal]=useState(!!debugModeInit);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
@@ -872,7 +873,19 @@ function JokerSetupScreen({mode, onDone, t}){
         </div>
       </Card>
     </>}
-    <div style={{marginTop:20}}>
+    {/* Debug Mode Toggle */}
+    <div style={{marginTop:16,padding:"12px 14px",borderRadius:t.radius,background:t.surface,border:`1.5px dashed ${t.border}`}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:700,color:t.muted}}>🛠️ Debug-Modus</div>
+          <div style={{fontSize:11,color:t.muted,marginTop:2}}>Joker manuell aufladen während des Spiels</div>
+        </div>
+        <button onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} style={{padding:"7px 16px",borderRadius:t.radius,background:debugModeLocal?t.accent:t.surface,border:`2px solid ${debugModeLocal?t.accent:t.border}`,color:debugModeLocal?"#fff":t.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody,transition:"all .2s"}}>
+          {debugModeLocal?"AN":"AUS"}
+        </button>
+      </div>
+    </div>
+    <div style={{marginTop:14}}>
       <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs)}>
         Weiter →
       </Btn>
@@ -890,11 +903,17 @@ function CategoryScreen({mode,onStart,t}){
     if(locked) return;
     setSelected(prev=>prev.includes(c)?prev.filter(x=>x!==c):[...prev,c]);
   }
+  const allSelected=allCats.every(c=>selected.includes(c));
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>KATEGORIEN WÄHLEN</Pill></div>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:6}}>Was wollt ihr spielen?</h2>
-    <p style={{color:t.muted,fontSize:14,marginBottom:18}}>Wähle mindestens eine Kategorie</p>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <p style={{color:t.muted,fontSize:14}}>Wähle mindestens eine Kategorie</p>
+      <button onClick={()=>setSelected(allSelected?[]:allCats)} style={{padding:"6px 14px",borderRadius:t.radius,background:allSelected?t.accent+"18":t.surface,border:`1.5px solid ${allSelected?t.accent:t.border}`,color:allSelected?t.accent:t.muted,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody,whiteSpace:"nowrap"}}>
+        {allSelected?"✗ Alle aus":"✓ Alle an"}
+      </button>
+    </div>
     <div style={{...col,marginBottom:18}}>
       {catMeta.map(({name,count,locked})=>{
         const isFree=name===freeKey;
@@ -952,7 +971,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
 }
 
 /* ─── QUESTION ────────────────────────────────────── */
-function QuestionScreen({room,myId,t,onGuess,code}){
+function QuestionScreen({room,myId,t,onGuess,code,debugMode}){
   const[val,setVal]=useState("");
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
@@ -1066,6 +1085,26 @@ function QuestionScreen({room,myId,t,onGuess,code}){
 
     {/* AFK button */}
     <AfkButton myId={myId} code={code} room={room} t={t}/>
+
+    {/* Debug Panel */}
+    {debugMode&&<div style={{marginTop:14,padding:"14px",borderRadius:t.radius,background:t.surface,border:`2px dashed ${t.accent}`,animation:"fu .3s ease both"}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:10}}>🛠️ DEBUG – JOKER AUFLADEN</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+        {Object.values(JOKER_DEFS).map(jk=>(
+          <button key={jk.id} onClick={async()=>{
+            const cur=(room.jokers||{})[myId]||[];
+            await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
+          }} style={{padding:"7px 12px",borderRadius:t.radius,background:t.card,border:`1.5px solid ${t.border}`,color:t.text,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+            {jk.icon} +{jk.name}
+          </button>
+        ))}
+        <button onClick={async()=>{
+          await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
+        }} style={{padding:"7px 12px",borderRadius:t.radius,background:t.danger+"22",border:`1.5px solid ${t.danger}`,color:t.danger,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+          🗑️ Alle löschen
+        </button>
+      </div>
+    </div>}
   </div>;
 }
 
@@ -1300,6 +1339,7 @@ export default function App(){
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
+  const[debugMode,setDebugMode]=useState(false);
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const enabledJokersRef=useRef([]);
@@ -1542,11 +1582,11 @@ export default function App(){
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup}/>}
-    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t}/>}
+    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart}/>}
