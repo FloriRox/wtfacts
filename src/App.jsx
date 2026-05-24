@@ -563,7 +563,7 @@ function QRCode({url,t}){
 }
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
-function JokerBar({room, myId, code, t}){
+function JokerBar({room, myId, code, t, onSkip}){
   const myJokers=(room.jokers||{})[myId]||[];
   const enabledJokers=room.enabledJokers||[];
   const afk=(room.afkPlayers||{})[myId];
@@ -591,15 +591,14 @@ function JokerBar({room, myId, code, t}){
     const idx=myJokers.indexOf(type);
     if(idx===-1) return;
 
-    // SKIP: handle completely separately – don't touch usedJokerThisRound
+    // SKIP: execute directly – any player can trigger
     if(type==="skip"){
-      // Remove joker from inventory immediately
       const newJokers=[...myJokers];
       newJokers.splice(idx,1);
       await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
       await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.skip`]:((room.jokerStats||{})[myId]?.skip||0)+1});
-      // Set skipImmediate – host useEffect will fire new question
-      await dbPatch(code,{skipImmediate:true,skipBy:myId});
+      // Execute skip directly
+      if(onSkip) await onSkip();
       return;
     }
 
@@ -979,7 +978,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
 }
 
 /* ─── QUESTION ────────────────────────────────────── */
-function QuestionScreen({room,myId,t,onGuess,code,debugMode}){
+function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
   const[val,setVal]=useState("");
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
@@ -1089,28 +1088,56 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode}){
     </div>
 
     {/* Joker bar */}
-    {room.enabledJokers?.length>0&&<JokerBar room={room} myId={myId} code={code} t={t}/>}
+    {room.enabledJokers?.length>0&&<JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip}/>}
 
     {/* AFK button */}
     <AfkButton myId={myId} code={code} room={room} t={t}/>
 
     {/* Debug Panel */}
     {debugMode&&<div style={{marginTop:14,padding:"14px",borderRadius:t.radius,background:t.surface,border:`2px dashed ${t.accent}`,animation:"fu .3s ease both"}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:10}}>🛠️ DEBUG – JOKER AUFLADEN</p>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:10}}>🛠️ DEBUG</p>
+
+      {/* Joker aufladen */}
+      <p style={{fontSize:10,color:t.muted,fontWeight:700,letterSpacing:.6,marginBottom:6}}>JOKER AUFLADEN (für mich)</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:12}}>
         {Object.values(JOKER_DEFS).map(jk=>(
           <button key={jk.id} onClick={async()=>{
             const cur=(room.jokers||{})[myId]||[];
             await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
-          }} style={{padding:"7px 12px",borderRadius:t.radius,background:t.card,border:`1.5px solid ${t.border}`,color:t.text,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+          }} style={{padding:"6px 10px",borderRadius:t.radius,background:t.card,border:`1.5px solid ${t.border}`,color:t.text,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
             {jk.icon} +{jk.name}
           </button>
         ))}
         <button onClick={async()=>{
           await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
-        }} style={{padding:"7px 12px",borderRadius:t.radius,background:t.danger+"22",border:`1.5px solid ${t.danger}`,color:t.danger,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
-          🗑️ Alle löschen
+        }} style={{padding:"6px 10px",borderRadius:t.radius,background:t.danger+"22",border:`1.5px solid ${t.danger}`,color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+          🗑️ löschen
         </button>
+      </div>
+
+      {/* Punkte verteilen */}
+      <p style={{fontSize:10,color:t.muted,fontWeight:700,letterSpacing:.6,marginBottom:6}}>PUNKTE VERTEILEN</p>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {(room.order||[]).map(pid=>{
+          const p=room.players?.[pid];
+          if(!p) return null;
+          const pts=room.scores?.[pid]||0;
+          return <div key={pid} style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:12,fontWeight:700,flex:1,color:t.text}}>{p.name}</span>
+            <span style={{fontSize:13,fontFamily:"monospace",color:t.gold,minWidth:28,textAlign:"right"}}>{pts}P</span>
+            <button onClick={async()=>{
+              const cur=(room.scores||{});
+              await update(ref(db,`rooms/${code}/scores`),{[pid]:(cur[pid]||0)-1});
+            }} style={{width:26,height:26,borderRadius:6,background:t.danger+"22",border:`1px solid ${t.danger}`,color:t.danger,fontSize:14,fontWeight:700,cursor:"pointer",lineHeight:1}}>−</button>
+            <button onClick={async()=>{
+              const cur=(room.scores||{});
+              await update(ref(db,`rooms/${code}/scores`),{[pid]:(cur[pid]||0)+1});
+            }} style={{width:26,height:26,borderRadius:6,background:t.green+"22",border:`1px solid ${t.green}`,color:t.green,fontSize:14,fontWeight:700,cursor:"pointer",lineHeight:1}}>+</button>
+            <button onClick={async()=>{
+              await update(ref(db,`rooms/${code}/scores`),{[pid]:0});
+            }} style={{padding:"3px 7px",borderRadius:6,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:10,fontWeight:700,cursor:"pointer"}}>0</button>
+          </div>;
+        })}
       </div>
     </div>}
   </div>;
@@ -1462,30 +1489,7 @@ export default function App(){
     await update(ref(db,`rooms/${code}/bets`),{[myId]:{closest,farthest}});
   }
 
-  // Skip joker: fires immediately when skipImmediate is set
-  // Host writes new question; non-hosts just wait for phase change
-  useEffect(()=>{
-    if(!room||room.phase!=="question"||!room.skipImmediate)return;
-    // Only host executes the skip
-    if(room.hostId!==myId)return;
-    const doSkip=async()=>{
-      // Re-fetch to avoid stale closure
-      const r=await dbGet(code);
-      if(!r||!r.skipImmediate)return; // already handled
-      const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[r.mode||mode]);
-      const newQ=getQuestion(r.mode||mode,cats,usedIdsRef.current);
-      if(newQ)usedIdsRef.current.push(newQ.id);
-      await dbPatch(code,{
-        phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},
-        qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,
-        hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,
-        skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},
-        newJokersThisRound:{},changeAllowed:null,
-        advancing:false,jokersDistributedForRound:-1,
-      });
-    };
-    doSkip();
-  },[room?.skipImmediate]);
+  // (Skip is now handled directly in JokerBar via onSkip prop)
 
   // Auto-advance: all bets in → results
   useEffect(()=>{
@@ -1567,7 +1571,15 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+  }
+
+  async function handleSkip(){
+    const r=await dbGet(code);
+    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
+    const q=getQuestion(mode,cats,usedIdsRef.current);
+    if(q)usedIdsRef.current.push(q.id);
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
@@ -1586,7 +1598,7 @@ export default function App(){
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart}/>}
