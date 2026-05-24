@@ -39,7 +39,7 @@ const JOKER_DEFS = {
   skip:     { id:"skip",     icon:"⏭️", name:"Frage überspringen", desc:"Sofort! Eine neue Frage wird gezogen – kein Voting nötig." },
   hint:     { id:"hint",     icon:"🔍", name:"Hinweis aufdecken",  desc:"Zeigt den Hinweis sofort an." },
   double:   { id:"double",   icon:"🎯", name:"Doppelte Punkte",    desc:"Diese Runde zählen alle Punkte doppelt." },
-  sabotage: { id:"sabotage", icon:"💣", name:"Sabotage",           desc:"Verschiebe einen Mitspieler um ±20% vom richtigen Wert." },
+  sabotage: { id:"sabotage", icon:"💣", name:"Sabotage",           desc:"Verschiebe den Tipp eines Mitspielers heimlich um 30–80%. Der Gegner merkt nichts – bis zur Auflösung!" },
   change:   { id:"change",   icon:"🔄", name:"Tipp ändern",        desc:"Darf nach Abgabe einmal den Tipp korrigieren." },
   extra:    { id:"extra",    icon:"📊", name:"50/50",              desc:"Zeigt ob die richtige Antwort größer oder kleiner als eine zufällige Zahl in der Nähe ist." },
 };
@@ -581,7 +581,7 @@ function JokerBar({room, myId, code, t}){
     skip:    "Sofort neue Frage ziehen – kein Voting",
     hint:    "Hinweis wird sofort angezeigt",
     double:  "Alle Punkte dieser Runde ×2",
-    sabotage:"Tipp eines Mitspielers ±20%",
+    sabotage:"Tipp eines Mitspielers heimlich um 30–80% verschieben",
     change:  "Deinen Tipp einmal korrigieren",
     extra:   "Zeigt: Antwort größer oder kleiner als [Zahl]?",
   };
@@ -607,6 +607,7 @@ function JokerBar({room, myId, code, t}){
       await dbPatch(code,{
         extraHint:`Die Antwort ist ${hint} als ${fmtNum(decoy)}`,
         extraHintColor:hintColor,
+        extraHintFor:myId,
       });
     }
     if(type==="sabotage") setShowSabotage(true);
@@ -623,10 +624,16 @@ function JokerBar({room, myId, code, t}){
     const guesses=room.guesses||{};
     const targetGuess=guesses[sabotageTarget];
     if(targetGuess==null||targetGuess===-999999){setShowSabotage(false);return;}
-    const shift=Math.random()<0.5?1.2:0.8;
-    await update(ref(db,`rooms/${code}/guesses`),{[sabotageTarget]:Math.round(targetGuess*shift)});
+    // Shift by 30-80% in a random direction
+    const factor=0.3+Math.random()*0.5; // 30-80%
+    const direction=Math.random()<0.5?1:-1;
+    const shifted=Math.round(targetGuess*(1+direction*factor));
+    // Store original guess separately so reveal can show "sabotaged"
+    await update(ref(db,`rooms/${code}/guesses`),{[sabotageTarget]:shifted});
+    await update(ref(db,`rooms/${code}/sabotaged`),{[sabotageTarget]:true});
     await update(ref(db,`rooms/${code}`),{[`sabotageStats.${myId}`]:((room.sabotageStats||{})[myId]||0)+1});
     setShowSabotage(false);
+    setSabotageTarget("");
   }
 
   if(!enabledJokers.length) return null;
@@ -680,9 +687,9 @@ function JokerBar({room, myId, code, t}){
     {Object.keys(skipVotes).length>0&&<div style={{marginTop:10,padding:"8px 12px",background:t.surface,borderRadius:t.radius,fontSize:13,color:t.muted}}>
       ⏭️ Skip-Abstimmung: <strong style={{color:t.accent}}>{skipCount}/{skipNeeded}</strong> Stimmen nötig
     </div>}
-    {/* Extra hint – prominent display */}
-    {room.extraHint&&<div style={{marginTop:10,padding:"12px 14px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
-      <div style={{fontSize:11,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:4}}>📊 50/50 JOKER</div>
+    {/* Extra hint – only for the player who used it */}
+    {room.extraHint&&room.extraHintFor===myId&&<div style={{marginTop:10,padding:"12px 14px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
+      <div style={{fontSize:11,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:4}}>📊 50/50 – nur für dich sichtbar!</div>
       <div style={{fontSize:16,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
     </div>}
     {/* Sabotage target picker */}
@@ -1022,8 +1029,8 @@ function QuestionScreen({room,myId,t,onGuess,code}){
       <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
       <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
       {(hintVisible||room.usedJokerThisRound==="hint")&&<p style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>💡 {q.hint}</p>}
-      {room.extraHint&&<div style={{marginTop:8,padding:"10px 12px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
-        <div style={{fontSize:10,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:3}}>📊 50/50</div>
+      {room.extraHint&&room.extraHintFor===myId&&<div style={{marginTop:8,padding:"10px 12px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
+        <div style={{fontSize:10,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:3}}>📊 50/50 – nur für dich!</div>
         <div style={{fontSize:15,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
       </div>}
     </Card>
@@ -1130,7 +1137,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
     </div>
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>TIPPS DIESER RUNDE</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=!!(room.sabotaged||{})[p.id];return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>💣 sabotiert!</span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
       {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>Zu langsam!</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
@@ -1357,7 +1364,7 @@ export default function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleGuess(val){
@@ -1431,8 +1438,8 @@ export default function App(){
       await dbPatch(code,{
         phase:"question",q:newQ,guesses:{},bets:{},roundScores:{},
         qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,
-        hintVisible:false,extraHint:null,extraHintColor:null,
-        skipVotes:{},skipImmediate:false,skipBy:null,
+        hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,
+        skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},
         newJokersThisRound:{},changeAllowed:null,
         advancing:false,jokersDistributedForRound:-1,
       });
@@ -1520,7 +1527,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
