@@ -5,7 +5,7 @@ export default [
   {q:"In welchem Jahr wurde das erste Lego-Stein erfunden?",a:1958,unit:"Jahr",hint:"Der dänische Tischler Ole Kirk Kristiansen.",emoji:"🧱"},
   {q:"Wie viele Farben hat ein Regenbogen?",a:7,unit:"Farben",hint:"Rot, Orange, Gelb, Grün, Blau, Indigo, Violett.",emoji:"🌈"},
   {q:"In welchem Jahr erfanden die Gebrüder Wright das Flugzeug?",a:1903,unit:"Jahr",hint:"12 Sekunden Flug – und die Welt veränderte sich.",emoji:"✈️"},
-  {q:"Wie viele Meter groß ist die Mona Lisa?",a:0.77,unit:"Meter Höhe",hint:"Nur 77cm hoch – überraschend klein.",emoji:"🖼️"},
+  {q:"Wie viele Meter groß ist die Mona Lisa?",a:77,unit:"cm Höhe",hint:"Nur 77cm hoch – überraschend klein.",emoji:"🖼️"},
   {q:"In welchem Jahr wurde das erste Buch gedruckt?",a:1440,unit:"Jahr",hint:"Johannes Gutenberg erfand den Buchdruck.",emoji:"📚"},
   {q:"Wie viele Farben nutzt ein Maler wenn er alle Farben mischen will?",a:3,unit:"Grundfarben",hint:"Rot, Gelb, Blau – die drei Grundfarben.",emoji:"🎨"},
   {q:"In welchem Jahr erfand Thomas Edison die Glühbirne?",a:1879,unit:"Jahr",hint:"Nach 1000 Versuchen!",emoji:"💡"},
