@@ -4,7 +4,7 @@ export default [
   {q:"Wie tief ist der Marianengraben in Metern?",a:11034,unit:"Meter",hint:"Der tiefste Punkt der Weltmeere.",emoji:"🌊"},
   {q:"Wie viele Prozent der Erde sind von Wasser bedeckt?",a:71,unit:"%",hint:"Deswegen heißt die Erde auch 'der blaue Planet'.",emoji:"🌍"},
   {q:"Wie groß wird ein ausgewachsener Blauwal in Metern?",a:30,unit:"Meter",hint:"Das größte Tier auf der Erde.",emoji:"🐋"},
-  {q:"Wie viele Arme hat ein Tintenfisch?",a:8,unit:"Arme",hint:"8 Arme plus 2 Fangarme beim Oktopus.",emoji:"🐙"},
+  {q:"Wie viele Arme hat ein Tintenfisch?",a:8,unit:"Arme",hint:"Arme plus 2 Fangarme beim Oktopus.",emoji:"🐙"},
   {q:"Wie viele Herzen hat ein Tintenfisch?",a:3,unit:"Herzen",hint:"Zwei Kiemenherzen und ein Körperherz.",emoji:"🐙"},
   {q:"Wie tief kann ein Pottwal tauchen in Metern?",a:3000,unit:"Meter",hint:"Der tieftauchende Säuger der Welt.",emoji:"🐳"},
   {q:"Wie viele Arten von Haien gibt es?",a:500,unit:"Arten",hint:"Von winzig bis riesig.",emoji:"🦈"},
@@ -29,5 +29,5 @@ export default [
   {q:"Wie viele Grad Celsius ist die Oberfläche des Meeres an einem heißen Tag?",a:30,unit:"°C",hint:"In tropischen Meeren.",emoji:"🌡️"},
   {q:"Wie viele Eier legt eine Meeresschildkröte pro Nest?",a:100,unit:"Eier",hint:"Nur wenige Babys überleben bis zum Meer.",emoji:"🥚"},
   {q:"Wie viele Kilometer tief ist der Atlantik?",a:3.3,unit:"km",hint:"3300 Meter Durchschnief.",emoji:"🌊"},
-  {q:"Wie viele Millionen Tierarten leben im Ozean?",a:0.7,unit:"Millionen",hint:"700.000 bekannte Arten – viele noch unentdeckt.",emoji:"🐠"},
+  {q:"Wie viele Millionen Tierarten leben im Ozean?",a:700,unit:"Tausend",hint:"000 bekannte Arten – viele noch unentdeckt.",emoji:"🐠"},
 ];
