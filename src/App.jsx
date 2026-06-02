@@ -564,6 +564,7 @@ function QRCode({url,t}){
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
 function JokerBar({room, myId, code, t, onSkip}){
+  const [open,setOpen]=useState(true);
   const myJokers   = (room.jokers||{})[myId]||[];
   const enabled    = room.enabledJokers||[];
   const afk        = !!(room.afkPlayers||{})[myId];
@@ -663,12 +664,21 @@ function JokerBar({room, myId, code, t, onSkip}){
   if(!enabled.length) return null;
 
   return <Card t={t} style={{marginTop:12,padding:"14px 16px"}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
-      🃏 JOKER
-      {usedRound && <span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
-    </p>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+      marginBottom:open?10:0,cursor:"pointer"}}
+      onClick={()=>setOpen(o=>!o)}>
+      <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,margin:0}}>
+        🃏 JOKER
+        {usedRound && <span style={{color:t.muted,fontWeight:400}}> · verbraucht</span>}
+        {" "}<span style={{color:t.muted,fontWeight:400}}>
+          ({myJokers.length} verfügbar)
+        </span>
+      </p>
+      <span style={{color:t.muted,fontSize:12}}>{open?"▲":"▼"}</span>
+    </div>
+    {!open&&null}
 
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    {open&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
       {enabled.map(jk=>{
         const def      = JOKER_DEFS[jk]; if(!def) return null;
         const count    = counts[jk]||0;
@@ -746,25 +756,7 @@ function JokerBar({room, myId, code, t, onSkip}){
 }
 
 
-/* ─── AFK / PAUSE BUTTON ─────────────────────────── */
-function AfkButton({myId, code, room, t}){
-  const isAfk=!!(room.afkPlayers||{})[myId];
-  async function toggle(){
-    await update(ref(db,`rooms/${code}/afkPlayers`),{[myId]:isAfk?null:true});
-  }
-  return <button onClick={toggle} style={{
-    position:"fixed",bottom:20,right:16,
-    padding:"10px 16px",borderRadius:100,
-    background:isAfk?t.gold:t.surface,
-    border:`2px solid ${isAfk?t.gold:t.border}`,
-    color:isAfk?t.bg:t.muted,
-    fontSize:13,fontWeight:700,
-    boxShadow:"0 2px 12px rgba(0,0,0,.3)",
-    zIndex:100,cursor:"pointer"
-  }}>
-    {isAfk?"▶️ Ich bin wieder da!":"⏸️ Kurz weg"}
-  </button>;
-}
+/* AfkButton inline in screens */
 
 /* ─── HOME ────────────────────────────────────────── */
 function HomeScreen({onHost,onJoin}){
@@ -1051,122 +1043,192 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
 
-  return <div style={page}>
-    <div style={{...row,justifyContent:"space-between",marginBottom:12,animation:"fu .3s ease both"}}>
+  const isAfkMe = !!(afkPlayers[myId]);
+
+  return <div style={{
+    minHeight:"100vh", display:"flex", flexDirection:"column",
+    maxWidth:520, margin:"0 auto", padding:"0 0 80px 0",
+    background:t.bg,
+  }}>
+
+    {/* ── TOP BAR ── */}
+    <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Frage ${(room.qIdx||0)+1}`:`FRAGE ${(room.qIdx||0)+1}`}</Pill>
-      <div style={{...row,gap:8}}>
-        {room.enabledJokers?.length>0&&<span style={{fontSize:13,color:t.gold}}>🃏</span>}
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
         {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>2× PUNKTE</Pill>}
-        <span style={{fontSize:13,color:t.muted,fontFamily:t.fontMono}}>{doneCount}/{activePl.length} ✓</span>
-      </div>
-    </div>
-    {/* Speed mode timer bar */}
-    {speedMode&&myGuess==null&&timeLeft!=null&&<div style={{marginBottom:14,animation:"fu .3s ease both"}}>
-      <div style={{...row,justifyContent:"space-between",marginBottom:5}}>
-        <span style={{fontSize:13,fontWeight:700,color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}>
-          ⏱️ {timeLeft}s
-        </span>
-        <span style={{fontSize:12,color:t.muted}}>Beeil dich!</span>
-      </div>
-      <div style={{height:6,background:t.border,borderRadius:3,overflow:"hidden"}}>
-        <div style={{
-          height:"100%",
-          width:`${(timeLeft/timerSecs)*100}%`,
-          background:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green,
-          borderRadius:3,
-          transition:"width 1s linear, background .3s"
-        }}/>
-      </div>
-    </div>}
-    <Card t={t} glow style={{marginBottom:14,animation:"fu .3s .05s ease both"}}>
-      <div style={{fontSize:26,marginBottom:8}}>{q.emoji||"❓"}</div>
-      <Pill t={t} color={t.muted}>{q.cat}</Pill>
-      <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
-      <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
-      {room.hintVisible&&<p style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>💡 {q.hint}</p>}
-    </Card>
-    {showInput
-      ?<Card t={t} style={{animation:"fu .3s .1s ease both"}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.6,marginBottom:10}}>{changeAllowed?"🔄 TIPP ÄNDERN":"DEIN TIPP"} ({q.unit})</p>
-        <div style={row}>
-          <Inp type="number" value={val} onChange={setVal} placeholder="z.B. 42" t={t} autoFocus style={{fontSize:22,fontWeight:700,fontFamily:t.fontMono}}/>
-          <Btn t={t} onClick={submit} disabled={!val} style={{flexShrink:0}}>OK ✓</Btn>
-        </div>
-        <p style={{marginTop:11,color:t.muted,fontSize:13,lineHeight:1.5}}>💬 Diskutiert – zeigt euren Tipp aber nicht!</p>
-      </Card>
-      :<Card t={t} style={{textAlign:"center",animation:"fu .3s .1s ease both"}}>
-        <div style={{fontSize:42,fontFamily:t.fontMono,color:t.accent,fontWeight:800,marginBottom:6}}>{fmtNum(myGuess)} {q.unit}</div>
-        <p style={{color:t.green,fontWeight:700,marginBottom:14}}>✓ Tipp abgegeben!</p>
-        <div style={{fontSize:12,color:t.muted,display:"flex",justifyContent:"space-between",marginBottom:5}}><span>Warte auf alle...</span><span>{doneCount}/{activePl.length}</span></div>
-        <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${activePl.length?doneCount/activePl.length*100:0}%`,background:`linear-gradient(90deg,${t.accent},${t.gold})`,borderRadius:3,transition:"width .4s ease"}}/></div>
-      </Card>}
-
-    {/* Player status chips – right below timer/progress */}
-    <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:8,marginBottom:4}}>
-      {pl.map(p=>{
-        const done=guesses[p.id]!=null;
-        const isAfk=afkPlayers[p.id];
-        return <div key={p.id} style={{padding:"5px 12px",borderRadius:100,fontSize:13,fontWeight:700,border:`1px solid ${isAfk?t.gold:done?t.green:t.border}`,color:isAfk?t.gold:done?t.green:t.muted,background:isAfk?t.gold+"18":done?t.green+"18":t.surface,transition:"all .25s"}}>
-          {p.name} {isAfk?"⏸️":done?"✓":"…"}
-        </div>;
-      })}
-    </div>
-
-    {/* Joker bar */}
-    {room.enabledJokers?.length>0&&<JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip}/>}
-
-    {/* AFK button */}
-    <AfkButton myId={myId} code={code} room={room} t={t}/>
-
-    {/* Debug Panel */}
-    {debugMode&&<div style={{marginTop:14,padding:"14px",borderRadius:t.radius,background:t.surface,border:`2px dashed ${t.accent}`,animation:"fu .3s ease both"}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:10}}>🛠️ DEBUG</p>
-
-      {/* Joker aufladen */}
-      <p style={{fontSize:10,color:t.muted,fontWeight:700,letterSpacing:.6,marginBottom:6}}>JOKER AUFLADEN (für mich)</p>
-      <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:12}}>
-        {Object.values(JOKER_DEFS).map(jk=>(
-          <button key={jk.id} onClick={async()=>{
-            const cur=(room.jokers||{})[myId]||[];
-            await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
-          }} style={{padding:"6px 10px",borderRadius:t.radius,background:t.card,border:`1.5px solid ${t.border}`,color:t.text,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
-            {jk.icon} +{jk.name}
-          </button>
-        ))}
-        <button onClick={async()=>{
-          await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
-        }} style={{padding:"6px 10px",borderRadius:t.radius,background:t.danger+"22",border:`1.5px solid ${t.danger}`,color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
-          🗑️ löschen
-        </button>
-      </div>
-
-      {/* Punkte verteilen */}
-      <p style={{fontSize:10,color:t.muted,fontWeight:700,letterSpacing:.6,marginBottom:6}}>PUNKTE VERTEILEN</p>
-      <div style={{display:"flex",flexDirection:"column",gap:6}}>
-        {(room.order||[]).map(pid=>{
-          const p=room.players?.[pid];
-          if(!p) return null;
-          const pts=room.scores?.[pid]||0;
-          return <div key={pid} style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:12,fontWeight:700,flex:1,color:t.text}}>{p.name}</span>
-            <span style={{fontSize:13,fontFamily:"monospace",color:t.gold,minWidth:28,textAlign:"right"}}>{pts}P</span>
-            <button onClick={async()=>{
-              const cur=(room.scores||{});
-              await update(ref(db,`rooms/${code}/scores`),{[pid]:(cur[pid]||0)-1});
-            }} style={{width:26,height:26,borderRadius:6,background:t.danger+"22",border:`1px solid ${t.danger}`,color:t.danger,fontSize:14,fontWeight:700,cursor:"pointer",lineHeight:1}}>−</button>
-            <button onClick={async()=>{
-              const cur=(room.scores||{});
-              await update(ref(db,`rooms/${code}/scores`),{[pid]:(cur[pid]||0)+1});
-            }} style={{width:26,height:26,borderRadius:6,background:t.green+"22",border:`1px solid ${t.green}`,color:t.green,fontSize:14,fontWeight:700,cursor:"pointer",lineHeight:1}}>+</button>
-            <button onClick={async()=>{
-              await update(ref(db,`rooms/${code}/scores`),{[pid]:0});
-            }} style={{padding:"3px 7px",borderRadius:6,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:10,fontWeight:700,cursor:"pointer"}}>0</button>
-          </div>;
+        {/* Player chips inline */}
+        {pl.map(p=>{
+          const done=guesses[p.id]!=null;
+          const isAfk=afkPlayers[p.id];
+          return <div key={p.id} style={{
+            padding:"3px 9px",borderRadius:100,fontSize:11,fontWeight:700,
+            border:`1px solid ${isAfk?t.gold:done?t.green:t.border}`,
+            color:isAfk?t.gold:done?t.green:t.muted,
+            background:isAfk?t.gold+"18":done?t.green+"18":t.surface,
+          }}>{p.name[0]} {isAfk?"⏸":done?"✓":"…"}</div>;
         })}
       </div>
-    </div>}
+    </div>
+
+    {/* ── TIMER BAR ── */}
+    {speedMode&&myGuess==null&&timeLeft!=null&&
+      <div style={{padding:"6px 16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+          <span style={{fontSize:12,fontWeight:700,
+            color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}>⏱️ {timeLeft}s</span>
+          <span style={{fontSize:11,color:t.muted}}>{doneCount}/{activePl.length} ✓</span>
+        </div>
+        <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}>
+          <div style={{height:"100%",
+            width:`${(timeLeft/timerSecs)*100}%`,
+            background:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green,
+            borderRadius:3,transition:"width 1s linear, background .3s"}}/>
+        </div>
+      </div>}
+
+    {/* ── QUESTION CARD ── */}
+    <div style={{padding:"8px 16px 0",flex:1,display:"flex",flexDirection:"column",gap:8}}>
+      <Card t={t} glow>
+        <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+          <span style={{fontSize:28}}>{q.emoji||"❓"}</span>
+          <div style={{flex:1}}>
+            <Pill t={t} color={t.muted} style={{marginBottom:6}}>{q.cat}</Pill>
+            <p style={{fontSize:t.id==="kids"?18:16,lineHeight:1.55,
+              fontWeight:t.id==="kids"?700:500,marginTop:6}}>{q.q}</p>
+            <p style={{marginTop:8,color:t.muted,fontSize:13}}>
+              Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong>
+            </p>
+          </div>
+        </div>
+        {room.hintVisible&&
+          <p style={{marginTop:8,padding:"7px 10px",background:t.gold+"18",
+            borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>
+            💡 {q.hint}
+          </p>}
+        {/* 50/50 hint – only for user who played it */}
+        {room.extraHint&&room.extraHintFor===myId&&
+          <div style={{marginTop:8,padding:"8px 10px",
+            background:(room.extraHintColor||t.gold)+"18",
+            border:`1.5px solid ${room.extraHintColor||t.gold}`,
+            borderRadius:t.radius,textAlign:"center"}}>
+            <div style={{fontSize:10,color:room.extraHintColor||t.gold,
+              fontWeight:700,marginBottom:2}}>📊 50/50</div>
+            <div style={{fontSize:14,color:room.extraHintColor||t.gold,
+              fontWeight:800}}>{room.extraHint}</div>
+          </div>}
+      </Card>
+
+      {/* ── INPUT OR SUBMITTED ── */}
+      {showInput
+        ?<Card t={t}>
+          <p style={{fontSize:11,fontWeight:700,color:t.muted,
+            letterSpacing:.6,marginBottom:8}}>
+            {changeAllowed?"🔄 TIPP ÄNDERN":"DEIN TIPP"} ({q.unit})
+          </p>
+          <div style={{display:"flex",gap:8}}>
+            <Inp type="number" value={val} onChange={setVal}
+              placeholder="z.B. 42" t={t} autoFocus
+              style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
+            <Btn t={t} onClick={submit} disabled={!val}
+              style={{flexShrink:0}}>OK ✓</Btn>
+          </div>
+          <p style={{marginTop:8,color:t.muted,fontSize:12}}>
+            💬 Tippt erst, dann diskutiert!
+          </p>
+        </Card>
+        :<Card t={t} style={{textAlign:"center"}}>
+          <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
+            fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
+          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>✓ Tipp abgegeben!</p>
+          <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
+            <div style={{height:"100%",
+              width:`${activePl.length?doneCount/activePl.length*100:0}%`,
+              background:`linear-gradient(90deg,${t.accent},${t.gold})`,
+              borderRadius:3,transition:"width .4s ease"}}/>
+          </div>
+          <p style={{fontSize:11,color:t.muted,marginTop:5}}>
+            {doneCount}/{activePl.length} haben getippt
+          </p>
+        </Card>}
+
+      {/* ── JOKER BAR (collapsed until tapped) ── */}
+      {room.enabledJokers?.length>0&&
+        <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip}/>}
+
+      {/* ── DEBUG PANEL ── */}
+      {debugMode&&<div style={{padding:"12px",borderRadius:t.radius,
+        background:t.surface,border:`2px dashed ${t.accent}`}}>
+        <p style={{fontSize:10,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:8}}>
+          🛠️ DEBUG
+        </p>
+        <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>JOKER AUFLADEN</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+          {Object.values(JOKER_DEFS).map(jk=>(
+            <button key={jk.id} onClick={async()=>{
+              const cur=(room.jokers||{})[myId]||[];
+              await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
+            }} style={{padding:"5px 9px",borderRadius:t.radius,background:t.card,
+              border:`1px solid ${t.border}`,color:t.text,fontSize:11,
+              fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+              {jk.icon}+
+            </button>
+          ))}
+          <button onClick={async()=>{
+            await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
+          }} style={{padding:"5px 9px",borderRadius:t.radius,
+            background:t.danger+"22",border:`1px solid ${t.danger}`,
+            color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</button>
+        </div>
+        <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>PUNKTE</p>
+        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+          {(room.order||[]).map(pid=>{
+            const p=room.players?.[pid]; if(!p) return null;
+            return <div key={pid} style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:11,flex:1,fontWeight:700}}>{p.name}</span>
+              <span style={{fontSize:12,fontFamily:"monospace",
+                color:t.gold,minWidth:24}}>{room.scores?.[pid]||0}P</span>
+              <button onClick={async()=>await update(ref(db,`rooms/${code}/scores`),
+                {[pid]:(room.scores?.[pid]||0)-1})}
+                style={{width:22,height:22,borderRadius:4,background:t.danger+"22",
+                  border:`1px solid ${t.danger}`,color:t.danger,fontSize:13,
+                  cursor:"pointer",fontWeight:700}}>−</button>
+              <button onClick={async()=>await update(ref(db,`rooms/${code}/scores`),
+                {[pid]:(room.scores?.[pid]||0)+1})}
+                style={{width:22,height:22,borderRadius:4,background:t.green+"22",
+                  border:`1px solid ${t.green}`,color:t.green,fontSize:13,
+                  cursor:"pointer",fontWeight:700}}>+</button>
+            </div>;
+          })}
+        </div>
+      </div>}
+    </div>
+
+    {/* ── FIXED BOTTOM BAR: AFK ── */}
+    <div style={{
+      position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
+      width:"100%",maxWidth:520,
+      padding:"10px 16px",
+      background:t.bg+"ee",
+      borderTop:`1px solid ${t.border}`,
+      backdropFilter:"blur(8px)",
+      zIndex:50,
+    }}>
+      <button onClick={async()=>{
+        await update(ref(db,`rooms/${code}/afkPlayers`),{[myId]:isAfkMe?null:true});
+      }} style={{
+        width:"100%",padding:"11px",borderRadius:t.radius,
+        background:isAfkMe?t.gold+"22":t.surface,
+        border:`1.5px solid ${isAfkMe?t.gold:t.border}`,
+        color:isAfkMe?t.gold:t.muted,
+        fontSize:14,fontWeight:700,cursor:"pointer",
+        fontFamily:t.fontBody,transition:"all .2s",
+      }}>
+        {isAfkMe?"▶️ Ich bin wieder da!":"⏸️ Kurz weg"}
+      </button>
+    </div>
   </div>;
 }
+
 
 /* ─── BETTING ─────────────────────────────────────── */
 function BettingScreen({room,myId,t,onBet,code}){
@@ -1197,7 +1259,19 @@ function BettingScreen({room,myId,t,onBet,code}){
         {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
         <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
       </>}
-    <AfkButton myId={myId} code={code} room={room} t={t}/>
+    {/* AFK inline in betting */}
+    <div style={{marginTop:14}}>
+      <button onClick={async()=>{
+        const isAfk=!!(room.afkPlayers||{})[myId];
+        await update(ref(db,`rooms/${code}/afkPlayers`),{[myId]:isAfk?null:true});
+      }} style={{width:"100%",padding:"10px",borderRadius:t.radius,
+        background:(room.afkPlayers||{})[myId]?t.gold+"22":t.surface,
+        border:`1.5px solid ${(room.afkPlayers||{})[myId]?t.gold:t.border}`,
+        color:(room.afkPlayers||{})[myId]?t.gold:t.muted,
+        fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
+        {(room.afkPlayers||{})[myId]?"▶️ Ich bin wieder da!":"⏸️ Kurz weg"}
+      </button>
+    </div>
   </div>;
 }
 
