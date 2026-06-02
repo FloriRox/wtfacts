@@ -36,7 +36,6 @@ export default [
   {q:"Wie viel kostet der teuerste Champagner (Goût de Diamants)?",a:1200000,unit:"Euro",hint:"Mit Diamanten verziert.",emoji:"🥂"},
   {q:"Wie viele Milliarden Dollar verdient Taylor Swift pro Tour?",a:1,unit:"Mrd. Dollar",hint:"Die Eras Tour 2023-2024 – erste Milliarden-Tour.",emoji:"🎤"},
   {q:"Wie viel kostet 1 Gramm Meissen-Porzellan (als Kunstwerk)?",a:1000,unit:"Euro",hint:"Echtes Meissen ist extrem wertvoll.",emoji:"🏺"},
-  {q:"Wie viele Milliarden Dollar wert ist der globale Drogenmarkt?",a:650,unit:"Mrd. Dollar",hint:"Illegale Drogen sind ein riesiger Markt.",emoji:"💊"},
   {q:"Wie viel kostete das teuerste Diamant-Ehering (Pink Star)?",a:71200000,unit:"Dollar",hint:"2017 für 71,2 Mio. Dollar versteigert.",emoji:"💍"},
   {q:"Wie viele Milliarden Dollar Steuern hinterziehen Deutsche pro Jahr?",a:30,unit:"Mrd. Euro",hint:"Schätzungen liegen bei 30 Milliarden Euro.",emoji:"💸"},
   {q:"Wie viel kostet ein Flug ins All mit Virgin Galactic?",a:450000,unit:"Dollar",hint:"Für einen Suborbitalflug.",emoji:"🚀"},
