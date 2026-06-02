@@ -564,7 +564,6 @@ function QRCode({url,t}){
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
 function JokerBar({room, myId, code, t, onSkip}){
-  const [open,setOpen]=useState(true);
   const myJokers   = (room.jokers||{})[myId]||[];
   const enabled    = room.enabledJokers||[];
   const afk        = !!(room.afkPlayers||{})[myId];
@@ -664,21 +663,12 @@ function JokerBar({room, myId, code, t, onSkip}){
   if(!enabled.length) return null;
 
   return <Card t={t} style={{marginTop:12,padding:"14px 16px"}}>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-      marginBottom:open?10:0,cursor:"pointer"}}
-      onClick={()=>setOpen(o=>!o)}>
-      <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,margin:0}}>
-        🃏 JOKER
-        {usedRound && <span style={{color:t.muted,fontWeight:400}}> · verbraucht</span>}
-        {" "}<span style={{color:t.muted,fontWeight:400}}>
-          ({myJokers.length} verfügbar)
-        </span>
-      </p>
-      <span style={{color:t.muted,fontSize:12}}>{open?"▲":"▼"}</span>
-    </div>
-    {!open&&null}
+    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
+      🃏 JOKER ({myJokers.length})
+      {usedRound && <span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
+    </p>
 
-    {open&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {enabled.map(jk=>{
         const def      = JOKER_DEFS[jk]; if(!def) return null;
         const count    = counts[jk]||0;
