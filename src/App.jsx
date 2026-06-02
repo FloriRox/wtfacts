@@ -581,7 +581,7 @@ function JokerBar({room, myId, code, t, onSkip}){
     skip:    "Sofort eine neue Frage ziehen",
     hint:    "Zeigt den Hinweis zur Frage an",
     double:  "Alle Punkte dieser Runde ×2",
-    sabotage:"Tipp eines Mitspielers heimlich verschieben",
+    sabotage:"Erst wenn ein Mitspieler getippt hat",
     change:  "Eigenen Tipp einmal korrigieren",
     extra:   "Antwort größer oder kleiner als X?",
   };
@@ -652,7 +652,15 @@ function JokerBar({room, myId, code, t, onSkip}){
     if(g == null || g === -999999){ setShowSabotage(false); return; }
     const factor  = 0.3 + Math.random()*0.5;
     const dir     = Math.random() < 0.5 ? 1 : -1;
-    const shifted = Math.round(g * (1 + dir*factor));
+    // Ensure shifted value is never equal to the real answer
+    const answer  = room.q?.a;
+    let shifted   = Math.round(g * (1 + dir*factor));
+    if(answer != null && shifted === answer){
+      // Nudge by 1 to avoid accidental exact hit after sabotage
+      shifted = shifted + (dir > 0 ? 1 : -1);
+    }
+    // Write atomically – reset advancing so calcRound re-runs with new value
+    await dbPatch(code, {advancing: false});
     await update(ref(db,`rooms/${code}/guesses`),   {[sabotageTarget]: shifted});
     await update(ref(db,`rooms/${code}/sabotaged`), {[sabotageTarget]: true});
     await update(ref(db,`rooms/${code}/sabotageStats`),
@@ -674,7 +682,11 @@ function JokerBar({room, myId, code, t, onSkip}){
         const def      = JOKER_DEFS[jk]; if(!def) return null;
         const count    = counts[jk]||0;
         const has      = count > 0;
-        const canClick = has && !afk && (jk==="skip" || !usedRound);
+        const othersGuessed = (room.order||[])
+          .filter(id=>id!==myId&&!(room.afkPlayers||{})[id])
+          .some(id=>(room.guesses||{})[id]!=null&&(room.guesses||{})[id]!==-999999);
+        const canClick = has && !afk && (jk==="skip" || !usedRound) &&
+          (jk!=="sabotage" || othersGuessed);
         return(
           <div key={jk} onClick={()=>canClick && useJoker(jk)}
             style={{display:"flex",alignItems:"center",gap:10,
