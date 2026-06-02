@@ -564,158 +564,187 @@ function QRCode({url,t}){
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
 function JokerBar({room, myId, code, t, onSkip}){
-  const myJokers=(room.jokers||{})[myId]||[];
-  const enabledJokers=room.enabledJokers||[];
-  const afk=(room.afkPlayers||{})[myId];
-  const [sabotageTarget,setSabotageTarget]=useState("");
-  const [showSabotage,setShowSabotage]=useState(false);
-  const skipVotes=room.skipVotes||{};
-  const order=room.order||[];
-  const activePlayers=order.filter(id=>!(room.afkPlayers||{})[id]);
-  const skipCount=Object.values(skipVotes).filter(Boolean).length;
-  const skipNeeded=Math.ceil(activePlayers.length/2);
-  const usedThisRound=room.usedJokerThisRound;
+  const myJokers   = (room.jokers||{})[myId]||[];
+  const enabled    = room.enabledJokers||[];
+  const afk        = !!(room.afkPlayers||{})[myId];
+  const usedRound  = !!room.usedJokerThisRound;   // another joker was used this round
+  const order      = room.order||[];
 
-  // Short descriptions for table view
-  const shortDesc={
-    skip:    "Sofort neue Frage ziehen – kein Voting",
-    hint:    "Hinweis wird sofort angezeigt",
+  const [showSabotage,   setShowSabotage]   = useState(false);
+  const [sabotageTarget, setSabotageTarget] = useState("");
+
+  // Count how many of each type the player holds
+  const counts = {};
+  myJokers.forEach(jk => { counts[jk] = (counts[jk]||0)+1; });
+
+  const shortDesc = {
+    skip:    "Sofort eine neue Frage ziehen",
+    hint:    "Zeigt den Hinweis zur Frage an",
     double:  "Alle Punkte dieser Runde ×2",
-    sabotage:"Tipp eines Mitspielers heimlich um 30–80% verschieben",
-    change:  "Deinen Tipp einmal korrigieren",
-    extra:   "Zeigt: Antwort größer oder kleiner als [Zahl]?",
+    sabotage:"Tipp eines Mitspielers heimlich verschieben",
+    change:  "Eigenen Tipp einmal korrigieren",
+    extra:   "Antwort größer oder kleiner als X?",
   };
 
-  async function useJoker(type){
-    if(usedThisRound||afk) return;
-    const idx=myJokers.indexOf(type);
-    if(idx===-1) return;
+  /* ── consume joker from inventory ── */
+  async function consume(type){
+    const arr = [...myJokers];
+    const i   = arr.indexOf(type);
+    if(i === -1) return false;
+    arr.splice(i, 1);
+    await update(ref(db,`rooms/${code}/jokers`), {[myId]: arr});
+    // track stats
+    const prev = (room.jokerStats||{})[myId]||{};
+    await update(ref(db,`rooms/${code}/jokerStats/${myId}`), {[type]: (prev[type]||0)+1});
+    return true;
+  }
 
-    // SKIP: execute directly – any player can trigger
-    if(type==="skip"){
-      const newJokers=[...myJokers];
-      newJokers.splice(idx,1);
-      await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
-      await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.skip`]:((room.jokerStats||{})[myId]?.skip||0)+1});
-      // Execute skip directly
-      if(onSkip) await onSkip();
+  async function useJoker(type){
+    if(afk) return;
+    // Skip never blocks on usedRound – it replaces the whole question
+    if(type !== "skip" && usedRound) return;
+    const ok = await consume(type);
+    if(!ok) return;
+
+    if(type === "skip"){
+      // Direct call – no Firebase flag needed
+      if(onSkip) onSkip();
       return;
     }
 
-    // All other jokers: mark as used this round
-    const newJokers=[...myJokers];
-    newJokers.splice(idx,1);
-    await update(ref(db,`rooms/${code}/jokers`),{[myId]:newJokers});
-    await dbPatch(code,{usedJokerThisRound:type,jokerUsedBy:myId});
-    await update(ref(db,`rooms/${code}`),{[`jokerStats.${myId}.${type}`]:((room.jokerStats||{})[myId]?.[type]||0)+1});
-    if(type==="hint") await dbPatch(code,{hintVisible:true});
-    if(type==="extra"){
-      const answer=room.q?.a||0;
-      const factor=0.3+Math.random()*0.5;
-      const direction=Math.random()<0.5?1:-1;
-      const decoy=Math.round(answer*(1+direction*factor));
-      const hint=answer>decoy?"größer ↑":"kleiner ↓";
-      const hintColor=answer>decoy?"#39d98a":"#e8360a";
-      await dbPatch(code,{
-        extraHint:`Die Antwort ist ${hint} als ${fmtNum(decoy)}`,
-        extraHintColor:hintColor,
-        extraHintFor:myId,
+    // Mark joker used this round so no second joker is played
+    await dbPatch(code, {usedJokerThisRound: type, jokerUsedBy: myId});
+
+    if(type === "hint"){
+      await dbPatch(code, {hintVisible: true});
+    }
+
+    if(type === "double"){
+      // calcRound already checks usedJokerThisRound==="double"
+    }
+
+    if(type === "change"){
+      await dbPatch(code, {changeAllowed: myId});
+    }
+
+    if(type === "extra"){
+      const answer  = room.q?.a || 0;
+      const factor  = 0.3 + Math.random()*0.5;          // 30–80 %
+      const dir     = Math.random() < 0.5 ? 1 : -1;
+      const decoy   = Math.round(answer * (1 + dir*factor));
+      const bigger  = answer > decoy;
+      await dbPatch(code, {
+        extraHint:      `Die Antwort ist ${bigger?"größer ↑":"kleiner ↓"} als ${fmtNum(decoy)}`,
+        extraHintColor: bigger ? "#39d98a" : "#e8360a",
+        extraHintFor:   myId,
       });
     }
-    if(type==="sabotage") setShowSabotage(true);
-    if(type==="change") await dbPatch(code,{changeAllowed:myId});
+
+    if(type === "sabotage"){
+      setShowSabotage(true);
+    }
   }
 
   async function submitSabotage(){
-    if(!sabotageTarget) return;
-    const guesses=room.guesses||{};
-    const targetGuess=guesses[sabotageTarget];
-    if(targetGuess==null||targetGuess===-999999){setShowSabotage(false);return;}
-    // Shift by 30-80% in a random direction
-    const factor=0.3+Math.random()*0.5; // 30-80%
-    const direction=Math.random()<0.5?1:-1;
-    const shifted=Math.round(targetGuess*(1+direction*factor));
-    // Store original guess separately so reveal can show "sabotaged"
-    await update(ref(db,`rooms/${code}/guesses`),{[sabotageTarget]:shifted});
-    await update(ref(db,`rooms/${code}/sabotaged`),{[sabotageTarget]:true});
-    await update(ref(db,`rooms/${code}`),{[`sabotageStats.${myId}`]:((room.sabotageStats||{})[myId]||0)+1});
+    if(!sabotageTarget){ setShowSabotage(false); return; }
+    const g = (room.guesses||{})[sabotageTarget];
+    if(g == null || g === -999999){ setShowSabotage(false); return; }
+    const factor  = 0.3 + Math.random()*0.5;
+    const dir     = Math.random() < 0.5 ? 1 : -1;
+    const shifted = Math.round(g * (1 + dir*factor));
+    await update(ref(db,`rooms/${code}/guesses`),   {[sabotageTarget]: shifted});
+    await update(ref(db,`rooms/${code}/sabotaged`), {[sabotageTarget]: true});
+    await update(ref(db,`rooms/${code}/sabotageStats`),
+      {[myId]: ((room.sabotageStats||{})[myId]||0)+1});
     setShowSabotage(false);
     setSabotageTarget("");
   }
 
-  if(!enabledJokers.length) return null;
+  if(!enabled.length) return null;
 
-  // Build full joker list: all enabled jokers, with count from myJokers
-  const jokerCounts={};
-  myJokers.forEach(jk=>{jokerCounts[jk]=(jokerCounts[jk]||0)+1;});
-
-  return <Card t={t} style={{marginTop:12,marginBottom:4,padding:"14px 16px"}}>
+  return <Card t={t} style={{marginTop:12,padding:"14px 16px"}}>
     <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
-      🃏 JOKER {usedThisRound&&<span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
+      🃏 JOKER
+      {usedRound && <span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
     </p>
-    {/* Joker table */}
+
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
-      {enabledJokers.map(jk=>{
-        const def=JOKER_DEFS[jk];
-        if(!def) return null;
-        const count=jokerCounts[jk]||0;
-        const hasJoker=count>0;
-        const canUse=hasJoker&&!usedThisRound&&!afk;
-        return <div key={jk} onClick={()=>canUse&&useJoker(jk)}
-          style={{
-            display:"flex",alignItems:"center",gap:10,
-            padding:"9px 12px",borderRadius:t.radius,
-            background:canUse?t.gold+"18":t.surface,
-            border:`1.5px solid ${canUse?t.gold:t.border}`,
-            opacity:hasJoker?1:0.35,
-            cursor:canUse?"pointer":"default",
-            transition:"all .15s",
-          }}>
-          {/* Icon + name */}
-          <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>{def.icon}</span>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:700,fontSize:13,color:canUse?t.gold:t.text,lineHeight:1.2}}>{def.name}</div>
-            <div style={{fontSize:11,color:t.muted,marginTop:2,lineHeight:1.3}}>{shortDesc[jk]}</div>
+      {enabled.map(jk=>{
+        const def      = JOKER_DEFS[jk]; if(!def) return null;
+        const count    = counts[jk]||0;
+        const has      = count > 0;
+        const canClick = has && !afk && (jk==="skip" || !usedRound);
+        return(
+          <div key={jk} onClick={()=>canClick && useJoker(jk)}
+            style={{display:"flex",alignItems:"center",gap:10,
+              padding:"9px 12px",borderRadius:t.radius,
+              background: canClick ? t.gold+"18" : t.surface,
+              border:`1.5px solid ${canClick ? t.gold : t.border}`,
+              opacity: has ? 1 : 0.3,
+              cursor: canClick ? "pointer" : "default",
+              transition:"all .15s"}}>
+            <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>{def.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:13,
+                color: canClick ? t.gold : t.text}}>{def.name}</div>
+              <div style={{fontSize:11,color:t.muted,marginTop:1}}>{shortDesc[jk]}</div>
+            </div>
+            <div style={{minWidth:22,height:22,borderRadius:100,
+              background: has ? t.gold : t.border,
+              color: has ? t.bg : t.muted,
+              fontSize:12,fontWeight:800,flexShrink:0,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {count}
+            </div>
           </div>
-          {/* Count badge */}
-          <div style={{
-            minWidth:22,height:22,borderRadius:100,
-            background:hasJoker?t.gold:t.border,
-            color:hasJoker?t.bg:t.muted,
-            fontSize:12,fontWeight:800,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            flexShrink:0,
-          }}>{count}</div>
-        </div>;
+        );
       })}
     </div>
 
-    {/* Skip vote status */}
-    {Object.keys(skipVotes).length>0&&<div style={{marginTop:10,padding:"8px 12px",background:t.surface,borderRadius:t.radius,fontSize:13,color:t.muted}}>
-      ⏭️ Skip-Abstimmung: <strong style={{color:t.accent}}>{skipCount}/{skipNeeded}</strong> Stimmen nötig
-    </div>}
-    {/* Extra hint – only for the player who used it */}
-    {room.extraHint&&room.extraHintFor===myId&&<div style={{marginTop:10,padding:"12px 14px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
-      <div style={{fontSize:11,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:4}}>📊 50/50 – nur für dich sichtbar!</div>
-      <div style={{fontSize:16,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
-    </div>}
-    {/* Sabotage target picker */}
-    {showSabotage&&<div style={{marginTop:10}}>
-      <p style={{fontSize:13,color:t.danger,fontWeight:700,marginBottom:8}}>💣 Wen sabotieren?</p>
-      {order.filter(id=>id!==myId&&!(room.afkPlayers||{})[id]).map(id=>{
-        const p=room.players?.[id];
-        return <div key={id} onClick={()=>setSabotageTarget(id)}
-          style={{...row,padding:"9px 12px",borderRadius:t.radius,cursor:"pointer",
-          background:sabotageTarget===id?t.danger+"22":t.surface,
-          border:`1.5px solid ${sabotageTarget===id?t.danger:t.border}`,marginBottom:6}}>
-          <Avatar name={p?.name} t={t} size={28}/>
-          <span style={{fontWeight:600}}>{p?.name}</span>
-        </div>;
-      })}
-      <Btn t={t} variant="primary" style={{background:t.danger,marginTop:8}} onClick={submitSabotage} disabled={!sabotageTarget} full>💣 Sabotieren!</Btn>
-    </div>}
+    {/* 50/50 hint – only visible to the player who used it */}
+    {room.extraHint && room.extraHintFor===myId &&
+      <div style={{marginTop:10,padding:"10px 14px",
+        background:(room.extraHintColor||t.gold)+"18",
+        border:`2px solid ${room.extraHintColor||t.gold}`,
+        borderRadius:t.radius,textAlign:"center"}}>
+        <div style={{fontSize:10,color:room.extraHintColor||t.gold,
+          fontWeight:700,letterSpacing:.8,marginBottom:3}}>📊 50/50 – nur für dich!</div>
+        <div style={{fontSize:15,color:room.extraHintColor||t.gold,
+          fontWeight:800}}>{room.extraHint}</div>
+      </div>}
+
+    {/* Sabotage: pick target */}
+    {showSabotage &&
+      <div style={{marginTop:10}}>
+        <p style={{fontSize:13,color:t.danger,fontWeight:700,marginBottom:8}}>
+          💣 Wen sabotieren?
+        </p>
+        {order.filter(id=>id!==myId&&!(room.afkPlayers||{})[id]).map(id=>{
+          const p=room.players?.[id];
+          return(
+            <div key={id} onClick={()=>setSabotageTarget(id)}
+              style={{display:"flex",alignItems:"center",gap:10,
+                padding:"9px 12px",borderRadius:t.radius,cursor:"pointer",
+                background: sabotageTarget===id ? t.danger+"22" : t.surface,
+                border:`1.5px solid ${sabotageTarget===id ? t.danger : t.border}`,
+                marginBottom:6}}>
+              <Avatar name={p?.name} t={t} size={28}/>
+              <span style={{fontWeight:600}}>{p?.name}</span>
+            </div>
+          );
+        })}
+        <Btn t={t} style={{background:t.danger,marginTop:8}}
+          onClick={submitSabotage} disabled={!sabotageTarget} full>
+          💣 Sabotieren!
+        </Btn>
+        <Btn t={t} variant="ghost" style={{marginTop:6}}
+          onClick={()=>{setShowSabotage(false);setSabotageTarget("");}}>
+          Abbrechen
+        </Btn>
+      </div>}
   </Card>;
 }
+
 
 /* ─── AFK / PAUSE BUTTON ─────────────────────────── */
 function AfkButton({myId, code, room, t}){
@@ -1054,11 +1083,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
       <Pill t={t} color={t.muted}>{q.cat}</Pill>
       <p style={{fontSize:t.id==="kids"?20:18,lineHeight:1.55,fontWeight:t.id==="kids"?700:500,marginTop:12}}>{q.q}</p>
       <p style={{marginTop:12,color:t.muted,fontSize:14}}>Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong></p>
-      {(hintVisible||room.usedJokerThisRound==="hint")&&<p style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>💡 {q.hint}</p>}
-      {room.extraHint&&room.extraHintFor===myId&&<div style={{marginTop:8,padding:"10px 12px",background:room.extraHintColor?room.extraHintColor+"18":t.gold+"18",border:`2px solid ${room.extraHintColor||t.gold}`,borderRadius:t.radius,textAlign:"center"}}>
-        <div style={{fontSize:10,color:room.extraHintColor||t.gold,fontWeight:700,letterSpacing:.8,marginBottom:3}}>📊 50/50 – nur für dich!</div>
-        <div style={{fontSize:15,color:room.extraHintColor||t.gold,fontWeight:800}}>{room.extraHint}</div>
-      </div>}
+      {room.hintVisible&&<p style={{marginTop:10,padding:"8px 12px",background:t.gold+"18",borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>💡 {q.hint}</p>}
     </Card>
     {showInput
       ?<Card t={t} style={{animation:"fu .3s .1s ease both"}}>
