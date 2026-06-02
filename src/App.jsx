@@ -616,7 +616,8 @@ function JokerBar({room, myId, code, t, onSkip}){
     await dbPatch(code, {usedJokerThisRound: type, jokerUsedBy: myId});
 
     if(type === "hint"){
-      await dbPatch(code, {hintVisible: true});
+      // Store who used it – only that player sees the hint
+      await dbPatch(code, {hintVisible: true, hintFor: myId});
     }
 
     if(type === "double"){
@@ -1090,7 +1091,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
             </p>
           </div>
         </div>
-        {room.hintVisible&&
+        {room.hintVisible&&(room.hintFor===myId||!room.hintFor)&&
           <p style={{marginTop:8,padding:"7px 10px",background:t.gold+"18",
             borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>
             💡 {q.hint}
@@ -1293,7 +1294,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
         {room.speedMode&&<Pill t={t} color={t.accent}>⚡ Speed</Pill>}
       </div>
       {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 DOPPELTE PUNKTE aktiv!</Pill></div>}
-      {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{JOKER_DEFS[room.usedJokerThisRound]?.icon} {jokerUsedName} nutzte: {JOKER_DEFS[room.usedJokerThisRound]?.name}</div>}
+      {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&room.usedJokerThisRound!=="hint"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{JOKER_DEFS[room.usedJokerThisRound]?.icon} {jokerUsedName} nutzte: {JOKER_DEFS[room.usedJokerThisRound]?.name}</div>}
       <p style={{marginTop:14,fontSize:t.id==="kids"?17:15,lineHeight:1.55,color:t.muted,maxWidth:380,margin:"14px auto 6px"}}>{q.q}</p>
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
@@ -1528,7 +1529,7 @@ export default function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
   async function handleGuess(val){
@@ -1660,7 +1661,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
   }
 
   async function handleSkip(){
@@ -1668,7 +1669,7 @@ export default function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,hintVisible:false,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
