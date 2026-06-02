@@ -784,6 +784,7 @@ function HomeScreen({onHost,onJoin}){
       setBusy(false);
       if(!room){setError("Raum nicht gefunden.");return;}
       if(room.phase!=="lobby"){setError("Das Spiel läuft bereits.");return;}
+      if((room.order||[]).length>=50){setError("Raum voll (max. 50 Spieler).");return;}
       onJoin(c,name.trim(),room.mode);
     }
   }
@@ -799,7 +800,7 @@ function HomeScreen({onHost,onJoin}){
           <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Beitreten</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {["1–15 Spieler","4.800+ Fragen","Echtzeit","Joker"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
+          {["4.800+ Fragen","Echtzeit","Joker"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
       </div>
     </div>;
@@ -1046,7 +1047,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
     </div>
     <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>SPIELER ({pl.length}/15)</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>SPIELER ({pl.length})</p>
       <div style={col}>
         {pl.map(p=>(
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
