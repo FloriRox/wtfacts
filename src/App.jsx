@@ -564,6 +564,7 @@ function QRCode({url,t}){
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
 function JokerBar({room, myId, code, t, onSkip}){
+  const [flash,setFlash] = useState(null); // joker type currently flashing
   const myJokers   = (room.jokers||{})[myId]||[];
   const enabled    = room.enabledJokers||[];
   const afk        = !!(room.afkPlayers||{})[myId];
@@ -605,6 +606,9 @@ function JokerBar({room, myId, code, t, onSkip}){
     if(type !== "skip" && usedRound) return;
     const ok = await consume(type);
     if(!ok) return;
+    // Visual flash feedback
+    setFlash(type);
+    setTimeout(()=>setFlash(null), 800);
 
     if(type === "skip"){
       // Direct call – no Firebase flag needed
@@ -691,10 +695,11 @@ function JokerBar({room, myId, code, t, onSkip}){
           <div key={jk} onClick={()=>canClick && useJoker(jk)}
             style={{display:"flex",alignItems:"center",gap:10,
               padding:"9px 12px",borderRadius:t.radius,
-              background: canClick ? t.gold+"18" : t.surface,
-              border:`1.5px solid ${canClick ? t.gold : t.border}`,
+              background: flash===jk ? t.gold+"44" : canClick ? t.gold+"18" : t.surface,
+              border:`1.5px solid ${flash===jk ? t.gold : canClick ? t.gold : t.border}`,
               opacity: has ? 1 : 0.3,
               cursor: canClick ? "pointer" : "default",
+              transform: flash===jk ? "scale(1.02)" : "scale(1)",
               transition:"all .15s"}}>
             <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>{def.icon}</span>
             <div style={{flex:1}}>
@@ -1102,9 +1107,13 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
 
   if(!q)return <div style={{...page,display:"flex",alignItems:"center",justifyContent:"center"}}><Spinner t={t}/></div>;
 
-  function submit(){
+  async function submit(){
     const n=parseFloat(val.replace(",","."));
     if(isNaN(n))return;
+    // If this was a "change" joker, clear changeAllowed after submit
+    if(changeAllowed){
+      await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
+    }
     onGuess(n);
     setVal("");
   }
@@ -1400,12 +1409,20 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
         </div>;
       })}
     </Card>}
-    {/* New joker notification */}
-    {myNewJoker&&<Card t={t} glow style={{marginBottom:12,textAlign:"center",border:`2px solid ${t.gold}`}}>
-      <div style={{fontSize:36,marginBottom:6}}>🎁</div>
-      <p style={{fontWeight:800,color:t.gold,fontSize:16}}>Du hast einen Joker gewonnen!</p>
-      <p style={{color:t.muted,fontSize:14,marginTop:4}}>{JOKER_DEFS[myNewJoker]?.icon} {JOKER_DEFS[myNewJoker]?.name}</p>
-    </Card>}
+    {/* New joker notification – animated */}
+    {myNewJoker&&<div style={{
+      marginBottom:12,padding:"14px 16px",
+      borderRadius:t.radius,textAlign:"center",
+      background:t.gold+"22",
+      border:`2px solid ${t.gold}`,
+      animation:"pop .4s ease both",
+    }}>
+      <div style={{fontSize:32,marginBottom:4,animation:"bop .8s ease infinite"}}>🎁</div>
+      <p style={{fontWeight:800,color:t.gold,fontSize:15}}>Joker gewonnen!</p>
+      <p style={{color:t.text,fontSize:18,fontWeight:700,marginTop:4}}>
+        {JOKER_DEFS[myNewJoker]?.icon} {JOKER_DEFS[myNewJoker]?.name}
+      </p>
+    </div>}
     <Card t={t} style={{marginBottom:18}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
@@ -1621,7 +1638,10 @@ export default function App(){
     const activePlayers=order.filter(id=>!afk[id]);
     const guesses=room.guesses||{};
     // -999999 = timer expired (counts as answered), null = not yet answered
-    const allDone=activePlayers.length>0&&activePlayers.every(id=>guesses[id]!=null||!!afk[id]);
+    // Solo: if only 1 active player and they submitted (incl. timer), advance immediately
+    const allDone=activePlayers.length>0&&activePlayers.every(id=>
+      guesses[id]!=null||!!afk[id]
+    );
     if(allDone&&room.hostId===myId&&!advanceGuessPhaseRef.current){
       advanceGuessPhaseRef.current=true;
       const advance=async()=>{
@@ -1632,8 +1652,8 @@ export default function App(){
         const g=r.guesses||{};
         const afkP=r.afkPlayers||{};
         const active=(r.order||[]).filter(id=>!afkP[id]);
+        // -999999 counts as answered (timer expired)
         if(!active.every(id=>g[id]!=null)){await dbPatch(code,{advancing:false});return;}
-        // Treat -999999 (timer expired) as answered
 
         // Skip check moved to separate useEffect below
 
@@ -1742,11 +1762,23 @@ export default function App(){
   }
 
   async function handleSkip(){
+    // Fully atomic – re-fetch then write in one patch
     const r=await dbGet(code);
-    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
-    const q=getQuestion(mode,cats,usedIdsRef.current);
+    if(!r||r.phase!=="question")return;
+    const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[r.mode||mode]);
+    const q=getQuestion(r.mode||mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,jokerUsedBy:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+    await dbPatch(code,{
+      phase:"question",q,
+      guesses:{},bets:{},roundScores:{},
+      qIdx:(r.qIdx||0)+1,
+      usedJokerThisRound:null,jokerUsedBy:null,
+      hintVisible:false,hintFor:null,
+      extraHint:null,extraHintColor:null,extraHintFor:null,
+      skipVotes:{},skipImmediate:false,skipBy:null,
+      newJokersThisRound:{},changeAllowed:null,
+      advancing:false,jokersDistributedForRound:-1,sabotaged:{},
+    });
   }
 
   async function handleEnd(){await dbPatch(code,{phase:"final"});}
