@@ -828,129 +828,193 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit}){
   const[timerSecs,setTimerSecs]=useState(30);
   const[debugModeLocal,setDebugModeLocal]=useState(!!debugModeInit);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
-  return <div style={{...page,animation:"fu .3s ease both"}}>
+
+  return <div style={{
+    minHeight:"100vh",display:"flex",flexDirection:"column",
+    maxWidth:520,margin:"0 auto",padding:"12px 16px 24px",
+    background:t.bg,
+  }}>
     <Logo t={t} size="sm"/>
 
-    {/* Speed Mode */}
-    <div style={{marginTop:20,marginBottom:8}}><Pill t={t} color={t.accent}>⚡ SPEED-MODUS</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?26:32,marginBottom:6}}>Mit Timer spielen?</h2>
-    <p style={{color:t.muted,fontSize:13,marginBottom:14}}>Keine Antwort in der Zeit = 0 Punkte.</p>
-    <div style={{display:"flex",gap:10,marginBottom:14}}>
-      {[{v:false,label:"🐢 Kein Timer"},{v:true,label:"⚡ Speed!"}].map(o=>(
-        <button key={String(o.v)} onClick={()=>setSpeedMode(o.v)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:speedMode===o.v?t.accent+"22":t.surface,border:`2px solid ${speedMode===o.v?t.accent:t.border}`,color:speedMode===o.v?t.accent:t.muted,fontWeight:700,fontSize:14,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody}}>
-          {o.label}
-        </button>
-      ))}
-    </div>
-    {speedMode&&<Card t={t} style={{marginBottom:16,background:t.accent+"0e",border:`1px solid ${t.accent}33`}}>
-      <p style={{fontSize:12,color:t.accent,fontWeight:700,marginBottom:10}}>⏱️ TIMER PRO FRAGE</p>
-      <div style={{display:"flex",gap:10}}>
-        {[15,30,60].map(s=>(
-          <button key={s} onClick={()=>setTimerSecs(s)} style={{flex:1,padding:"12px 6px",borderRadius:t.radius,background:timerSecs===s?t.accent:t.surface,border:`2px solid ${timerSecs===s?t.accent:t.border}`,color:timerSecs===s?"#fff":t.muted,fontWeight:700,fontSize:16,cursor:"pointer",transition:"all .2s",fontFamily:t.fontMono}}>
-            {s}s
+    {/* ── Speed ── */}
+    <div style={{marginTop:14,marginBottom:10}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>
+        ⚡ SPEED-MODUS
+      </p>
+      <div style={{display:"flex",gap:8,marginBottom:speedMode?8:0}}>
+        {[{v:false,label:"🐢 Kein Timer"},{v:true,label:"⚡ Speed!"}].map(o=>(
+          <button key={String(o.v)} onClick={()=>setSpeedMode(o.v)}
+            style={{flex:1,padding:"10px 6px",borderRadius:t.radius,
+              background:speedMode===o.v?t.accent+"22":t.surface,
+              border:`2px solid ${speedMode===o.v?t.accent:t.border}`,
+              color:speedMode===o.v?t.accent:t.muted,
+              fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody}}>
+            {o.label}
           </button>
         ))}
       </div>
-    </Card>}
-
-    {/* Jokers */}
-    <div style={{marginTop:8,marginBottom:8}}><Pill t={t} color={t.gold}>🃏 JOKER</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?26:32,marginBottom:6}}>Mit Jokern spielen?</h2>
-    <p style={{color:t.muted,fontSize:13,marginBottom:14}}>Joker werden durch gutes Spielen verdient.</p>
-    <div style={{display:"flex",gap:10,marginBottom:14}}>
-      {[{v:false,label:"🚫 Ohne Joker"},{v:true,label:"🃏 Mit Jokern"}].map(o=>(
-        <button key={String(o.v)} onClick={()=>setWithJokers(o.v)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:withJokers===o.v?t.gold+"22":t.surface,border:`2px solid ${withJokers===o.v?t.gold:t.border}`,color:withJokers===o.v?t.gold:t.muted,fontWeight:700,fontSize:14,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody}}>
-          {o.label}
-        </button>
-      ))}
+      {speedMode&&<div style={{display:"flex",gap:8}}>
+        {[15,30,60].map(s=>(
+          <button key={s} onClick={()=>setTimerSecs(s)}
+            style={{flex:1,padding:"9px 6px",borderRadius:t.radius,
+              background:timerSecs===s?t.accent:t.surface,
+              border:`2px solid ${timerSecs===s?t.accent:t.border}`,
+              color:timerSecs===s?"#fff":t.muted,
+              fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:t.fontMono}}>
+            {s}s
+          </button>
+        ))}
+      </div>}
     </div>
-    {withJokers&&<>
-      <p style={{fontSize:12,color:t.muted,marginBottom:12,fontWeight:700,letterSpacing:.5}}>JOKER AUSWÄHLEN (max. 3 aktiv)</p>
-      <div style={col}>
+
+    {/* ── Divider ── */}
+    <div style={{height:1,background:t.border,margin:"4px 0 10px"}}/>
+
+    {/* ── Joker ── */}
+    <div style={{marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8}}>
+          🃏 JOKER
+        </p>
+        <div style={{display:"flex",gap:8}}>
+          {[{v:false,label:"Aus"},{v:true,label:"An"}].map(o=>(
+            <button key={String(o.v)} onClick={()=>setWithJokers(o.v)}
+              style={{padding:"5px 14px",borderRadius:t.radius,
+                background:withJokers===o.v?t.gold+"22":t.surface,
+                border:`1.5px solid ${withJokers===o.v?t.gold:t.border}`,
+                color:withJokers===o.v?t.gold:t.muted,
+                fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {withJokers&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
         {Object.values(JOKER_DEFS).map(jk=>{
           const on=enabled.includes(jk.id);
           const atMax=enabled.length>=3&&!on;
-          return <div key={jk.id} onClick={()=>!atMax&&toggle(jk.id)} style={{...row,padding:"13px 16px",borderRadius:t.radius,cursor:atMax?"not-allowed":"pointer",background:on?t.gold+"18":t.surface,border:`2px solid ${on?t.gold:t.border}`,opacity:atMax?.45:1,transition:"all .15s"}}>
-            <span style={{fontSize:22,minWidth:32}}>{jk.icon}</span>
+          return <div key={jk.id} onClick={()=>!atMax&&toggle(jk.id)}
+            style={{display:"flex",alignItems:"center",gap:10,
+              padding:"8px 12px",borderRadius:t.radius,cursor:atMax?"not-allowed":"pointer",
+              background:on?t.gold+"18":t.surface,
+              border:`1.5px solid ${on?t.gold:t.border}`,
+              opacity:atMax?.4:1,transition:"all .15s"}}>
+            <span style={{fontSize:16}}>{jk.icon}</span>
             <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:14}}>{jk.name}</div>
-              <div style={{fontSize:12,color:t.muted,marginTop:2}}>{jk.desc}</div>
+              <div style={{fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{jk.name}</div>
+              <div style={{fontSize:10,color:t.muted}}>{jk.desc}</div>
             </div>
-            <div style={{width:22,height:22,borderRadius:4,background:on?t.gold:t.surface,border:`2px solid ${on?t.gold:t.border}`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,flexShrink:0}}>
+            <div style={{width:18,height:18,borderRadius:4,
+              background:on?t.gold:t.surface,
+              border:`1.5px solid ${on?t.gold:t.border}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#fff",fontSize:11,flexShrink:0}}>
               {on?"✓":""}
             </div>
           </div>;
         })}
-      </div>
-      <Card t={t} style={{marginTop:14,background:t.gold+"10",border:`1px solid ${t.gold}33`}}>
-        <p style={{fontSize:12,color:t.gold,fontWeight:700,marginBottom:6}}>🎁 Wie bekommt man Joker?</p>
-        <div style={{fontSize:12,color:t.muted,lineHeight:1.7}}>
-          🎯 Punktlandung → Joker garantiert<br/>
-          🥇 Nächster dran → 25% Chance<br/>
-          🎲 Richtige Wette → 25% Chance<br/>
-          💀 3× hintereinander Letzter → Trost-Joker
+        <div style={{padding:"8px 10px",borderRadius:t.radius,
+          background:t.gold+"10",border:`1px solid ${t.gold}22`,
+          fontSize:10,color:t.muted,lineHeight:1.6}}>
+          🎯 Punktlandung → Joker · 🥇 Nächster (25%) · 🎲 Wette (25%) · 💀 3× Letzter → Trost
         </div>
-      </Card>
-    </>}
-    {/* Debug Mode Toggle */}
-    <div style={{marginTop:16,padding:"12px 14px",borderRadius:t.radius,background:t.surface,border:`1.5px dashed ${t.border}`}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div>
-          <div style={{fontSize:13,fontWeight:700,color:t.muted}}>🛠️ Debug-Modus</div>
-          <div style={{fontSize:11,color:t.muted,marginTop:2}}>Joker manuell aufladen während des Spiels</div>
-        </div>
-        <button onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} style={{padding:"7px 16px",borderRadius:t.radius,background:debugModeLocal?t.accent:t.surface,border:`2px solid ${debugModeLocal?t.accent:t.border}`,color:debugModeLocal?"#fff":t.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody,transition:"all .2s"}}>
-          {debugModeLocal?"AN":"AUS"}
-        </button>
-      </div>
+      </div>}
     </div>
-    <div style={{marginTop:14}}>
-      <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs)}>
-        Weiter →
-      </Btn>
+
+    {/* ── Divider ── */}
+    <div style={{height:1,background:t.border,margin:"4px 0 10px"}}/>
+
+    {/* ── Debug ── */}
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <p style={{fontSize:11,color:t.muted}}>🛠️ Debug-Modus</p>
+      <button onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}}
+        style={{padding:"5px 14px",borderRadius:t.radius,
+          background:debugModeLocal?t.accent+"22":t.surface,
+          border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
+          color:debugModeLocal?t.accent:t.muted,
+          fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
+        {debugModeLocal?"AN":"AUS"}
+      </button>
     </div>
+
+    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs)}>
+      Weiter →
+    </Btn>
   </div>;
 }
 
 /* ─── CATEGORY SELECTION ─────────────────────────── */
 function CategoryScreen({mode,onStart,t}){
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
-  const freeKey="🎯 Gratis-Test";
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
   const[selected,setSelected]=useState(allCats);
   function toggle(c,locked){
-    if(locked) return;
+    if(locked)return;
     setSelected(prev=>prev.includes(c)?prev.filter(x=>x!==c):[...prev,c]);
   }
   const allSelected=allCats.every(c=>selected.includes(c));
-  return <div style={{...page,animation:"fu .3s ease both"}}>
+
+  return <div style={{
+    minHeight:"100vh",display:"flex",flexDirection:"column",
+    maxWidth:520,margin:"0 auto",padding:"12px 16px 90px",
+    background:t.bg,
+  }}>
     <Logo t={t} size="sm"/>
-    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>KATEGORIEN WÄHLEN</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:6}}>Was wollt ihr spielen?</h2>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-      <p style={{color:t.muted,fontSize:14}}>Wähle mindestens eine Kategorie</p>
-      <button onClick={()=>setSelected(allSelected?[]:allCats)} style={{padding:"6px 14px",borderRadius:t.radius,background:allSelected?t.accent+"18":t.surface,border:`1.5px solid ${allSelected?t.accent:t.border}`,color:allSelected?t.accent:t.muted,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody,whiteSpace:"nowrap"}}>
+
+    {/* Header row */}
+    <div style={{display:"flex",alignItems:"center",
+      justifyContent:"space-between",margin:"12px 0 10px"}}>
+      <div>
+        <p style={{fontSize:15,fontWeight:800}}>Kategorien</p>
+        <p style={{fontSize:12,color:t.muted}}>{selected.length} von {allCats.length} gewählt</p>
+      </div>
+      <button onClick={()=>setSelected(allSelected?[]:allCats)}
+        style={{padding:"7px 14px",borderRadius:t.radius,
+          background:allSelected?t.accent+"18":t.surface,
+          border:`1.5px solid ${allSelected?t.accent:t.border}`,
+          color:allSelected?t.accent:t.muted,
+          fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
         {allSelected?"✗ Alle aus":"✓ Alle an"}
       </button>
     </div>
-    <div style={{...col,marginBottom:18}}>
+
+    {/* Category list – compact */}
+    <div style={{display:"flex",flexDirection:"column",gap:5,flex:1}}>
       {catMeta.map(({name,count,locked})=>{
-        const isFree=name===freeKey;
         const sel=selected.includes(name);
-        return <div key={name} onClick={()=>toggle(name,locked)} style={{...row,padding:"13px 16px",borderRadius:t.radius,cursor:locked?"not-allowed":"pointer",background:locked?t.surface:sel?t.accent+"18":t.surface,border:`2px solid ${locked?t.border:sel?t.accent:t.border}`,opacity:locked?0.5:1,transition:"all .15s"}}>
-          <div style={{fontSize:22,minWidth:32}}>{locked?"🔒":sel?"✅":"⬜"}</div>
+        const isFree=name==="🎯 Gratis-Test";
+        return <div key={name} onClick={()=>toggle(name,locked)}
+          style={{display:"flex",alignItems:"center",gap:10,
+            padding:"9px 12px",borderRadius:t.radius,
+            cursor:locked?"not-allowed":"pointer",
+            background:locked?t.surface:sel?t.accent+"18":t.surface,
+            border:`1.5px solid ${locked?t.border:sel?t.accent:t.border}`,
+            opacity:locked?.5:1,transition:"all .15s"}}>
+          <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>
+            {locked?"🔒":sel?"✅":"⬜"}
+          </span>
           <div style={{flex:1}}>
-            <div style={{fontWeight:700,fontSize:15}}>{name}</div>
-            {isFree&&<div style={{fontSize:12,color:t.green,fontWeight:700,marginTop:2}}>✓ Kostenlos – perfekt zum Testen!</div>}
-            {locked&&<div style={{fontSize:12,color:t.muted,fontWeight:700,marginTop:2}}>🔒 Kommt bald – kostenpflichtiges Paket</div>}
-            <div style={{fontSize:12,color:t.muted,marginTop:1}}>{count} Fragen</div>
+            <div style={{fontWeight:600,fontSize:13}}>{name}</div>
+            {isFree&&<div style={{fontSize:10,color:t.green,fontWeight:700}}>Kostenlos</div>}
+            {locked&&<div style={{fontSize:10,color:t.muted}}>Kommt bald</div>}
           </div>
+          <span style={{fontSize:11,color:t.muted,fontFamily:t.fontMono}}>{count}</span>
         </div>;
       })}
     </div>
-    <Btn t={t} full disabled={selected.length===0} onClick={()=>onStart(selected)}>
-      Spiel starten ({selected.length} {selected.length===1?"Kategorie":"Kategorien"}) →
-    </Btn>
+
+    {/* Fixed bottom button */}
+    <div style={{position:"fixed",bottom:0,left:"50%",
+      transform:"translateX(-50%)",width:"100%",maxWidth:520,
+      padding:"10px 16px",background:t.bg+"ee",
+      borderTop:`1px solid ${t.border}`,backdropFilter:"blur(8px)",zIndex:50}}>
+      <Btn t={t} full disabled={selected.length===0}
+        onClick={()=>onStart(selected)}>
+        {selected.length===0?"Wähle eine Kategorie":
+         `Starten mit ${selected.length} ${selected.length===1?"Kategorie":"Kategorien"} →`}
+      </Btn>
+    </div>
   </div>;
 }
 
