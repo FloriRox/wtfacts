@@ -215,13 +215,41 @@ const UI = {
 };
 
 /* ─── JOKER DEFINITIONS ───────────────────────────── */
+const JOKER_NAMES = {
+  de: {
+    skip:{name:"Frage überspringen",desc:"Sofort! Eine neue Frage wird gezogen."},
+    hint:{name:"Hinweis aufdecken", desc:"Zeigt den Hinweis zur Frage an."},
+    double:{name:"Doppelte Punkte", desc:"Alle Punkte dieser Runde ×2."},
+    sabotage:{name:"Sabotage",      desc:"Tipp eines Mitspielers heimlich verschieben."},
+    change:{name:"Tipp ändern",     desc:"Eigenen Tipp einmal korrigieren."},
+    extra:{name:"50/50",            desc:"Antwort größer oder kleiner als X?"},
+  },
+  en: {
+    skip:{name:"Skip Question",   desc:"Instantly draw a new question."},
+    hint:{name:"Reveal Hint",     desc:"Shows the hint for this question."},
+    double:{name:"Double Points", desc:"All points this round ×2."},
+    sabotage:{name:"Sabotage",    desc:"Secretly shift a teammate's guess by 30–80%."},
+    change:{name:"Change Guess",  desc:"Correct your own guess once."},
+    extra:{name:"50/50",          desc:"Is the answer higher or lower than X?"},
+  },
+  es: {
+    skip:{name:"Saltar pregunta", desc:"¡Instantáneo! Se sortea una nueva pregunta."},
+    hint:{name:"Revelar pista",   desc:"Muestra la pista de esta pregunta."},
+    double:{name:"Puntos dobles", desc:"Todos los puntos de esta ronda ×2."},
+    sabotage:{name:"Sabotaje",    desc:"Desplaza secretamente la respuesta de alguien."},
+    change:{name:"Cambiar respuesta", desc:"Corrige tu propia respuesta una vez."},
+    extra:{name:"50/50",          desc:"¿La respuesta es mayor o menor que X?"},
+  },
+};
+function getJokerDef(id, lang) {
+  const icons = {skip:"⏭️",hint:"🔍",double:"🎯",sabotage:"💣",change:"🔄",extra:"📊"};
+  const names = (JOKER_NAMES[lang]||JOKER_NAMES.de)[id]||{name:id,desc:""};
+  return {id, icon:icons[id]||"🃏", ...names};
+}
+// JOKER_DEFS kept for non-UI uses (enabledJokers array etc.)
 const JOKER_DEFS = {
-  skip:     { id:"skip",     icon:"⏭️", name:"Frage überspringen", desc:"Sofort! Eine neue Frage wird gezogen – kein Voting nötig." },
-  hint:     { id:"hint",     icon:"🔍", name:"Hinweis aufdecken",  desc:"Zeigt den Hinweis sofort an." },
-  double:   { id:"double",   icon:"🎯", name:"Doppelte Punkte",    desc:"Diese Runde zählen alle Punkte doppelt." },
-  sabotage: { id:"sabotage", icon:"💣", name:"Sabotage",           desc:"Verschiebe den Tipp eines Mitspielers heimlich um 30–80%. Der Gegner merkt nichts – bis zur Auflösung!" },
-  change:   { id:"change",   icon:"🔄", name:"Tipp ändern",        desc:"Darf nach Abgabe einmal den Tipp korrigieren." },
-  extra:    { id:"extra",    icon:"📊", name:"50/50",              desc:"Zeigt ob die richtige Antwort größer oder kleiner als eine zufällige Zahl in der Nähe ist." },
+  skip:{id:"skip"},hint:{id:"hint"},double:{id:"double"},
+  sabotage:{id:"sabotage"},change:{id:"change"},extra:{id:"extra"},
 };
 
 /* ─── QUESTIONS ───────────────────────────────────── */
@@ -1079,7 +1107,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>SPIELMODUS</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.gameMode}</p>
       <div style={{display:"flex",gap:10}}>
         {[{id:"adult",icon:"🔥",label:i.adultMode,sub:i.adultSub},{id:"kids",icon:"🌈",label:i.kidsMode,sub:i.kidsSub}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
@@ -1173,7 +1201,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
       </div>
 
       {withJokers&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
-        {Object.values(JOKER_DEFS).map(jk=>{
+        {Object.keys(JOKER_DEFS).map(id=>{ const jk=getJokerDef(id,lang);
           const on=enabled.includes(jk.id);
           const atMax=enabled.length>=3&&!on;
           return <div key={jk.id} onClick={()=>!atMax&&toggle(jk.id)}
@@ -1511,7 +1539,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
         </p>
         <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>JOKER AUFLADEN</p>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-          {Object.values(JOKER_DEFS).map(jk=>(
+          {Object.keys(JOKER_DEFS).map(id=>{ const jk=getJokerDef(id,"de"); return(
             <button key={jk.id} onClick={async()=>{
               const cur=(room.jokers||{})[myId]||[];
               await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
@@ -1519,7 +1547,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
               border:`1px solid ${t.border}`,color:t.text,fontSize:11,
               fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
               {jk.icon}+
-            </button>
+            </button>)
           ))}
           <button onClick={async()=>{
             await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
