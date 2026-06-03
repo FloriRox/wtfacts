@@ -78,6 +78,148 @@ const KIDS = {
   radius:"20px", emoji:"🌈",
 };
 
+/* ─── UI TRANSLATIONS ────────────────────────────── */
+const UI = {
+  de: {
+    createRoom: i.createRoom, join: "Beitreten", back: "← Zurück",
+    yourName: i.yourName, roomCode: i.roomCode,
+    searching: i.searching, roomNotFound: i.roomNotFound,
+    gameRunning: i.gameRunning, roomFull: i.roomFull,
+    enterName: i.enterName, enterCode: i.enterCode,
+    waitingHost: i.waitingHost,
+    players: "SPIELER", inviteQr: i.inviteQr, scanJoin: i.scanJoin,
+    continueBtn: "Weiter →", startGame: "Spiel starten",
+    categories: i.categories, minOne: i.minOne,
+    allOn: i.allOn, allOff: i.allOff, selected: "von",
+    question: "FRAGE", reveal: i.reveal, waitReveal: "Warte auf Auflösung...",
+    yourTip: i.yourTip, changeTip: i.changeTip, tipIn: "Antwort in",
+    tipSubmitted: i.tipSubmitted, waitingAll: i.waitingAll,
+    haveTipped: "haben getippt", discuss: i.discuss,
+    betting: i.betting, whoClosest: i.whoClosest,
+    betCorrect: "+1 Punkt extra", betSet: i.betSet,
+    waitRevealBet: "Warte auf Auflösung...", closestLabel: i.closestLabel,
+    farthestLabel: i.farthestLabel, submitBet: i.submitBet,
+    twoPlayers: i.twoPlayers,
+    roundScores: i.roundScores, bets: i.betting,
+    totalScore: i.totalScore, nextQ: i.nextQ,
+    endGame: i.endGame, waitNext: i.waitingHost,
+    finalStand: i.finalStand, stats: i.stats,
+    shareBtn: i.shareBtn, playAgain: i.playAgain,
+    afkAway: i.afkAway, afkBack: i.afkBack,
+    jokerWon: "Joker gewonnen!", jokers: "JOKER", jokerUsed: "diese Runde verbraucht",
+    speedMode: i.speedMode, noTimer: i.noTimer, speed: i.speed,
+    jokerSection: i.jokerSection, jokerOn: "An", jokerOff: "Aus",
+    jokerHowTitle: "🎁 Wie bekommt man Joker?", jokerHowText: "🎯 Punktlandung → Joker · 🥇 Nächster (25%) · 🎲 Wette (25%) · 💀 3× Letzter → Trost",
+    debugMode: i.debugMode, soundLabel: i.soundLabel,
+    sabotageWho: i.sabotageWho, sabotageBtn: i.sabotageBtn,
+    cancelBtn: "Abbrechen", betKing: i.betKing, bestGuesser: i.bestGuesser,
+    worstGuesser: i.worstGuesser, exactHits: i.exactHits,
+    jokerKing: i.jokerKing, sabotageKing: i.sabotageKing,
+    sabotaged: "{i.sabotaged}", tooSlow: i.tooSlow,
+    globalRank: (p) => `🌍 Du bist besser als ${p}% aller Spieler weltweit`,
+    wins: (name, pts) => `${name} gewinnt mit ${pts} Punkten! 🎊`,
+    roundsPlayed: "Runden gespielt", lobbyWaiting: i.lobbyWaiting,
+    hostLabel: "HOST", youLabel: "DU", startBtn: "Weiter →",
+    adultMode: i.adultMode, kidsMode: i.kidsMode, adultSub: i.adultSub, kidsSub: i.kidsSub,
+    gameMode: i.gameMode, freeSample: "✓ Kostenlos – perfekt zum Testen!",
+    comingSoon: i.comingSoon, questions: "Fragen",
+    startWith: (n, s) => `Starten mit ${n} ${s === 1 ? "Kategorie" : i.categories} →`,
+    chooseMin: "Wähle eine Kategorie",
+  },
+  en: {
+    createRoom: "Create Room", join: "Join", back: "← Back",
+    yourName: "Your Name", roomCode: "Room Code (e.g. AB3XY)",
+    searching: "Searching...", roomNotFound: "Room not found.",
+    gameRunning: "Game already running.", roomFull: "Room full (max. 50 players).",
+    enterName: "Please enter your name.", enterCode: "Please enter a room code.",
+    waitingHost: "Waiting for the host 🙂",
+    players: "PLAYERS", inviteQr: "INVITE QR", scanJoin: "Scan to join",
+    continueBtn: "Continue →", startGame: "Start game",
+    categories: "Categories", minOne: "Choose at least one category",
+    allOn: "✓ Select all", allOff: "✗ Deselect all", selected: "of",
+    question: "QUESTION", reveal: "REVEAL", waitReveal: "Waiting for reveal...",
+    yourTip: "YOUR GUESS", changeTip: "🔄 CHANGE GUESS", tipIn: "Answer in",
+    tipSubmitted: "✓ Guess submitted!", waitingAll: "Waiting for all...",
+    haveTipped: "have guessed", discuss: "💬 Guess first, then discuss!",
+    betting: "BETTING", whoClosest: "Who's closest?",
+    betCorrect: "+1 bonus point", betSet: "Bet placed!",
+    waitRevealBet: "Waiting for reveal...", closestLabel: "🎯 CLOSEST guess",
+    farthestLabel: "💀 FARTHEST off", submitBet: "Place bet 🎲",
+    twoPlayers: "With 2 players one choice is enough 👆",
+    roundScores: "ROUND GUESSES", bets: "BETS",
+    totalScore: "TOTAL SCORE", nextQ: "Next Question →",
+    endGame: "End Game", waitNext: "Waiting for the host 🙂",
+    finalStand: "FINAL STANDINGS", stats: "STATISTICS",
+    shareBtn: "📤 Share / save result", playAgain: "🔄 Play again!",
+    afkAway: "⏸️ Taking a break", afkBack: "▶️ I'm back!",
+    jokerWon: "Joker won!", jokers: "JOKERS", jokerUsed: "used this round",
+    speedMode: "⚡ SPEED MODE", noTimer: "🐢 No Timer", speed: i.speed,
+    jokerSection: "🃏 JOKERS", jokerOn: "On", jokerOff: "Off",
+    jokerHowTitle: "🎁 How to earn jokers?", jokerHowText: "🎯 Exact hit → Joker · 🥇 Closest (25%) · 🎲 Correct bet (25%) · 💀 3× Last → Consolation",
+    debugMode: "🛠️ Debug Mode", soundLabel: i.soundLabel,
+    sabotageWho: "💣 Who to sabotage?", sabotageBtn: "💣 Sabotage!",
+    cancelBtn: "Cancel", betKing: "Bet King", bestGuesser: "Best Guesser",
+    worstGuesser: "Worst Guesser", exactHits: "Exact Hits",
+    jokerKing: "Joker King", sabotageKing: "Sabotage King",
+    sabotaged: "💣 sabotaged by", tooSlow: "Too slow!",
+    globalRank: (p) => `🌍 You're better than ${p}% of all players worldwide`,
+    wins: (name, pts) => `${name} wins with ${pts} points! 🎊`,
+    roundsPlayed: "rounds played", lobbyWaiting: "Waiting for players",
+    hostLabel: "HOST", youLabel: "YOU", startBtn: "Continue →",
+    adultMode: "Adults", kidsMode: "Kids", adultSub: "Funny · edgy", kidsSub: "Colorful · safe",
+    gameMode: "GAME MODE", freeSample: "✓ Free – great for testing!",
+    comingSoon: "Coming soon", questions: "Questions",
+    startWith: (n, s) => `Start with ${n} ${s === 1 ? "category" : "categories"} →`,
+    chooseMin: "Choose a category",
+  },
+  es: {
+    createRoom: "Crear sala", join: "Unirse", back: "← Volver",
+    yourName: "Tu nombre", roomCode: "Código de sala (ej. AB3XY)",
+    searching: "Buscando...", roomNotFound: "Sala no encontrada.",
+    gameRunning: "El juego ya está en curso.", roomFull: "Sala llena (máx. 50 jugadores).",
+    enterName: "Por favor ingresa tu nombre.", enterCode: "Por favor ingresa un código de sala.",
+    waitingHost: "Esperando al anfitrión 🙂",
+    players: "JUGADORES", inviteQr: "QR DE INVITACIÓN", scanJoin: "Escanear para unirse",
+    continueBtn: "Continuar →", startGame: "Iniciar juego",
+    categories: "Categorías", minOne: "Elige al menos una categoría",
+    allOn: "✓ Todas", allOff: "✗ Ninguna", selected: "de",
+    question: "PREGUNTA", reveal: "RESPUESTA", waitReveal: "Esperando revelación...",
+    yourTip: "TU RESPUESTA", changeTip: "🔄 CAMBIAR RESPUESTA", tipIn: "Respuesta en",
+    tipSubmitted: "✓ ¡Respuesta enviada!", waitingAll: "Esperando a todos...",
+    haveTipped: "han respondido", discuss: "💬 ¡Responde primero, luego discute!",
+    betting: "APUESTAS", whoClosest: "¿Quién se acerca más?",
+    betCorrect: "+1 punto extra", betSet: "¡Apuesta hecha!",
+    waitRevealBet: "Esperando revelación...", closestLabel: "🎯 MÁS CERCA",
+    farthestLabel: "💀 MÁS LEJOS", submitBet: "Apostar 🎲",
+    twoPlayers: "Con 2 jugadores una elección es suficiente 👆",
+    roundScores: "RESPUESTAS DE LA RONDA", bets: "APUESTAS",
+    totalScore: "PUNTUACIÓN TOTAL", nextQ: "Siguiente pregunta →",
+    endGame: "Terminar", waitNext: "Esperando al anfitrión 🙂",
+    finalStand: "CLASIFICACIÓN FINAL", stats: "ESTADÍSTICAS",
+    shareBtn: "📤 Compartir / guardar resultado", playAgain: "🔄 ¡Jugar de nuevo!",
+    afkAway: "⏸️ Un momento", afkBack: "▶️ ¡Ya estoy!",
+    jokerWon: "¡Comodín ganado!", jokers: "COMODINES", jokerUsed: "usado esta ronda",
+    speedMode: "⚡ MODO RÁPIDO", noTimer: "🐢 Sin tiempo", speed: "⚡ ¡Rápido!",
+    jokerSection: "🃏 COMODINES", jokerOn: "Sí", jokerOff: "No",
+    jokerHowTitle: "🎁 ¿Cómo ganar comodines?", jokerHowText: "🎯 Acierto exacto → Comodín · 🥇 Más cerca (25%) · 🎲 Apuesta (25%) · 💀 3× Último → Consuelo",
+    debugMode: "🛠️ Modo Debug", soundLabel: "🔊 Sonido",
+    sabotageWho: "💣 ¿A quién sabotear?", sabotageBtn: "💣 ¡Sabotear!",
+    cancelBtn: "Cancelar", betKing: "Rey de apuestas", bestGuesser: "Mejor estimador",
+    worstGuesser: "Peor estimador", exactHits: "Aciertos exactos",
+    jokerKing: "Rey de comodines", sabotageKing: "Rey del sabotaje",
+    sabotaged: "💣 saboteado por", tooSlow: "¡Demasiado lento!",
+    globalRank: (p) => `🌍 Eres mejor que el ${p}% de todos los jugadores`,
+    wins: (name, pts) => `¡${name} gana con ${pts} puntos! 🎊`,
+    roundsPlayed: "rondas jugadas", lobbyWaiting: "Esperando jugadores",
+    hostLabel: "ANFITRIÓN", youLabel: "TÚ", startBtn: "Continuar →",
+    adultMode: "Adultos", kidsMode: "Niños", adultSub: "Divertido · atrevido", kidsSub: "Colorido · seguro",
+    gameMode: "MODO DE JUEGO", freeSample: "✓ Gratis – ¡perfecto para probar!",
+    comingSoon: "Próximamente", questions: "Preguntas",
+    startWith: (n, s) => `Empezar con ${n} ${s === 1 ? "categoría" : "categorías"} →`,
+    chooseMin: "Elige una categoría",
+  },
+};
+
 /* ─── JOKER DEFINITIONS ───────────────────────────── */
 const JOKER_DEFS = {
   skip:     { id:"skip",     icon:"⏭️", name:"Frage überspringen", desc:"Sofort! Eine neue Frage wird gezogen – kein Voting nötig." },
@@ -668,7 +810,8 @@ function QRCode({url,t}){
 }
 
 /* ─── JOKER BAR (shown during question) ──────────────── */
-function JokerBar({room, myId, code, t, onSkip}){
+function JokerBar({room, myId, code, t, onSkip, lang}){
+  const i=UI[lang]||UI.de;
   const [flash,setFlash] = useState(null); // joker type currently flashing
   const myJokers   = (room.jokers||{})[myId]||[];
   const enabled    = room.enabledJokers||[];
@@ -873,6 +1016,7 @@ function JokerBar({room, myId, code, t, onSkip}){
 
 /* ─── HOME ────────────────────────────────────────── */
 function HomeScreen({onHost,onJoin,lang,onSetLang}){
+  const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":"landing");
   const[name,setName]=useState("");
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
@@ -883,18 +1027,18 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
   useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
 
   async function submit(){
-    if(!name.trim()){setError("Bitte gib deinen Namen ein.");return;}
+    if(!name.trim()){setError(i.enterName);return;}
     setError("");
     if(tab==="host"){onHost(name.trim(),mode);}
     else{
       const c=code.trim().toUpperCase();
-      if(!c){setError("Bitte gib einen Raumcode ein.");return;}
+      if(!c){setError(i.enterCode);return;}
       setBusy(true);
       const room=await dbGet(c);
       setBusy(false);
-      if(!room){setError("Raum nicht gefunden.");return;}
-      if(room.phase!=="lobby"){setError("Das Spiel läuft bereits.");return;}
-      if((room.order||[]).length>=50){setError("Raum voll (max. 50 Spieler).");return;}
+      if(!room){setError(i.roomNotFound);return;}
+      if(room.phase!=="lobby"){setError(i.gameRunning);return;}
+      if((room.order||[]).length>=50){setError(i.roomFull);return;}
       onJoin(c,name.trim(),room.mode,room.lang||"de");
     }
   }
@@ -936,7 +1080,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>SPIELMODUS</p>
       <div style={{display:"flex",gap:10}}>
-        {[{id:"adult",icon:"🔥",label:"Erwachsene",sub:"Witzig · obszön"},{id:"kids",icon:"🌈",label:"Kinder",sub:"Bunt · sicher"}].map(m=>(
+        {[{id:"adult",icon:"🔥",label:i.adultMode,sub:i.adultSub},{id:"kids",icon:"🌈",label:i.kidsMode,sub:i.kidsSub}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
             <div style={{fontSize:22}}>{m.icon}</div>
             <div style={{fontWeight:800,fontSize:13,marginTop:3}}>{m.label}</div>
@@ -947,17 +1091,18 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
     </Card>}
     <Card t={t}>
       <div style={col}>
-        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Dein Name 😊":"Dein Name"} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder="Raumcode (z.B. AB3XY)" t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Dein Name 😊":i.yourName} t={t} autoFocus/>
+        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder=i.roomCode t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
-        <Btn t={t} onClick={submit} disabled={busy} full>{busy?"Suche Raum...":tab==="host"?`${t.emoji} Raum erstellen`:"Beitreten →"}</Btn>
+        <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} Raum erstellen`:{i.join+" →"}}</Btn>
       </div>
     </Card>
   </div>;
 }
 
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
-function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit}){
+function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang}){
+  const i=UI[lang]||UI.de;
   const[withJokers,setWithJokers]=useState(false);
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
@@ -978,7 +1123,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit}){
         ⚡ SPEED-MODUS
       </p>
       <div style={{display:"flex",gap:8,marginBottom:speedMode?8:0}}>
-        {[{v:false,label:"🐢 Kein Timer"},{v:true,label:"⚡ Speed!"}].map(o=>(
+        {[{v:false,label:i.noTimer},{v:true,label:i.speed}].map(o=>(
           <button key={String(o.v)} onClick={()=>setSpeedMode(o.v)}
             style={{flex:1,padding:"10px 6px",borderRadius:t.radius,
               background:speedMode===o.v?t.accent+"22":t.surface,
@@ -1081,7 +1226,8 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit}){
 }
 
 /* ─── CATEGORY SELECTION ─────────────────────────── */
-function CategoryScreen({mode,onStart,t}){
+function CategoryScreen({mode,onStart,t,lang}){
+  const i=UI[lang]||UI.de;
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
   const[selected,setSelected]=useState(allCats);
@@ -1111,7 +1257,7 @@ function CategoryScreen({mode,onStart,t}){
           border:`1.5px solid ${allSelected?t.accent:t.border}`,
           color:allSelected?t.accent:t.muted,
           fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
-        {allSelected?"✗ Alle aus":"✓ Alle an"}
+        {allSelected?i.allOff:i.allOn}
       </button>
     </div>
 
@@ -1148,14 +1294,15 @@ function CategoryScreen({mode,onStart,t}){
       <Btn t={t} full disabled={selected.length===0}
         onClick={()=>onStart(selected)}>
         {selected.length===0?"Wähle eine Kategorie":
-         `Starten mit ${selected.length} ${selected.length===1?"Kategorie":"Kategorien"} →`}
+         `Starten mit ${selected.length} ${selected.length===1?"Kategorie":i.categories} →`}
       </Btn>
     </div>
   </div>;
 }
 
 /* ─── LOBBY ───────────────────────────────────────── */
-function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
+function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
+  const i=UI[lang]||UI.de;
   const[copied,setCopied]=useState(false);
   const isHost=room.hostId===myId;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
@@ -1176,8 +1323,8 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
             <Avatar name={p.name} t={t}/>
             <span style={{flex:1,fontWeight:600}}>{p.name}</span>
-            {p.id===room.hostId&&<Pill t={t} color={t.gold}>HOST</Pill>}
-            {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>DU</Pill>}
+            {p.id===room.hostId&&<Pill t={t} color={t.gold}>{i.hostLabel}</Pill>}
+            {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>{i.youLabel}</Pill>}
           </div>
         ))}
       </div>
@@ -1190,7 +1337,8 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup}){
 }
 
 /* ─── QUESTION ────────────────────────────────────── */
-function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
+function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
+  const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
@@ -1250,7 +1398,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
 
     {/* ── TOP BAR ── */}
     <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Frage ${(room.qIdx||0)+1}`:`FRAGE ${(room.qIdx||0)+1}`}</Pill>
+      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Frage ${(room.qIdx||0)+1}`:{i.question+" "+((room.qIdx||0)+1)}}</Pill>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>2× PUNKTE</Pill>}
         {/* Player chips inline */}
@@ -1322,7 +1470,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
         ?<Card t={t}>
           <p style={{fontSize:11,fontWeight:700,color:t.muted,
             letterSpacing:.6,marginBottom:8}}>
-            {changeAllowed?"🔄 TIPP ÄNDERN":"DEIN TIPP"} ({q.unit})
+            {changeAllowed?i.changeTip:i.yourTip} ({q.unit})
           </p>
           <div style={{display:"flex",gap:8}}>
             <Inp type="number" value={val} onChange={setVal}
@@ -1352,7 +1500,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
 
       {/* ── JOKER BAR (collapsed until tapped) ── */}
       {room.enabledJokers?.length>0&&
-        <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip}/>}
+        <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
 
       {/* ── DEBUG PANEL ── */}
       {debugMode&&<div style={{padding:"12px",borderRadius:t.radius,
@@ -1422,7 +1570,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
         fontSize:14,fontWeight:700,cursor:"pointer",
         fontFamily:t.fontBody,transition:"all .2s",
       }}>
-        {isAfkMe?"▶️ Ich bin wieder da!":"⏸️ Kurz weg"}
+        {isAfkMe?i.afkBack:i.afkAway}
       </button>
     </div>
   </div>;
@@ -1430,7 +1578,8 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
 
 
 /* ─── BETTING ─────────────────────────────────────── */
-function BettingScreen({room,myId,t,onBet,code}){
+function BettingScreen({room,myId,t,onBet,code,lang}){
+  const i=UI[lang]||UI.de;
   const[closest,setClosest]=useState("");
   const[farthest,setFarthest]=useState("");
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
@@ -1453,8 +1602,8 @@ function BettingScreen({room,myId,t,onBet,code}){
     {myBet
       ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
       :<>
-        <RG label="🎯 AM NÄCHSTEN dran" color={t.green} val={closest} setVal={setClosest}/>
-        {!soloOther&&<RG label="💀 AM WEITESTEN daneben" color={t.danger} val={farthest} setVal={setFarthest}/>}
+        <RG label=i.closestLabel color={t.green} val={closest} setVal={setClosest}/>
+        {!soloOther&&<RG label=i.farthestLabel color={t.danger} val={farthest} setVal={setFarthest}/>}
         {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
         <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
       </>}
@@ -1468,14 +1617,15 @@ function BettingScreen({room,myId,t,onBet,code}){
         border:`1.5px solid ${(room.afkPlayers||{})[myId]?t.gold:t.border}`,
         color:(room.afkPlayers||{})[myId]?t.gold:t.muted,
         fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
-        {(room.afkPlayers||{})[myId]?"▶️ Ich bin wieder da!":"⏸️ Kurz weg"}
+        {(room.afkPlayers||{})[myId]?i.afkBack:i.afkAway}
       </button>
     </div>
   </div>;
 }
 
 /* ─── RESULTS ─────────────────────────────────────── */
-function ResultsScreen({room,myId,t,onNext,onEnd}){
+function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
+  const i=UI[lang]||UI.de;
   const myNewJoker=(room.newJokersThisRound||{})[myId];
   useEffect(()=>{
     playSound("reveal");
@@ -1526,7 +1676,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>TIPPS DIESER RUNDE</p>
       {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
-  💣 sabotiert von {room.players?.[wasSabotaged]?.name||"?"}
+  {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
       {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>Zu langsam!</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
@@ -1572,7 +1722,8 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
 }
 
 /* ─── FINAL ───────────────────────────────────────── */
-function FinalScreen({room,myId,t,onRestart}){
+function FinalScreen({room,myId,t,onRestart,lang}){
+  const i=UI[lang]||UI.de;
   const[globalRank,setGlobalRank]=useState(null);
   useEffect(()=>{
     const history=room.history||[];
@@ -1659,12 +1810,12 @@ function FinalScreen({room,myId,t,onRestart}){
   const sabotageKing=pl.find(p=>p.id===sabotageKingId&&(sabotageStats[p.id]||0)>0);
 
   const statCards=[
-    betKing&&{icon:"🎲",label:"Wettkönig",name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten (${betKingRate}%)`,color:t.gold},
-    bestPlayer&&sorted.length>1&&{icon:"🎯",label:"Bester Schätzer",name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} Abweichung`,color:t.green},
-    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:"Schlechtester Schätzer",name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
-    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:"Punktlandungen",name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
-    jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:"Joker-König",name:jokerKing.name,sub:`${jokerTotals[jokerKingId]} Joker gezockt`,color:t.gold},
-    sabotageKing&&{icon:"💣",label:"Sabotage-König",name:sabotageKing.name,sub:`${sabotageStats[sabotageKingId]} Sabotagen`,color:t.danger},
+    betKing&&{icon:"🎲",label:i.betKing,name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten (${betKingRate}%)`,color:t.gold},
+    bestPlayer&&sorted.length>1&&{icon:"🎯",label:i.bestGuesser,name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} Abweichung`,color:t.green},
+    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:i.worstGuesser,name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:i.exactHits,name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
+    jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:i.jokerKing,name:jokerKing.name,sub:`${jokerTotals[jokerKingId]} Joker gezockt`,color:t.gold},
+    sabotageKing&&{icon:"💣",label:i.sabotageKing,name:sabotageKing.name,sub:`${sabotageStats[sabotageKingId]} Sabotagen`,color:t.danger},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
@@ -1678,7 +1829,7 @@ function FinalScreen({room,myId,t,onRestart}){
       fontSize:13,textAlign:"center",
     }}>
       <span style={{color:globalRank<=25?t.gold:globalRank<=50?t.green:t.muted,fontWeight:700}}>
-        {lang==="es"?"🌍 Eres mejor que el "+(100-globalRank)+"% de los jugadores":lang==="en"?"🌍 You're better than "+(100-globalRank)+"% of all players worldwide":"🌍 Du bist besser als "+(100-globalRank)+"% aller Spieler weltweit"}
+        {i.globalRank(100-globalRank)}
         {globalRank<=10?" 🏆":globalRank<=25?" 🥇":globalRank<=50?" 🎯":""}
       </span>
     </div>}
@@ -1967,14 +2118,14 @@ export default function App(){
   return <>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
-    {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup}/>}
-    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode}/>}
+    {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang}/>}
+    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
-    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t}/>}
+    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip}/>}
-    {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code}/>}
-    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd}/>}
-    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
+    {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
+    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
+    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
   </>;
 }
