@@ -123,6 +123,13 @@ const UI = {
     startWith:(n,s)=>`Starten mit ${n} ${s===1?"Kategorie":"Kategorien"} →`,
     chooseMin:"Wähle eine Kategorie",minOne:"Wähle mindestens eine Kategorie",
     tippIn:"Antwort in",
+    debugOn:"AN",debugOff:"AUS",
+    betSub:(w,t)=>`${w} von ${t} Wetten`,
+    avgDeviation:"Ø Abweichung",
+    exactCount:(n)=>`${n} exakte Treffer`,
+    jokerPlayed:(n)=>`${n} Joker gespielt`,
+    sabotageCount:(n)=>`${n} Sabotagen`,
+    hintLabel:"💡 HINWEIS",
   },
   en: {
     createRoom:"Create Room",join:"Join",back:"← Back",
@@ -167,6 +174,13 @@ const UI = {
     startWith:(n,s)=>`Start with ${n} ${s===1?"category":"categories"} →`,
     chooseMin:"Choose a category",minOne:"Choose at least one category",
     tippIn:"Answer in",
+    debugOn:"ON",debugOff:"OFF",
+    betSub:(w,t)=>`${w} of ${t} bets`,
+    avgDeviation:"Ø deviation",
+    exactCount:(n)=>`${n} exact hits`,
+    jokerPlayed:(n)=>`${n} jokers played`,
+    sabotageCount:(n)=>`${n} sabotages`,
+    hintLabel:"💡 HINT",
   },
   es: {
     createRoom:"Crear sala",join:"Unirse",back:"← Volver",
@@ -211,6 +225,13 @@ const UI = {
     startWith:(n,s)=>`Empezar con ${n} ${s===1?"categoría":"categorías"} →`,
     chooseMin:"Elige una categoría",minOne:"Elige al menos una categoría",
     tippIn:"Respuesta en",
+    debugOn:"SÍ",debugOff:"NO",
+    betSub:(w,t)=>`${w} de ${t} apuestas`,
+    avgDeviation:"Ø desviación",
+    exactCount:(n)=>`${n} aciertos exactos`,
+    jokerPlayed:(n)=>`${n} comodines usados`,
+    sabotageCount:(n)=>`${n} sabotajes`,
+    hintLabel:"💡 PISTA",
   },
 };
 
@@ -438,12 +459,12 @@ async function shareResult(room, t, lang) {
 
   // ── Stats section ──
   const statItems=[
-    betKingId&&betTotal[betKingId]>0&&{icon:'🎲',label:'Wettkönig',val:name(betKingId),sub:`${betWins[betKingId]}/${betTotal[betKingId]} Wetten`},
-    bestId&&pl.length>1&&{icon:'🎯',label:'Bester Schätzer',val:name(bestId),sub:`Ø ${Math.round(avgDiff[bestId]/diffCount[bestId]*10)/10} Abw.`},
-    worstId&&pl.length>1&&bestId!==worstId&&{icon:'🙈',label:'Schlechtester Schätzer',val:name(worstId),sub:`Ø ${Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10} Abw.`},
-    exactKingId&&(exactHits[exactKingId]||0)>0&&{icon:'💥',label:'Punktlandungen',val:name(exactKingId),sub:`${exactHits[exactKingId]}× exakt`},
-    jokerKingId&&jokerTotals[jokerKingId]>0&&{icon:'🃏',label:'Joker-König',val:name(jokerKingId),sub:`${jokerTotals[jokerKingId]} Joker gespielt`},
-    sabKingId&&(sabotageStats[sabKingId]||0)>0&&{icon:'💣',label:'Sabotage-König',val:name(sabKingId),sub:`${sabotageStats[sabKingId]}× sabotiert`},
+    betKingId&&betTotal[betKingId]>0&&{icon:'🎲',label:i.betKing,val:name(betKingId),sub:i.betSub(betWins[betKingId],betTotal[betKingId])},
+    bestId&&pl.length>1&&{icon:'🎯',label:i.bestGuesser,val:name(bestId),sub:`${i.avgDeviation} ${Math.round(avgDiff[bestId]/diffCount[bestId]*10)/10}`},
+    worstId&&pl.length>1&&bestId!==worstId&&{icon:'🙈',label:i.worstGuesser,val:name(worstId),sub:`${i.avgDeviation} ${Math.round(avgDiff[worstId]/diffCount[worstId]*10)/10}`},
+    exactKingId&&(exactHits[exactKingId]||0)>0&&{icon:'💥',label:i.exactHits,val:name(exactKingId),sub:i.exactCount(exactHits[exactKingId])},
+    jokerKingId&&jokerTotals[jokerKingId]>0&&{icon:'🃏',label:i.jokerKing,val:name(jokerKingId),sub:i.jokerPlayed(jokerTotals[jokerKingId])},
+    sabKingId&&(sabotageStats[sabKingId]||0)>0&&{icon:'💣',label:i.sabotageKing,val:name(sabKingId),sub:i.sabotageCount(sabotageStats[sabKingId])},
   ].filter(Boolean);
 
   if(statItems.length>0){
@@ -850,14 +871,10 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
   const counts = {};
   myJokers.forEach(jk => { counts[jk] = (counts[jk]||0)+1; });
 
-  const shortDesc = {
-    skip:    "Sofort eine neue Frage ziehen",
-    hint:    "Zeigt den Hinweis zur Frage an",
-    double:  "Alle Punkte dieser Runde ×2",
-    sabotage:"Erst wenn ein Mitspieler getippt hat",
-    change:  "Eigenen Tipp einmal korrigieren",
-    extra:   "Antwort größer oder kleiner als X?",
-  };
+  // shortDesc now comes from JOKER_NAMES (already translated via getJokerDef)
+  const shortDesc = Object.fromEntries(
+    ["skip","hint","double","sabotage","change","extra"].map(id => [id, getJokerDef(id,lang).desc])
+  );
 
   /* ── consume joker from inventory ── */
   async function consume(type){
@@ -1239,14 +1256,14 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 
     {/* ── Debug ── */}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-      <p style={{fontSize:11,color:t.muted}}>🛠️ Debug-Modus</p>
+      <p style={{fontSize:11,color:t.muted}}>{i.debugMode}</p>
       <button onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}}
         style={{padding:"5px 14px",borderRadius:t.radius,
           background:debugModeLocal?t.accent+"22":t.surface,
           border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
           color:debugModeLocal?t.accent:t.muted,
           fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
-        {debugModeLocal?"AN":"AUS"}
+        {debugModeLocal?i.debugOn:i.debugOff}
       </button>
     </div>
 
@@ -1481,7 +1498,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
         {room.hintVisible&&(room.hintFor===myId||!room.hintFor)&&
           <p style={{marginTop:8,padding:"7px 10px",background:t.gold+"18",
             borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>
-            💡 {q.hint}
+            {i.hintLabel} {q.hint}
           </p>}
         {/* 50/50 hint – only for user who played it */}
         {room.extraHint&&room.extraHintFor===myId&&
@@ -1842,18 +1859,18 @@ function FinalScreen({room,myId,t,onRestart,lang}){
   const sabotageKing=pl.find(p=>p.id===sabotageKingId&&(sabotageStats[p.id]||0)>0);
 
   const statCards=[
-    betKing&&{icon:"🎲",label:i.betKing,name:betKing.name,sub:`${betWins[betKingId]} von ${betTotal[betKingId]} Wetten (${betKingRate}%)`,color:t.gold},
-    bestPlayer&&sorted.length>1&&{icon:"🎯",label:i.bestGuesser,name:bestPlayer.name,sub:`Ø ${fmtNum(bestAvg)} Abweichung`,color:t.green},
-    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:i.worstGuesser,name:worstPlayer.name,sub:`Ø ${fmtNum(worstAvg)} Abweichung`,color:t.danger},
-    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:i.exactHits,name:exactKing.name,sub:`${exactHits[exactKingId]} exakte Treffer`,color:t.accent},
-    jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:i.jokerKing,name:jokerKing.name,sub:`${jokerTotals[jokerKingId]} Joker gezockt`,color:t.gold},
-    sabotageKing&&{icon:"💣",label:i.sabotageKing,name:sabotageKing.name,sub:`${sabotageStats[sabotageKingId]} Sabotagen`,color:t.danger},
+    betKing&&{icon:"🎲",label:i.betKing,name:betKing.name,sub:`${i.betSub(betWins[betKingId],betTotal[betKingId])} (${betKingRate}%)`,color:t.gold},
+    bestPlayer&&sorted.length>1&&{icon:"🎯",label:i.bestGuesser,name:bestPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(bestAvg)}`,color:t.green},
+    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:i.worstGuesser,name:worstPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(worstAvg)}`,color:t.danger},
+    exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:i.exactHits,name:exactKing.name,sub:i.exactCount(exactHits[exactKingId]),color:t.accent},
+    jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:i.jokerKing,name:jokerKing.name,sub:i.jokerPlayed(jokerTotals[jokerKingId]),color:t.gold},
+    sabotageKing&&{icon:"💣",label:i.sabotageKing,name:sabotageKing.name,sub:i.sabotageCount(sabotageStats[sabotageKingId]),color:t.danger},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {i.roundsPlayed.includes("gespielt")?"Punkte":"pts"}! 🎊</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {lang==="de"?"Punkte":lang==="es"?"puntos":"pts"}! 🎊</p>
     {globalRank!=null&&<div style={{
       padding:"8px 16px",borderRadius:t.radius,marginBottom:12,
       background:globalRank<=25?t.gold+"22":globalRank<=50?t.green+"18":t.surface,
@@ -1887,7 +1904,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
     </Card>}
     {/* Share button */}
     <Btn t={t} variant="secondary" full onClick={()=>shareResult(room,t,lang)} style={{marginBottom:12}}>
-      📤 Ergebnis teilen / speichern
+      {i.shareBtn}
     </Btn>
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
   </div>;
