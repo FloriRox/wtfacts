@@ -1547,8 +1547,8 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
               border:`1px solid ${t.border}`,color:t.text,fontSize:11,
               fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
               {jk.icon}+
-            </button>)
-          ))}
+            </button>
+          );})
           <button onClick={async()=>{
             await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
           }} style={{padding:"5px 9px",borderRadius:t.radius,
