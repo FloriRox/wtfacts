@@ -303,7 +303,7 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
-async function shareResult(room, t, lang) {
+async function shareResult(room, t, lang, winnerPhoto=null) {
   const i=UI[lang]||UI.de;
   const pl = (room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const scores = room.scores||{};
@@ -363,7 +363,8 @@ async function shareResult(room, t, lang) {
     jokerKingId&&jokerTotals[jokerKingId]>0,
     sabKingId&&(sabotageStats[sabKingId]||0)>0,
   ].filter(Boolean).length;
-  const H = 120 + 30 + sorted.length*44 + 20 + (statsRows>0?30+statsRows*40+16:0) + 64;
+  const PHOTO_H = winnerPhoto ? 180 : 0;
+  const H = 120 + PHOTO_H + 30 + sorted.length*44 + 20 + (statsRows>0?30+statsRows*40+16:0) + 64;
 
   const canvas = document.createElement('canvas');
   canvas.width = W*2; canvas.height = H*2; // retina
@@ -408,36 +409,68 @@ async function shareResult(room, t, lang) {
   ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(PAD,76); ctx.lineTo(W-PAD,76); ctx.stroke();
 
+  // ── Winner photo (if provided) ──
+  let y = 82;
+  if(winnerPhoto) {
+    // Draw photo as large circle at top center
+    const PHR = 72; // radius
+    const PHX = W/2;
+    const PHY = y + PHR + 8;
+    // Gold ring
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(PHX, PHY, PHR+5, 0, Math.PI*2);
+    const ringGrad = ctx.createLinearGradient(PHX-PHR, PHY-PHR, PHX+PHR, PHY+PHR);
+    ringGrad.addColorStop(0, t.gold);
+    ringGrad.addColorStop(1, t.accent);
+    ctx.strokeStyle = ringGrad;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+    // Clip to circle and draw photo
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(PHX, PHY, PHR, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(winnerPhoto, PHX-PHR, PHY-PHR, PHR*2, PHR*2);
+    ctx.restore();
+    // Trophy badge
+    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.fillText('🏆', PHX + PHR - 8, PHY - PHR + 20);
+    y = PHY + PHR + 16;
+  }
+
   // ── Winner banner ──
-  const winGrad=ctx.createLinearGradient(PAD,78,W-PAD,78);
+  const winGrad=ctx.createLinearGradient(PAD,y,W-PAD,y);
   winGrad.addColorStop(0,t.gold+'33');
   winGrad.addColorStop(1,t.gold+'08');
   ctx.fillStyle=winGrad;
-  roundRect(ctx,PAD,82,W-PAD*2,46,8);
+  roundRect(ctx,PAD,y,W-PAD*2,46,8);
   ctx.fill();
   ctx.strokeStyle=t.gold+'55';
   ctx.lineWidth=1;
-  roundRect(ctx,PAD,82,W-PAD*2,46,8);
+  roundRect(ctx,PAD,y,W-PAD*2,46,8);
   ctx.stroke();
 
   ctx.font='bold 15px system-ui, sans-serif';
   ctx.fillStyle=t.gold;
-  ctx.fillText('🏆', PAD+12, 111);
+  ctx.fillText('🏆', PAD+12, y+29);
   ctx.font='bold 18px system-ui, sans-serif';
-  ctx.fillText(`${winner?.name||'?'} gewinnt!`, PAD+36, 111);
+  ctx.fillText(`${winner?.name||'?'}`, PAD+36, y+29);
   ctx.font='13px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#f2ece6':'#1e1e1e';
   const winPts=`${scores[winner?.id]||0} ${i.pts}`;
-  ctx.fillText(winPts, W-PAD-ctx.measureText(winPts).width, 111);
+  ctx.fillText(winPts, W-PAD-ctx.measureText(winPts).width, y+29);
+  y += 54;
 
   // ── Scoreboard ──
   const medals=['🥇','🥈','🥉'];
-  let y=146;
   ctx.font='bold 11px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
   ctx.fillText('ENDSTAND', PAD, y); y+=16;
 
-  sorted.forEach((p,i)=>{
+  sorted.forEach((p,idx)=>{
+    const i=idx; // shadow fix
     const rowBg = i===0 ? t.gold+'18' : isDark?'#181310':'#fff4e0';
     ctx.fillStyle=rowBg;
     roundRect(ctx,PAD,y,W-PAD*2,36,6);
@@ -477,9 +510,9 @@ async function shareResult(room, t, lang) {
 
     // two columns
     const colW=(W-PAD*2-10)/2;
-    statItems.forEach((s,i)=>{
-      const cx = PAD + (i%2)*(colW+10);
-      const cy = y + Math.floor(i/2)*40;
+    statItems.forEach((s,si)=>{
+      const cx = PAD + (si%2)*(colW+10);
+      const cy = y + Math.floor(si/2)*40;
       ctx.fillStyle=isDark?'#211c18':'#ffffff';
       roundRect(ctx,cx,cy,colW,34,6); ctx.fill();
       ctx.strokeStyle=isDark?'#32261e':'#ffd58a';
@@ -1773,10 +1806,92 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
   </div>;
 }
 
+
+/* ─── WINNER PHOTO CAPTURE ───────────────────────── */
+function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
+  const i = UI[lang]||UI.de;
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [stream, setStream] = useState(null);
+  const [photo, setPhoto] = useState(null);
+  const [camError, setCamError] = useState(false);
+
+  useEffect(()=>{
+    startCamera();
+    return ()=>{ if(stream) stream.getTracks().forEach(t=>t.stop()); };
+  },[]);
+
+  async function startCamera(){
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:'user', width:{ideal:400}, height:{ideal:400}},audio:false
+      });
+      setStream(s);
+      if(videoRef.current){ videoRef.current.srcObject=s; videoRef.current.play(); }
+    } catch(e){ setCamError(true); }
+  }
+
+  function capture(){
+    const v=videoRef.current, c=canvasRef.current;
+    if(!v||!c)return;
+    const size=Math.min(v.videoWidth,v.videoHeight);
+    const ox=(v.videoWidth-size)/2, oy=(v.videoHeight-size)/2;
+    c.width=400; c.height=400;
+    const ctx=c.getContext('2d');
+    // Mirror for selfie feel
+    ctx.save(); ctx.scale(-1,1); ctx.drawImage(v,-400,oy,400,size); ctx.restore();
+    c.toBlob(blob=>{ const img=new Image(); img.onload=()=>setPhoto(img); img.src=URL.createObjectURL(blob); },'image/jpeg',0.92);
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+  }
+
+  function retake(){
+    setPhoto(null);
+    startCamera();
+  }
+
+  if(camError){
+    return <div style={{textAlign:'center',padding:24}}>
+      <div style={{fontSize:40,marginBottom:12}}>📵</div>
+      <p style={{color:t.muted,fontSize:14,marginBottom:16}}>{i.camUnavailable}</p>
+      <Btn t={t} full onClick={onSkip}>{i.skipPhoto}</Btn>
+    </div>;
+  }
+
+  return <div style={{textAlign:'center'}}>
+    <canvas ref={canvasRef} style={{display:'none'}}/>
+    {!photo ? <>
+      <div style={{position:'relative',width:220,height:220,margin:'0 auto 16px',borderRadius:'50%',overflow:'hidden',border:`4px solid ${t.gold}`}}>
+        <video ref={videoRef} autoPlay playsInline muted
+          style={{width:'100%',height:'100%',objectFit:'cover',transform:'scaleX(-1)'}}/>
+      </div>
+      <p style={{color:t.muted,fontSize:13,marginBottom:12}}>{i.photoHint}</p>
+      <Btn t={t} full onClick={capture} style={{marginBottom:8}}>
+        {i.takePhoto}
+      </Btn>
+      <Btn t={t} variant="secondary" full onClick={onSkip}>
+        {i.skipPhoto}
+      </Btn>
+    </> : <>
+      <div style={{position:'relative',width:220,height:220,margin:'0 auto 16px',borderRadius:'50%',overflow:'hidden',border:`4px solid ${t.gold}`}}>
+        <img src={photo.src} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+        <div style={{position:'absolute',top:8,right:8,fontSize:28}}>🏆</div>
+      </div>
+      <Btn t={t} full onClick={()=>onCapture(photo)} style={{marginBottom:8}}>
+        {i.usePhoto}
+      </Btn>
+      <Btn t={t} variant="secondary" full onClick={retake}>
+        {i.retakePhoto}
+      </Btn>
+    </>}
+  </div>;
+}
+
 /* ─── FINAL ───────────────────────────────────────── */
 function FinalScreen({room,myId,t,onRestart,lang}){
   const i=UI[lang]||UI.de;
   const[globalRank,setGlobalRank]=useState(null);
+  const[showCamera,setShowCamera]=useState(false);
+  const[winnerPhoto,setWinnerPhoto]=useState(null);
   useEffect(()=>{
     const history=room.history||[];
     if(!history.length)return;
@@ -1905,8 +2020,17 @@ function FinalScreen({room,myId,t,onRestart,lang}){
         </div>
       </div>)}
     </Card>}
+    {/* Camera modal */}
+    {showCamera&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+      <Card t={t} style={{width:'100%',maxWidth:340,padding:24}}>
+        <WinnerPhotoCapture t={t} lang={lang}
+          onCapture={photo=>{setWinnerPhoto(photo);setShowCamera(false);setTimeout(()=>shareResult(room,t,lang,photo),100);}}
+          onSkip={()=>{setShowCamera(false);shareResult(room,t,lang,null);}}
+        />
+      </Card>
+    </div>}
     {/* Share button */}
-    <Btn t={t} variant="secondary" full onClick={()=>shareResult(room,t,lang)} style={{marginBottom:12}}>
+    <Btn t={t} variant="secondary" full onClick={()=>setShowCamera(true)} style={{marginBottom:12}}>
       {i.shareBtn}
     </Btn>
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
