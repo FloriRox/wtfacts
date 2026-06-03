@@ -124,6 +124,8 @@ const UI = {
     chooseMin:"Wähle eine Kategorie",minOne:"Wähle mindestens eine Kategorie",
     tippIn:"Antwort in",
     debugOn:"AN",debugOff:"AUS",
+    doubleActive:"DOPPELTE PUNKTE aktiv!",
+    extraHintBigger:"größer ↑",extraHintSmaller:"kleiner ↓",extraHintPrefix:"Die Antwort ist",
     betSub:(w,t)=>`${w} von ${t} Wetten`,
     avgDeviation:"Ø Abweichung",
     exactCount:(n)=>`${n} exakte Treffer`,
@@ -175,6 +177,8 @@ const UI = {
     chooseMin:"Choose a category",minOne:"Choose at least one category",
     tippIn:"Answer in",
     debugOn:"ON",debugOff:"OFF",
+    doubleActive:"DOUBLE POINTS active!",
+    extraHintBigger:"higher ↑",extraHintSmaller:"lower ↓",extraHintPrefix:"The answer is",
     betSub:(w,t)=>`${w} of ${t} bets`,
     avgDeviation:"Ø deviation",
     exactCount:(n)=>`${n} exact hits`,
@@ -226,6 +230,8 @@ const UI = {
     chooseMin:"Elige una categoría",minOne:"Elige al menos una categoría",
     tippIn:"Respuesta en",
     debugOn:"SÍ",debugOff:"NO",
+    doubleActive:"PUNTOS DOBLES activos!",
+    extraHintBigger:"mayor ↑",extraHintSmaller:"menor ↓",extraHintPrefix:"La respuesta es",
     betSub:(w,t)=>`${w} de ${t} apuestas`,
     avgDeviation:"Ø desviación",
     exactCount:(n)=>`${n} aciertos exactos`,
@@ -424,7 +430,7 @@ async function shareResult(room, t, lang) {
   ctx.fillText(`${winner?.name||'?'} gewinnt!`, PAD+36, 111);
   ctx.font='13px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#f2ece6':'#1e1e1e';
-  const winPts=`${scores[winner?.id]||0} Punkte`;
+  const winPts=`${scores[winner?.id]||0} ${i.pts}`;
   ctx.fillText(winPts, W-PAD-ctx.measureText(winPts).width, 111);
 
   // ── Scoreboard ──
@@ -928,7 +934,7 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
       const decoy   = Math.round(answer * (1 + dir*factor));
       const bigger  = answer > decoy;
       await dbPatch(code, {
-        extraHint:      `Die Antwort ist ${bigger?"größer ↑":"kleiner ↓"} als ${fmtNum(decoy)}`,
+        extraHint:      `${i.extraHintPrefix} ${bigger?i.extraHintBigger:i.extraHintSmaller} als ${fmtNum(decoy)}`,
         extraHintColor: bigger ? "#39d98a" : "#e8360a",
         extraHintFor:   myId,
       });
@@ -967,7 +973,7 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
   return <Card t={t} style={{marginTop:12,padding:"14px 16px"}}>
     <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
       🃏 JOKER ({myJokers.length})
-      {usedRound && <span style={{color:t.muted,fontWeight:400}}> · diese Runde verbraucht</span>}
+      {usedRound && <span style={{color:t.muted,fontWeight:400}}> · {i.jokerUsed}</span>}
     </p>
 
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -1365,7 +1371,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
     </div>
     <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>SPIELER ({pl.length})</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>{i.players} ({pl.length})</p>
       <div style={col}>
         {pl.map(p=>(
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
@@ -1528,13 +1534,13 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
           <p style={{marginTop:8,color:t.muted,fontSize:12}}>
-            💬 Tippt erst, dann diskutiert!
+            {i.discuss}
           </p>
         </Card>
         :<Card t={t} style={{textAlign:"center"}}>
           <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
             fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
-          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>✓ Tipp abgegeben!</p>
+          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>{i.tipSubmitted}</p>
           <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
             <div style={{height:"100%",
               width:`${activePl.length?doneCount/activePl.length*100:0}%`,
@@ -1647,14 +1653,14 @@ function BettingScreen({room,myId,t,onBet,code,lang}){
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Pill t={t} color={t.gold}>{i.betting}</Pill>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>Wer trifft's am besten?</h2>
-    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Richtige Wette = +1 Punkt extra</p>
+    <p style={{color:t.muted,marginBottom:18,fontSize:14}}>{i.betCorrect}</p>
     {myBet
-      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>{i.waitRevealBet}</p></Card>
+      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>{i.betSet}</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>{i.waitRevealBet}</p></Card>
       :<>
         <RG label={i.closestLabel} color={t.green} val={closest} setVal={setClosest}/>
         {!soloOther&&<RG label={i.farthestLabel} color={t.danger} val={farthest} setVal={setFarthest}/>}
-        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
-        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
+        {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>{i.twoPlayers}</p>}
+        <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>{i.submitBet}</Btn>
       </>}
     {/* AFK inline in betting */}
     <div style={{marginTop:14}}>
@@ -1716,18 +1722,18 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
         <Pill t={t}>{i.reveal}</Pill>
         {room.speedMode&&<Pill t={t} color={t.accent}>⚡ Speed</Pill>}
       </div>
-      {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 DOPPELTE PUNKTE aktiv!</Pill></div>}
+      {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 {i.doubleActive}</Pill></div>}
       {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&room.usedJokerThisRound!=="hint"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{getJokerDef(room.usedJokerThisRound,lang)?.icon} {jokerUsedName}: {getJokerDef(room.usedJokerThisRound,lang)?.name}</div>}
       <p style={{marginTop:14,fontSize:t.id==="kids"?17:15,lineHeight:1.55,color:t.muted,maxWidth:380,margin:"14px auto 6px"}}>{q.q}</p>
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>TIPPS DIESER RUNDE</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
       {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
-      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>Zu langsam!</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
+      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
@@ -1870,7 +1876,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {lang==="de"?"Punkte":lang==="es"?"puntos":"pts"}! 🎊</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {i.pts}! 🎊</p>
     {globalRank!=null&&<div style={{
       padding:"8px 16px",borderRadius:t.radius,marginBottom:12,
       background:globalRank<=25?t.gold+"22":globalRank<=50?t.green+"18":t.surface,
