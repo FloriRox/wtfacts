@@ -1091,10 +1091,10 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
     </Card>}
     <Card t={t}>
       <div style={col}>
-        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"Dein Name 😊":i.yourName} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder=i.roomCode t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
+        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
-        <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} Raum erstellen`:{i.join+" →"}}</Btn>
+        <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
     </Card>
   </div>;
