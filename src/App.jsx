@@ -799,7 +799,7 @@ function QRCode({url,t}){
   return <div style={{textAlign:"center",marginTop:18}}>
     <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>EINLADUNGS-QR</p>
     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:130,height:130,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
-    <p style={{fontSize:12,color:t.muted,marginTop:7}}>Scannen zum Beitreten</p>
+    <p style={{fontSize:12,color:t.muted,marginTop:7}}>{i.scanJoin}</p>
   </div>;
 }
 
@@ -925,7 +925,7 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
 
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {enabled.map(jk=>{
-        const def      = JOKER_DEFS[jk]; if(!def) return null;
+        const def      = getJokerDef(jk,lang); if(!def) return null;
         const count    = counts[jk]||0;
         const has      = count > 0;
         const othersGuessed = (room.order||[])
@@ -1038,30 +1038,37 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
   }
 
   if(tab==="landing"){
+    const li=UI[lang]||UI.de;
     inject(globalCSS(ADULT));
+    const pills={
+      de:["4.800+ Fragen","Echtzeit","Joker"],
+      en:["4,800+ Questions","Real-time","Jokers"],
+      es:["4.800+ Preguntas","Tiempo real","Comodines"],
+    };
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        {/* Language toggle */}
-        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+        {/* Language selector - prominent at top */}
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:32}}>
           {["de","en","es"].map(l=>(
             <button key={l} onClick={()=>onSetLang(l)}
-              style={{padding:"5px 12px",background:lang===l?ADULT.accent+"22":ADULT.surface,
-                border:`1.5px solid ${lang===l?ADULT.accent:ADULT.border}`,
-                borderRadius:8,color:lang===l?ADULT.accent:ADULT.muted,
-                fontWeight:700,fontSize:12,cursor:"pointer",
-                marginLeft:6,fontFamily:ADULT.fontBody}}>
-              {l==="de"?"🇩🇪 DE":l==="en"?"🇬🇧 EN":"🇪🇸 ES"}
+              style={{padding:"8px 18px",
+                background:lang===l?ADULT.accent:ADULT.surface,
+                border:`2px solid ${lang===l?ADULT.accent:ADULT.border}`,
+                borderRadius:100,color:lang===l?"#fff":ADULT.muted,
+                fontWeight:700,fontSize:13,cursor:"pointer",
+                fontFamily:ADULT.fontBody,transition:"all .2s"}}>
+              {l==="de"?"🇩🇪 Deutsch":l==="en"?"🇬🇧 English":"🇪🇸 Español"}
             </button>
           ))}
         </div>
         <Logo t={ADULT} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
-          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Raum erstellen</Btn>
-          <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>Beitreten</Btn>
+          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
+          <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {["4.800+ Fragen","Echtzeit","Joker"].map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
+          {(pills[lang]||pills.de).map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
       </div>
     </div>;
@@ -1177,8 +1184,8 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
               opacity:atMax?.4:1,transition:"all .15s"}}>
             <span style={{fontSize:16}}>{jk.icon}</span>
             <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{jk.name}</div>
-              <div style={{fontSize:10,color:t.muted}}>{jk.desc}</div>
+              <div style={{fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{getJokerDef(jk.id,lang).name}</div>
+              <div style={{fontSize:10,color:t.muted}}>{getJokerDef(jk.id,lang).desc}</div>
             </div>
             <div style={{width:18,height:18,borderRadius:4,
               background:on?t.gold:t.surface,
@@ -1192,7 +1199,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
         <div style={{padding:"8px 10px",borderRadius:t.radius,
           background:t.gold+"10",border:`1px solid ${t.gold}22`,
           fontSize:10,color:t.muted,lineHeight:1.6}}>
-          🎯 Punktlandung → Joker · 🥇 Nächster (25%) · 🎲 Wette (25%) · 💀 3× Letzter → Trost
+          {i.jokerHowText}
         </div>
       </div>}
     </div>
@@ -1394,7 +1401,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
     <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 ${i.question} ${(room.qIdx||0)+1}`:i.question+" "+((room.qIdx||0)+1)}</Pill>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>2× PUNKTE</Pill>}
+        {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>{lang==="es"?"2× PUNTOS":lang==="en"?"2× POINTS":"2× PUNKTE"}</Pill>}
         {/* Player chips inline */}
         {pl.map(p=>{
           const done=guesses[p.id]!=null;
@@ -1662,7 +1669,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
         {room.speedMode&&<Pill t={t} color={t.accent}>⚡ Speed</Pill>}
       </div>
       {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 DOPPELTE PUNKTE aktiv!</Pill></div>}
-      {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&room.usedJokerThisRound!=="hint"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{JOKER_DEFS[room.usedJokerThisRound]?.icon} {jokerUsedName} nutzte: {JOKER_DEFS[room.usedJokerThisRound]?.name}</div>}
+      {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&room.usedJokerThisRound!=="hint"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{getJokerDef(room.usedJokerThisRound,lang)?.icon} {jokerUsedName}: {getJokerDef(room.usedJokerThisRound,lang)?.name}</div>}
       <p style={{marginTop:14,fontSize:t.id==="kids"?17:15,lineHeight:1.55,color:t.muted,maxWidth:380,margin:"14px auto 6px"}}>{q.q}</p>
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}>{fmtNum(q.a)} {q.unit}</div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
@@ -1702,9 +1709,9 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
       animation:"pop .4s ease both",
     }}>
       <div style={{fontSize:32,marginBottom:4,animation:"bop .8s ease infinite"}}>🎁</div>
-      <p style={{fontWeight:800,color:t.gold,fontSize:15}}>Joker gewonnen!</p>
+      <p style={{fontWeight:800,color:t.gold,fontSize:15}}>{i.jokerWon}</p>
       <p style={{color:t.text,fontSize:18,fontWeight:700,marginTop:4}}>
-        {JOKER_DEFS[myNewJoker]?.icon} {JOKER_DEFS[myNewJoker]?.name}
+        {getJokerDef(myNewJoker,lang)?.icon} {getJokerDef(myNewJoker,lang)?.name}
       </p>
     </div>}
     <Card t={t} style={{marginBottom:18}}>
