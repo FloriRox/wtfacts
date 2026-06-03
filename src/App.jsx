@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import QUESTIONS_RAW from "./questions/index.js";
+import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
 
@@ -19,6 +19,50 @@ const dbSet    = (c, v) => set(dbRef(c), v);
 const dbPatch  = (c, v) => update(dbRef(c), v);
 const dbGet    = (c)    => get(dbRef(c)).then(s => s.val());
 const dbListen = (c,fn) => onValue(dbRef(c), s => fn(s.val()));
+
+/* ─── GLOBAL STATS ───────────────────────────────── */
+function hashString(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){h=Math.imul(31,h)+str.charCodeAt(i)|0;}
+  return Math.abs(h).toString(36);
+}
+const PLAYER_HASH=(()=>{
+  let h=localStorage.getItem("em_phash");
+  if(!h){h=hashString(navigator.userAgent+(Date.now()%100000));localStorage.setItem("em_phash",h);}
+  return h;
+})();
+
+async function saveGlobalStats(roundData,lang){
+  try {
+    const {playerId,diff,exact,mode,category}=roundData;
+    const phash=PLAYER_HASH;
+    const statRef=ref(db,`globalStats/players/${phash}`);
+    const snap=await get(statRef);
+    const prev=snap.val()||{gamesPlayed:0,totalDiff:0,exactHits:0,rounds:0,lang};
+    await update(statRef,{
+      gamesPlayed: prev.gamesPlayed+(roundData.isNewGame?1:0),
+      totalDiff:   (prev.totalDiff||0)+diff,
+      exactHits:   (prev.exactHits||0)+(exact?1:0),
+      rounds:      (prev.rounds||0)+1,
+      lang,
+      lastSeen:    Date.now(),
+    });
+  } catch(e){ console.warn("Stats save failed",e); }
+}
+
+async function getGlobalRank(avgDiff){
+  try {
+    const snap=await get(ref(db,"globalStats/players"));
+    const players=snap.val()||{};
+    const avgs=Object.values(players)
+      .filter(p=>p.rounds>=5)
+      .map(p=>p.totalDiff/p.rounds)
+      .sort((a,b)=>a-b);
+    if(!avgs.length)return null;
+    const better=avgs.filter(a=>a<avgDiff).length;
+    return Math.round((1-better/avgs.length)*100);
+  } catch(e){ return null; }
+}
 
 /* ─── THEMES ──────────────────────────────────────── */
 const ADULT = {
@@ -45,17 +89,20 @@ const JOKER_DEFS = {
 };
 
 /* ─── QUESTIONS ───────────────────────────────────── */
-let QUESTIONS = {};
-try {
-  Object.keys(QUESTIONS_RAW).forEach(mode => {
-    QUESTIONS[mode] = {};
-    Object.entries(QUESTIONS_RAW[mode]).forEach(([cat, { questions, locked }]) => {
-      QUESTIONS[mode][cat] = questions.map(q => ({ ...q, locked }));
+function buildQuestions(raw) {
+  const q = {};
+  Object.keys(raw).forEach(mode => {
+    q[mode] = {};
+    Object.entries(raw[mode]).forEach(([cat, { questions, locked }]) => {
+      q[mode][cat] = questions.map(x => ({ ...x, locked }));
     });
   });
-} catch(e) {
-  throw new Error("Failed to load questions: " + e.message);
+  return q;
 }
+const QUESTIONS_MAP = { de: buildQuestions(QUESTIONS_DE), en: buildQuestions(QUESTIONS_EN), es: buildQuestions(QUESTIONS_ES) };
+let QUESTIONS = QUESTIONS_MAP.de; // default, updated when lang changes
+const QUESTIONS_RAW_MAP = { de: QUESTIONS_DE, en: QUESTIONS_EN, es: QUESTIONS_ES };
+let QUESTIONS_RAW = QUESTIONS_DE; // for CategoryScreen
 
 /* ─── SHARING ────────────────────────────────────── */
 function roundRect(ctx, x, y, w, h, r){
@@ -350,6 +397,64 @@ function downloadCanvas(canvas) {
   a.download = 'estimatess-ergebnis.png';
   a.href = canvas.toDataURL('image/png');
   a.click();
+}
+
+/* ─── SOUNDS ─────────────────────────────────────── */
+const SOUND_ENABLED_KEY="em_sound";
+function isSoundOn(){ return localStorage.getItem(SOUND_ENABLED_KEY)!=="off"; }
+function toggleSound(){ localStorage.setItem(SOUND_ENABLED_KEY,isSoundOn()?"off":"on"); }
+
+function playSound(type){
+  if(!isSoundOn())return;
+  try {
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const g=ctx.createGain();
+    g.connect(ctx.destination);
+    const o=ctx.createOscillator();
+    o.connect(g);
+    const now=ctx.currentTime;
+    if(type==="correct"){
+      // Happy ding
+      o.frequency.setValueAtTime(523,now);
+      o.frequency.setValueAtTime(659,now+0.1);
+      o.frequency.setValueAtTime(784,now+0.2);
+      g.gain.setValueAtTime(0.3,now);
+      g.gain.exponentialRampToValueAtTime(0.001,now+0.5);
+      o.start(now); o.stop(now+0.5);
+    } else if(type==="joker"){
+      // Magical sparkle
+      o.type="sine";
+      o.frequency.setValueAtTime(880,now);
+      o.frequency.exponentialRampToValueAtTime(1760,now+0.15);
+      g.gain.setValueAtTime(0.2,now);
+      g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+      o.start(now); o.stop(now+0.3);
+    } else if(type==="reveal"){
+      // Drum roll reveal
+      o.type="triangle";
+      o.frequency.setValueAtTime(200,now);
+      o.frequency.exponentialRampToValueAtTime(400,now+0.2);
+      g.gain.setValueAtTime(0.4,now);
+      g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+      o.start(now); o.stop(now+0.3);
+    } else if(type==="tick"){
+      // Timer tick
+      o.type="square";
+      o.frequency.setValueAtTime(800,now);
+      g.gain.setValueAtTime(0.05,now);
+      g.gain.exponentialRampToValueAtTime(0.001,now+0.05);
+      o.start(now); o.stop(now+0.05);
+    } else if(type==="alarm"){
+      // Timer urgent
+      o.type="sawtooth";
+      o.frequency.setValueAtTime(400,now);
+      o.frequency.setValueAtTime(500,now+0.1);
+      o.frequency.setValueAtTime(400,now+0.2);
+      g.gain.setValueAtTime(0.2,now);
+      g.gain.exponentialRampToValueAtTime(0.001,now+0.4);
+      o.start(now); o.stop(now+0.4);
+    }
+  } catch(e){}
 }
 
 /* ─── HELPERS ─────────────────────────────────────── */
@@ -767,7 +872,7 @@ function JokerBar({room, myId, code, t, onSkip}){
 /* AfkButton inline in screens */
 
 /* ─── HOME ────────────────────────────────────────── */
-function HomeScreen({onHost,onJoin}){
+function HomeScreen({onHost,onJoin,lang,onSetLang}){
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":"landing");
   const[name,setName]=useState("");
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
@@ -790,7 +895,7 @@ function HomeScreen({onHost,onJoin}){
       if(!room){setError("Raum nicht gefunden.");return;}
       if(room.phase!=="lobby"){setError("Das Spiel läuft bereits.");return;}
       if((room.order||[]).length>=50){setError("Raum voll (max. 50 Spieler).");return;}
-      onJoin(c,name.trim(),room.mode);
+      onJoin(c,name.trim(),room.mode,room.lang||"de");
     }
   }
 
@@ -799,6 +904,19 @@ function HomeScreen({onHost,onJoin}){
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
+        {/* Language toggle */}
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+          {["de","en","es"].map(l=>(
+            <button key={l} onClick={()=>onSetLang(l)}
+              style={{padding:"5px 12px",background:lang===l?ADULT.accent+"22":ADULT.surface,
+                border:`1.5px solid ${lang===l?ADULT.accent:ADULT.border}`,
+                borderRadius:8,color:lang===l?ADULT.accent:ADULT.muted,
+                fontWeight:700,fontSize:12,cursor:"pointer",
+                marginLeft:6,fontFamily:ADULT.fontBody}}>
+              {l==="de"?"🇩🇪 DE":l==="en"?"🇬🇧 EN":"🇪🇸 ES"}
+            </button>
+          ))}
+        </div>
         <Logo t={ADULT} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
           <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>Raum erstellen</Btn>
@@ -1095,10 +1213,12 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
       setTimeLeft(prev=>{
         if(prev<=1){
           clearInterval(iv);
-          // time's up – submit sentinel
           onGuess(-999999);
           return 0;
         }
+        // Play sound on timer ticks
+        if(prev<=5) playSound("alarm");
+        else if(prev<=10) playSound("tick");
         return prev-1;
       });
     },1000);
@@ -1152,7 +1272,9 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip}){
       <div style={{padding:"6px 16px"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
           <span style={{fontSize:12,fontWeight:700,
-            color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}>⏱️ {timeLeft}s</span>
+            color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}
+>
+          ⏱️ {timeLeft}s</span>
           <span style={{fontSize:11,color:t.muted}}>{doneCount}/{activePl.length} ✓</span>
         </div>
         <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}>
@@ -1354,6 +1476,24 @@ function BettingScreen({room,myId,t,onBet,code}){
 
 /* ─── RESULTS ─────────────────────────────────────── */
 function ResultsScreen({room,myId,t,onNext,onEnd}){
+  const myNewJoker=(room.newJokersThisRound||{})[myId];
+  useEffect(()=>{
+    playSound("reveal");
+    if(myNewJoker) setTimeout(()=>playSound("joker"),600);
+    // Save global stats for this player
+    const guesses=room.guesses||{};
+    const myGuess=guesses[myId];
+    if(myGuess!=null&&myGuess!==-999999&&room.q?.a!=null){
+      const diff=Math.abs(myGuess-room.q.a);
+      const exact=diff===0;
+      const history=room.history||[];
+      saveGlobalStats({
+        diff,exact,
+        isNewGame:history.length<=1,
+        mode:room.mode,
+      }, room.lang||"de");
+    }
+  },[]);
   const q=room.q;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const guesses=room.guesses||{},bets=room.bets||{},scores=room.scores||{},rs=room.roundScores||{};
@@ -1435,6 +1575,16 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
 
 /* ─── FINAL ───────────────────────────────────────── */
 function FinalScreen({room,myId,t,onRestart}){
+  const[globalRank,setGlobalRank]=useState(null);
+  useEffect(()=>{
+    const history=room.history||[];
+    if(!history.length)return;
+    const myGuesses=history.filter(r=>r.guesses?.[myId]!=null&&r.guesses[myId]!==-999999);
+    if(!myGuesses.length)return;
+    const totalDiff=myGuesses.reduce((s,r)=>s+Math.abs(r.guesses[myId]-r.answer),0);
+    const avg=totalDiff/myGuesses.length;
+    getGlobalRank(avg).then(rank=>{if(rank!=null)setGlobalRank(rank);});
+  },[]);
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const scores=room.scores||{};
   const sorted=[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
@@ -1522,7 +1672,18 @@ function FinalScreen({room,myId,t,onRestart}){
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 24px"}}>gewinnt mit {scores[winner?.id]||0} Punkten! 🎊</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>gewinnt mit {scores[winner?.id]||0} Punkten! 🎊</p>
+    {globalRank!=null&&<div style={{
+      padding:"8px 16px",borderRadius:t.radius,marginBottom:12,
+      background:globalRank<=25?t.gold+"22":globalRank<=50?t.green+"18":t.surface,
+      border:`1.5px solid ${globalRank<=25?t.gold:globalRank<=50?t.green:t.border}`,
+      fontSize:13,textAlign:"center",
+    }}>
+      <span style={{color:globalRank<=25?t.gold:globalRank<=50?t.green:t.muted,fontWeight:700}}>
+        {lang==="es"?"🌍 Eres mejor que el "+(100-globalRank)+"% de los jugadores":lang==="en"?"🌍 You're better than "+(100-globalRank)+"% of all players worldwide":"🌍 Du bist besser als "+(100-globalRank)+"% aller Spieler weltweit"}
+        {globalRank<=10?" 🏆":globalRank<=25?" 🥇":globalRank<=50?" 🎯":""}
+      </span>
+    </div>}
     <Card t={t} style={{textAlign:"left",marginBottom:14}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>ENDSTAND</p>
       {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
@@ -1561,6 +1722,19 @@ export default function App(){
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
   const[debugMode,setDebugMode]=useState(false);
+  const[lang,setLangState]=useState(()=>localStorage.getItem("em_lang")||"de");
+
+  function setLang(l){
+    setLangState(l);
+    localStorage.setItem("em_lang",l);
+    QUESTIONS=QUESTIONS_MAP[l]||QUESTIONS_MAP.de;
+    QUESTIONS_RAW=QUESTIONS_RAW_MAP[l]||QUESTIONS_RAW_MAP.de;
+  }
+  // Apply lang on mount
+  useEffect(()=>{
+    QUESTIONS=QUESTIONS_MAP[lang]||QUESTIONS_MAP.de;
+    QUESTIONS_RAW=QUESTIONS_RAW_MAP[lang]||QUESTIONS_RAW_MAP.de;
+  },[]);
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const enabledJokersRef=useRef([]);
@@ -1596,12 +1770,13 @@ export default function App(){
     setMode(m);
     const c=genCode();
     setCode(c);
-    await dbSet(c,{code:c,mode:m,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
+    await dbSet(c,{code:c,mode:m,lang,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
     listenRoom(c);
   }
 
-  async function handleJoin(c,name,m){
+  async function handleJoin(c,name,m,roomLang){
     setMode(m||"adult");
+    if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
     const r=await dbGet(c);
     await dbPatch(c,{players:{...r.players,[myId]:{id:myId,name}},order:[...(r.order||[]),myId]});
@@ -1793,7 +1968,7 @@ export default function App(){
 
   return <>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
-    {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin}/>}
+    {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
