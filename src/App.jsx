@@ -95,7 +95,7 @@ const UI = {
     tipSubmitted:"✓ Tipp abgegeben!",waitingAll:"Warte auf alle...",
     haveTipped:"haben getippt",discuss:"💬 Tippt erst, dann diskutiert!",
     betting:"WETTEN",whoClosest:"Wer trifft\'s am besten?",
-    betCorrect:"+1 Punkt extra",betSet:"Wette gesetzt!",
+    betCorrect:"+1 Punkt extra",betSet:"Wette gesetzt!",waitRevealBet:"Warte auf Auflösung...",
     closestLabel:"🎯 AM NÄCHSTEN dran",farthestLabel:"💀 AM WEITESTEN daneben",
     submitBet:"Wette abgeben 🎲",twoPlayers:"Bei 2 Spielern reicht eine Auswahl 👆",
     roundScores:"TIPPS DIESER RUNDE",bets:"WETTEN",
@@ -139,7 +139,7 @@ const UI = {
     tipSubmitted:"✓ Guess submitted!",waitingAll:"Waiting for everyone...",
     haveTipped:"have guessed",discuss:"💬 Guess first, then discuss!",
     betting:"BETTING",whoClosest:"Who\'s closest?",
-    betCorrect:"+1 bonus point",betSet:"Bet placed!",
+    betCorrect:"+1 bonus point",betSet:"Bet placed!",waitRevealBet:"Waiting for reveal...",
     closestLabel:"🎯 CLOSEST guess",farthestLabel:"💀 FARTHEST off",
     submitBet:"Place bet 🎲",twoPlayers:"With 2 players one choice is enough 👆",
     roundScores:"ROUND GUESSES",bets:"BETS",
@@ -183,7 +183,7 @@ const UI = {
     tipSubmitted:"✓ ¡Respuesta enviada!",waitingAll:"Esperando a todos...",
     haveTipped:"han respondido",discuss:"💬 ¡Responde primero, luego discute!",
     betting:"APUESTAS",whoClosest:"¿Quién se acerca más?",
-    betCorrect:"+1 punto extra",betSet:"¡Apuesta hecha!",
+    betCorrect:"+1 punto extra",betSet:"¡Apuesta hecha!",waitRevealBet:"Esperando revelación...",
     closestLabel:"🎯 MÁS CERCA",farthestLabel:"💀 MÁS LEJOS",
     submitBet:"Apostar 🎲",twoPlayers:"Con 2 jugadores una elección es suficiente 👆",
     roundScores:"RESPUESTAS DE LA RONDA",bets:"APUESTAS",
@@ -348,7 +348,7 @@ async function shareResult(room, t) {
   ctx.fillText('The pocket party game to prove your mates wrong.', PAD, 64);
   ctx.font = '11px system-ui, sans-serif';
   ctx.fillStyle = isDark?'#32261e':'#ffd58a';
-  ctx.fillText(`${history.length} Runden gespielt`, W-PAD-ctx.measureText(`${history.length} Runden gespielt`).width, 64);
+  ctx.fillText(`${history.length} ${i.roundsPlayed}`, W-PAD-ctx.measureText(`${history.length} ${i.roundsPlayed}`).width, 64);
 
   // ── Divider ──
   ctx.strokeStyle = isDark?'#32261e':'#ffd58a';
@@ -496,7 +496,7 @@ async function shareResult(room, t) {
           try {
             await navigator.share({
               title: 'EstiMates Ergebnis',
-              text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
+              text: `🏆 ${winner?.name} – ${scores[winner?.id]||0} pts! playestimates.app`,
               files: [file]
             });
           } catch(e) { downloadCanvas(canvas); }
@@ -514,7 +514,7 @@ async function shareResult(room, t) {
           try {
             await navigator.share({
               title: 'EstiMates Ergebnis',
-              text: `🏆 ${winner?.name} gewinnt mit ${scores[winner?.id]||0} Punkten! Spielt mit uns: playestimates.app`,
+              text: `🏆 ${winner?.name} – ${scores[winner?.id]||0} pts! playestimates.app`,
               files: [file]
             });
           } catch(e) { downloadCanvas(canvas); }
@@ -1214,7 +1214,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     </div>
 
     <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs)}>
-      Weiter →
+      {i.continueBtn}
     </Btn>
   </div>;
 }
@@ -1305,7 +1305,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>Warte auf Mitspieler</h2>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{i.lobbyWaiting}</h2>
     <div style={{...row,marginBottom:16}}>
       <span style={{fontFamily:t.fontMono,fontSize:28,letterSpacing:5,color:t.accent,fontWeight:800}}>{code}</span>
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
@@ -1325,8 +1325,8 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
       <QRCode url={link} t={t}/>
     </Card>
     {isHost
-      ?<Btn t={t} onClick={onGoJokerSetup} full>{t.id==="kids"?"Los geht's 🎮":"Weiter →"}</Btn>
-      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>Warte auf den Spielleiter 🙂</p>}
+      ?<Btn t={t} onClick={onGoJokerSetup} full>{i.continueBtn}</Btn>
+      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
   </div>;
 }
 
@@ -1590,11 +1590,11 @@ function BettingScreen({room,myId,t,onBet,code,lang}){
   const canSubmit=soloOther?!!closest:!!(closest&&farthest&&closest!==farthest);
   function submitBet(){onBet(closest,soloOther?closest:farthest);}
   return <div style={{...page,animation:"fu .3s ease both"}}>
-    <Pill t={t} color={t.gold}>WETTEN</Pill>
+    <Pill t={t} color={t.gold}>{i.betting}</Pill>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?32:38,margin:"8px 0 5px"}}>Wer trifft's am besten?</h2>
     <p style={{color:t.muted,marginBottom:18,fontSize:14}}>Richtige Wette = +1 Punkt extra</p>
     {myBet
-      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
+      ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>{i.waitRevealBet}</p></Card>
       :<>
         <RG label={i.closestLabel} color={t.green} val={closest} setVal={setClosest}/>
         {!soloOther&&<RG label={i.farthestLabel} color={t.danger} val={farthest} setVal={setFarthest}/>}
@@ -1658,7 +1658,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
       <div style={{fontSize:30,marginBottom:6}}>{q.emoji||"❓"}</div>
       <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-        <Pill t={t}>AUFLÖSUNG</Pill>
+        <Pill t={t}>{i.reveal}</Pill>
         {room.speedMode&&<Pill t={t} color={t.accent}>⚡ Speed</Pill>}
       </div>
       {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 DOPPELTE PUNKTE aktiv!</Pill></div>}
@@ -1675,7 +1675,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
       {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>Zu langsam!</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>WETTEN</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
@@ -1711,7 +1711,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
-    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>Nächste Frage →</Btn><Btn t={t} variant="secondary" onClick={onEnd}>Beenden</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>Warte auf den Spielleiter 🙂</p>}
+    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
   </div>;
 }
 
@@ -1815,7 +1815,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
-    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>gewinnt mit {scores[winner?.id]||0} Punkten! 🎊</p>
+    <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {i.roundsPlayed.includes("gespielt")?"Punkte":"pts"}! 🎊</p>
     {globalRank!=null&&<div style={{
       padding:"8px 16px",borderRadius:t.radius,marginBottom:12,
       background:globalRank<=25?t.gold+"22":globalRank<=50?t.green+"18":t.surface,
