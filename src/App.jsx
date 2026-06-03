@@ -131,6 +131,9 @@ const UI = {
     jokerPlayed:(n)=>`${n} Joker gespielt`,
     sabotageCount:(n)=>`${n} Sabotagen`,
     hintLabel:"💡 HINWEIS",
+    pts:"Punkte",
+    camUnavailable:"Kamera nicht verfügbar",
+    takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
   en: {
     createRoom:"Create Room",join:"Join",back:"← Back",
@@ -183,6 +186,9 @@ const UI = {
     jokerPlayed:(n)=>`${n} jokers played`,
     sabotageCount:(n)=>`${n} sabotages`,
     hintLabel:"💡 HINT",
+    pts:"pts",
+    camUnavailable:"Camera not available",
+    takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
   es: {
     createRoom:"Crear sala",join:"Unirse",back:"← Volver",
@@ -235,6 +241,9 @@ const UI = {
     jokerPlayed:(n)=>`${n} comodines usados`,
     sabotageCount:(n)=>`${n} sabotajes`,
     hintLabel:"💡 PISTA",
+    pts:"puntos",
+    camUnavailable:"Cámara no disponible",
+    takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
 };
 
