@@ -1509,9 +1509,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd}){
   const jokerUsedBy=room.jokerUsedBy;
   const jokerUsedName=jokerUsedBy?room.players?.[jokerUsedBy]?.name:"";
 
-  // show newly earned jokers
-  const myNewJoker=room.newJokersThisRound?.[myId];
-
+  // myNewJoker declared above in useEffect
   return <div style={page}>
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
       <div style={{fontSize:30,marginBottom:6}}>{q.emoji||"❓"}</div>
