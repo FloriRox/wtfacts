@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
@@ -279,7 +279,8 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
-async function shareResult(room, t) {
+async function shareResult(room, t, lang) {
+  const i=UI[lang]||UI.de;
   const pl = (room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const scores = room.scores||{};
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
@@ -1884,7 +1885,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
       </div>)}
     </Card>}
     {/* Share button */}
-    <Btn t={t} variant="secondary" full onClick={()=>shareResult(room,t)} style={{marginBottom:12}}>
+    <Btn t={t} variant="secondary" full onClick={()=>shareResult(room,t,lang)} style={{marginBottom:12}}>
       📤 Ergebnis teilen / speichern
     </Btn>
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
@@ -1892,6 +1893,20 @@ function FinalScreen({room,myId,t,onRestart,lang}){
 }
 
 /* ─── ROOT APP ────────────────────────────────────── */
+class ErrorBoundary extends React.Component {
+  constructor(props){super(props);this.state={error:null};}
+  static getDerivedStateFromError(e){return{error:e};}
+  render(){
+    if(this.state.error)return <div style={{padding:20,color:"red",fontFamily:"monospace",background:"#fff",minHeight:"100vh"}}>
+      <h2>🔴 Error (share with developer):</h2>
+      <pre style={{fontSize:12,whiteSpace:"pre-wrap"}}>{this.state.error?.message}</pre>
+      <pre style={{fontSize:11,whiteSpace:"pre-wrap",color:"#666"}}>{this.state.error?.stack}</pre>
+      <button onClick={()=>this.setState({error:null})} style={{marginTop:16,padding:"8px 16px"}}>Retry</button>
+    </div>;
+    return this.props.children;
+  }
+}
+
 export default function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
@@ -2145,7 +2160,7 @@ export default function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];enabledJokersRef.current=[];
   }
 
-  return <>
+  return <ErrorBoundary>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
     {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang}/>}
@@ -2157,5 +2172,5 @@ export default function App(){
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
-  </>;
+  </ErrorBoundary>;
 }
