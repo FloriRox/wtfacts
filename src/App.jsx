@@ -1539,16 +1539,17 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
         </p>
         <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>JOKER AUFLADEN</p>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-          {Object.keys(JOKER_DEFS).map(id=>{ const jk=getJokerDef(id,"de"); return(
-            <button key={jk.id} onClick={async()=>{
+          {Object.keys(JOKER_DEFS).map(id=>{
+            const jk=getJokerDef(id,"de");
+            return <button key={jk.id} onClick={async()=>{
               const cur=(room.jokers||{})[myId]||[];
               await update(ref(db,`rooms/${code}/jokers`),{[myId]:[...cur,jk.id]});
             }} style={{padding:"5px 9px",borderRadius:t.radius,background:t.card,
               border:`1px solid ${t.border}`,color:t.text,fontSize:11,
               fontWeight:700,cursor:"pointer",fontFamily:t.fontBody}}>
               {jk.icon}+
-            </button>
-          );})
+            </button>;
+          })}
           <button onClick={async()=>{
             await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
           }} style={{padding:"5px 9px",borderRadius:t.radius,
