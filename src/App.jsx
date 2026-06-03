@@ -822,13 +822,14 @@ function Logo({t,size="lg"}){
 function LoadingOverlay({t,text}){
   return <div style={{position:"fixed",inset:0,background:t.bg+"ee",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>{t.id==="kids"?<div style={{fontSize:48,animation:"bop .6s ease infinite"}}>🤔</div>:<Spinner t={t}/>}<p style={{color:t.muted,fontSize:15}}>{text}</p></div>;
 }
-function QRCode({url,t}){
+function QRCode({url,t,lang}){
   const bg=t.id==="adult"?"211c18":"ffffff";
   const fg=t.id==="adult"?"e8360a":"ff5c5c";
+  const label=(UI[lang]||UI.de).scanJoin;
   return <div style={{textAlign:"center",marginTop:18}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>EINLADUNGS-QR</p>
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>{(UI[lang]||UI.de).inviteQr}</p>
     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:130,height:130,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
-    <p style={{fontSize:12,color:t.muted,marginTop:7}}>{i.scanJoin}</p>
+    <p style={{fontSize:12,color:t.muted,marginTop:7}}>{label}</p>
   </div>;
 }
 
@@ -1358,7 +1359,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
           </div>
         ))}
       </div>
-      <QRCode url={link} t={t}/>
+      <QRCode url={link} t={t} lang={lang}/>
     </Card>
     {isHost
       ?<Btn t={t} onClick={onGoJokerSetup} full>{i.continueBtn}</Btn>
