@@ -132,6 +132,7 @@ const UI = {
     sabotageCount:(n)=>`${n} Sabotagen`,
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
+    scanJoin2:"Scan & mitspielen!",
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -187,6 +188,7 @@ const UI = {
     sabotageCount:(n)=>`${n} sabotages`,
     hintLabel:"💡 HINT",
     pts:"pts",
+    scanJoin2:"Scan to play!",
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -242,6 +244,7 @@ const UI = {
     sabotageCount:(n)=>`${n} sabotajes`,
     hintLabel:"💡 PISTA",
     pts:"puntos",
+    scanJoin2:"¡Escanear y jugar!",
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -476,7 +479,7 @@ async function shareResult(room, t, lang, winnerPhoto=null) {
   const medals=['🥇','🥈','🥉'];
   ctx.font='bold 11px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
-  ctx.fillText('ENDSTAND', PAD, y); y+=16;
+  ctx.fillText(i.finalStand, PAD, y); y+=16;
 
   sorted.forEach((p,idx)=>{
     const i=idx; // shadow fix
@@ -515,7 +518,7 @@ async function shareResult(room, t, lang, winnerPhoto=null) {
   if(statItems.length>0){
     ctx.font='bold 11px system-ui, sans-serif';
     ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
-    ctx.fillText('STATISTIKEN', PAD, y); y+=14;
+    ctx.fillText(i.stats, PAD, y); y+=14;
 
     // two columns
     const colW=(W-PAD*2-10)/2;
@@ -563,7 +566,7 @@ async function shareResult(room, t, lang, winnerPhoto=null) {
   ctx.fillText('playestimates.app', PAD, y+40);
   ctx.font='11px system-ui, sans-serif';
   ctx.fillStyle=isDark?'#6e5e54':'#b0a090';
-  ctx.fillText('Scan & mitspielen!', PAD, y+55);
+  ctx.fillText(i.scanJoin2, PAD, y+55);
 
   // ── Share or download (QR drawn async after image loads) ──
   return new Promise(resolve => {
@@ -2010,7 +2013,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
       </span>
     </div>}
     <Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>ENDSTAND</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>{i.finalStand}</p>
       {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
         <span style={{fontSize:20,minWidth:26}}>{medals[i]||`${i+1}.`}</span>
         <Avatar name={p.name} t={t}/>
@@ -2019,7 +2022,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
       </div>)}
     </Card>
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>STATISTIKEN</p>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>{i.stats}</p>
       {statCards.map((s,i)=><div key={i} style={{...row,padding:"10px 12px",borderRadius:t.radius,background:s.color+"14",border:`1px solid ${s.color}33`,marginBottom:8}}>
         <div style={{fontSize:26,minWidth:34}}>{s.icon}</div>
         <div style={{flex:1}}>
