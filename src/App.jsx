@@ -122,7 +122,6 @@ const UI = {
     gameMode:"SPIELMODUS",freeSample:"Kostenlos",comingSoon:"Kommt bald",
     startWith:(n,s)=>`Starten mit ${n} ${s===1?"Kategorie":"Kategorien"} →`,
     chooseMin:"Wähle eine Kategorie",minOne:"Wähle mindestens eine Kategorie",
-    tippIn:"Antwort in",
     debugOn:"AN",debugOff:"AUS",
     doubleActive:"DOPPELTE PUNKTE aktiv!",
     extraHintBigger:"größer ↑",extraHintSmaller:"kleiner ↓",extraHintPrefix:"Die Antwort ist",
@@ -175,7 +174,6 @@ const UI = {
     gameMode:"GAME MODE",freeSample:"Free",comingSoon:"Coming soon",
     startWith:(n,s)=>`Start with ${n} ${s===1?"category":"categories"} →`,
     chooseMin:"Choose a category",minOne:"Choose at least one category",
-    tippIn:"Answer in",
     debugOn:"ON",debugOff:"OFF",
     doubleActive:"DOUBLE POINTS active!",
     extraHintBigger:"higher ↑",extraHintSmaller:"lower ↓",extraHintPrefix:"The answer is",
@@ -228,7 +226,6 @@ const UI = {
     gameMode:"MODO DE JUEGO",freeSample:"Gratis",comingSoon:"Próximamente",
     startWith:(n,s)=>`Empezar con ${n} ${s===1?"categoría":"categorías"} →`,
     chooseMin:"Elige una categoría",minOne:"Elige al menos una categoría",
-    tippIn:"Respuesta en",
     debugOn:"SÍ",debugOff:"NO",
     doubleActive:"PUNTOS DOBLES activos!",
     extraHintBigger:"mayor ↑",extraHintSmaller:"menor ↓",extraHintPrefix:"La respuesta es",
@@ -1497,7 +1494,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
             <p style={{fontSize:t.id==="kids"?18:16,lineHeight:1.55,
               fontWeight:t.id==="kids"?700:500,marginTop:6}}>{q.q}</p>
             <p style={{marginTop:8,color:t.muted,fontSize:13}}>
-              Antwort in: <strong style={{color:t.gold}}>{q.unit}</strong>
+              {i.tipIn}: <strong style={{color:t.gold}}>{q.unit}</strong>
             </p>
           </div>
         </div>
