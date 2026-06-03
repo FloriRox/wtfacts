@@ -1398,7 +1398,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
 
     {/* ── TOP BAR ── */}
     <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 Frage ${(room.qIdx||0)+1}`:{i.question+" "+((room.qIdx||0)+1)}}</Pill>
+      <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 ${i.question} ${(room.qIdx||0)+1}`:i.question+" "+((room.qIdx||0)+1)}</Pill>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>2× PUNKTE</Pill>}
         {/* Player chips inline */}
@@ -1602,8 +1602,8 @@ function BettingScreen({room,myId,t,onBet,code,lang}){
     {myBet
       ?<Card t={t} style={{textAlign:"center"}}><div style={{fontSize:52,animation:"bop 1.2s ease infinite",marginBottom:10}}>🎲</div><p style={{fontWeight:700,fontSize:17}}>Wette gesetzt!</p><p style={{color:t.muted,marginTop:7,animation:"pulse 1.5s ease infinite"}}>Warte auf Auflösung...</p></Card>
       :<>
-        <RG label=i.closestLabel color={t.green} val={closest} setVal={setClosest}/>
-        {!soloOther&&<RG label=i.farthestLabel color={t.danger} val={farthest} setVal={setFarthest}/>}
+        <RG label={i.closestLabel} color={t.green} val={closest} setVal={setClosest}/>
+        {!soloOther&&<RG label={i.farthestLabel} color={t.danger} val={farthest} setVal={setFarthest}/>}
         {soloOther&&<p style={{color:t.muted,fontSize:13,marginBottom:12,textAlign:"center"}}>Bei 2 Spielern reicht eine Auswahl 👆</p>}
         <Btn t={t} full disabled={!canSubmit} onClick={submitBet}>Wette abgeben 🎲</Btn>
       </>}
