@@ -2946,6 +2946,19 @@ function App(){
   }
 
   return <ErrorBoundary>
+    {/* Floating Gastgeber button – visible for host during entire game */}
+    {code&&room&&room.hostId===myId&&screen!=='home'&&screen!=='final'&&
+      <button onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
+        title={i.displayMode}
+        style={{position:'fixed',bottom:20,right:16,zIndex:99,
+          background:t.surface,border:`1.5px solid ${t.gold}88`,
+          borderRadius:'50%',width:48,height:48,fontSize:20,cursor:'pointer',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          boxShadow:`0 2px 12px ${t.gold}44`,transition:'transform .2s'}}
+        onMouseEnter={e=>e.currentTarget.style.transform='scale(1.1)'}
+        onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+        📺
+      </button>}
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
     {screen==='lobby'&&room&&(room.kicked||{})[myId]&&
