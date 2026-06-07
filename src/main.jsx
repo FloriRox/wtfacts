@@ -1,6 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import App, { DisplayApp } from './App.jsx'
+
+const isDisplay = new URLSearchParams(location.search).get('mode') === 'display';
+
 createRoot(document.getElementById('root')).render(
-  <StrictMode><App /></StrictMode>
+  <StrictMode>{isDisplay ? <DisplayApp/> : <App/>}</StrictMode>
 )
