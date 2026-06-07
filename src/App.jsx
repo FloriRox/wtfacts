@@ -2122,9 +2122,9 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
         borderRadius:8,padding:'7px 10px',
         borderLeft:`3px solid ${ev.color}`,
         animation:'slideUp .3s ease both',flexShrink:0}}>
-        <span style={{fontSize:ev.type==='phase'?18:15,flexShrink:0,marginTop:1}}>{ev.emoji}</span>
+        <span style={{fontSize:ev.type==='phase'?20:16,flexShrink:0,marginTop:1}}>{ev.emoji}</span>
         <span style={{
-          fontSize:ev.type==='phase'?13:11,
+          fontSize:ev.type==='phase'?14:12,
           fontWeight:ev.type==='phase'?800:ev.type==='exact'?700:400,
           color:ev.color,
           lineHeight:1.4,
@@ -2279,7 +2279,7 @@ function DisplayScreen({room, code, t, lang}) {
     <div style={{flex:1,display:'flex',overflow:'hidden'}}>
 
       {/* ── LEFT: Live content ── */}
-      <div style={{flex:'0 0 68%',padding:'20px 28px',display:'flex',flexDirection:'column',
+      <div style={{flex:'0 0 63%',padding:'20px 28px',display:'flex',flexDirection:'column',
         gap:16,borderRight:'1px solid #2a1a0e',overflow:'hidden'}}>
 
         {/* LOBBY */}
@@ -2385,84 +2385,92 @@ function DisplayScreen({room, code, t, lang}) {
       </div>
 
       {/* ── RIGHT: Scoreboard + Live Stats ── */}
-      <div style={{flex:1,padding:'16px 16px',display:'flex',flexDirection:'column',
-        gap:12,overflow:'hidden'}}>
+      <div style={{flex:'0 0 37%',padding:'20px 24px',display:'flex',flexDirection:'column',
+        gap:0,overflow:'hidden',minWidth:280}}>
 
-        {/* Rangliste */}
-        <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>{i.dispRanking}</p>
-        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {/* ── Rangliste ── */}
+        <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+          margin:'0 0 10px',textTransform:'uppercase'}}>{i.dispRanking}</p>
+        <div style={{display:'flex',flexDirection:'column',gap:7,marginBottom:16}}>
           {sorted.map((p,idx)=>(
-            <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
-              background:idx===0?gold+'18':'#181310',
-              border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`,
-              borderRadius:9,padding:'8px 10px',transition:'all .5s',
+            <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
+              background:idx===0?gold+'22':'#181310',
+              border:`1.5px solid ${idx===0?gold+'66':'#2a1a0e'}`,
+              borderRadius:10,padding:'10px 14px',transition:'all .5s',
               animation:'flyIn .4s ease both'}}>
-              <span style={{fontSize:14,width:22,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-              <span style={{flex:1,fontSize:13,fontWeight:idx===0?700:400,
-                overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-              <span style={{color:idx===0?gold:'#6e5e54',fontWeight:800,fontSize:15,flexShrink:0}}>
-                {scores[p.id]||0}<span style={{fontSize:10,marginLeft:2}}>P</span>
+              <span style={{fontSize:18,width:28,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+              <span style={{flex:1,fontSize:15,fontWeight:idx===0?800:500,
+                overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                color:idx===0?'#f2ece6':'#c8b8a8'}}>{p.name}</span>
+              <span style={{color:idx===0?gold:'#8e7e6e',fontWeight:900,
+                fontSize:idx===0?20:16,flexShrink:0}}>
+                {scores[p.id]||0}
+                <span style={{fontSize:11,marginLeft:2,fontWeight:400}}>P</span>
               </span>
             </div>
           ))}
         </div>
 
-        {/* Live Statistiken */}
+        {/* ── Live Statistiken ── */}
         {history.length>0&&<>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'4px 0 0'}}>{i.dispStats}</p>
-          <div style={{display:'flex',flexDirection:'column',gap:4,overflowY:'auto',flex:1}}>
+          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+            margin:'0 0 10px',textTransform:'uppercase',borderTop:'1px solid #2a1a0e',
+            paddingTop:14}}>{i.dispStats}</p>
+          <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>
             {sorted.map(p=>{
               const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
-              return <div key={p.id} style={{background:'#181310',borderRadius:8,
-                padding:'7px 10px',fontSize:12}}>
-                <div style={{fontWeight:600,marginBottom:3,
-                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                <div style={{display:'flex',gap:10,color:'#6e5e54'}}>
-                  <span>💥 {exactHits[p.id]||0}×</span>
-                  <span>Ø±{avg!=null?fmtNum(avg):'–'}</span>
-                  <span>🃏 {jokerTotals[p.id]||0}</span>
+              return <div key={p.id} style={{background:'#181310',borderRadius:10,
+                padding:'10px 14px',border:'1px solid #2a1a0e'}}>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:5,
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                  color:'#f2ece6'}}>{p.name}</div>
+                <div style={{display:'flex',gap:14,color:'#8e7e6e',fontSize:13}}>
+                  <span title="Exakte Treffer">🎯 {exactHits[p.id]||0}</span>
+                  <span title="Ø Abweichung">Ø {avg!=null?fmtNum(avg):'–'}</span>
+                  <span title="Joker gespielt">🃏 {jokerTotals[p.id]||0}</span>
                 </div>
               </div>;
             })}
           </div>
         </>}
 
-        {/* Joker Status + Earned */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flexShrink:0}}>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>{i.dispJoker}</p>
+        {/* ── Joker Inventar ── */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:14,marginBottom:14,flexShrink:0}}>
+          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+            margin:'0 0 10px',textTransform:'uppercase'}}>{i.dispJoker}</p>
           {pl.map(p=>{
             const jk=(room?.jokers||{})[p.id]||[];
             const newJk=(room?.newJokersThisRound||{})[p.id];
-            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6,
-              background:newJk?gold+'18':'transparent',borderRadius:6,
-              padding:newJk?'3px 6px':'0',transition:'all .4s'}}>
-              <span style={{fontSize:11,color:'#6e5e54',flex:1,
+            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
+              marginBottom:8,background:newJk?gold+'18':'transparent',
+              borderRadius:8,padding:'4px 8px',transition:'background .4s'}}>
+              <span style={{fontSize:13,color:'#c8b8a8',flex:1,fontWeight:500,
                 overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-              <div style={{display:'flex',alignItems:'center',gap:3}}>
+              <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
                 {jk.length>0
-                  ? jk.map((j,ii)=><span key={ii} style={{fontSize:13}}>{jokerIcon(j)}</span>)
-                  : <span style={{fontSize:11,color:'#3a2a1e'}}>—</span>}
-                {newJk&&<span style={{fontSize:10,color:gold,fontWeight:700,
-                  background:gold+'33',borderRadius:4,padding:'1px 5px',marginLeft:2,
+                  ? jk.map((j,ii)=><span key={ii} style={{fontSize:16}}>{jokerIcon(j)}</span>)
+                  : <span style={{fontSize:13,color:'#3a2a1e'}}>—</span>}
+                {newJk&&<span style={{fontSize:12,color:gold,fontWeight:800,
+                  background:gold+'33',borderRadius:5,padding:'2px 7px',
                   animation:'popIn .4s ease both'}}>+{jokerIcon(newJk)}</span>}
               </div>
             </div>;
           })}
         </div>
 
-        {/* Chat / Event Feed */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flex:1,
+        {/* ── Event Feed ── */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:14,flex:1,
           display:'flex',flexDirection:'column',minHeight:0}}>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px',flexShrink:0}}>
-            {i.dispEvents}
-          </p>
+          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+            margin:'0 0 10px',textTransform:'uppercase',flexShrink:0}}>{i.dispEvents}</p>
           <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i}/>
         </div>
 
-        {/* QR */}
-        {qr&&<div style={{textAlign:'center',opacity:.4,marginTop:'auto'}}>
-          <img src={qr} style={{width:64,height:64,borderRadius:5}}/>
-          <p style={{fontSize:10,color:'#6e5e54',margin:'3px 0 0'}}>{i.dispScanJoin}</p>
+        {/* ── QR ── */}
+        {qr&&<div style={{textAlign:'center',opacity:.5,paddingTop:12,flexShrink:0,
+          borderTop:'1px solid #2a1a0e',marginTop:8}}>
+          <img src={qr} style={{width:72,height:72,borderRadius:6}}/>
+          <p style={{fontSize:11,color:'#6e5e54',margin:'4px 0 0'}}>{i.dispScanJoin}</p>
         </div>}
       </div>
     </div>
