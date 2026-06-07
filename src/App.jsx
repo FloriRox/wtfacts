@@ -2279,7 +2279,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default /* ─── DISPLAY APP (Gastgeber-Modus – eigenständig) ─── */
+/* ─── DISPLAY APP (Gastgeber-Modus – eigenständig) ─── */
 export function DisplayApp() {
   const params = new URLSearchParams(location.search);
   const roomCode = params.get('room');
