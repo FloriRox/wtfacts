@@ -2006,6 +2006,86 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
 
 
 /* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
+
+/* ─── CHAT FEED (Display Mode) ─────────────────────── */
+function ChatFeed({room, pl, gold, jokerIcon}) {
+  const [events, setEvents] = useState([]);
+  const feedRef = useRef(null);
+  const prevRoom = useRef(null);
+
+  useEffect(()=>{
+    if(!room||!prevRoom.current) { prevRoom.current=room; return; }
+    const prev = prevRoom.current;
+    const newEvents = [];
+    const now = Date.now();
+
+    // Joker used
+    const curJokers = room.jokers||{}, prevJokers = prev.jokers||{};
+    pl.forEach(p=>{
+      const cur=(curJokers[p.id]||[]).length;
+      const prv=(prevJokers[p.id]||[]).length;
+      if(cur<prv){
+        const used = (prevJokers[p.id]||[]).find(j=>!(curJokers[p.id]||[]).includes(j)||
+          (prevJokers[p.id]||[]).filter(x=>x===j).length>(curJokers[p.id]||[]).filter(x=>x===j).length);
+        if(used) newEvents.push({id:now+Math.random(),emoji:jokerIcon(used),
+          text:`${p.name} spielt ${used}-Joker`,color:used==='sabotage'?'#cc2244':gold,ts:now});
+      }
+    });
+
+    // Joker earned
+    const newJk = room.newJokersThisRound||{}, prevJk = prev.newJokersThisRound||{};
+    pl.forEach(p=>{
+      if(newJk[p.id]&&!prevJk[p.id])
+        newEvents.push({id:now+Math.random(),emoji:'🎁',
+          text:`${p.name} erhält ${jokerIcon(newJk[p.id])}`,color:gold,ts:now});
+    });
+
+    // Exact hit
+    const curG=room.guesses||{}, prevG=prev.guesses||{};
+    const answer=room.q?.a;
+    pl.forEach(p=>{
+      if(curG[p.id]!=null&&prevG[p.id]==null&&answer!=null){
+        if(Math.abs(curG[p.id]-answer)===0)
+          newEvents.push({id:now+Math.random(),emoji:'🎯',
+            text:`${p.name} trifft EXAKT!`,color:'#39d98a',ts:now});
+      }
+    });
+
+    // New phase
+    if(room.phase!==prev.phase){
+      const labels={question:'Neue Runde!',results:'Auflösung!',final:'Spiel beendet!'};
+      if(labels[room.phase])
+        newEvents.push({id:now+Math.random(),emoji:room.phase==='final'?'🏆':'🔔',
+          text:labels[room.phase],color:'#f2ece6',ts:now});
+    }
+
+    if(newEvents.length>0){
+      setEvents(prev=>[...newEvents,...prev].slice(0,30));
+    }
+    prevRoom.current=room;
+  },[room]);
+
+  // Auto-scroll to top
+  useEffect(()=>{
+    if(feedRef.current) feedRef.current.scrollTop=0;
+  },[events]);
+
+  return <div ref={feedRef} style={{flex:1,overflowY:'auto',display:'flex',
+    flexDirection:'column',gap:5}}>
+    {events.length===0&&<p style={{fontSize:11,color:'#3a2a1e',textAlign:'center',
+      marginTop:12}}>Noch keine Events...</p>}
+    {events.map(ev=>(
+      <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:6,
+        background:'#181310',borderRadius:8,padding:'6px 10px',
+        borderLeft:`3px solid ${ev.color}`,
+        animation:'slideUp .3s ease both',flexShrink:0}}>
+        <span style={{fontSize:16,flexShrink:0}}>{ev.emoji}</span>
+        <span style={{fontSize:12,color:'#f2ece6',lineHeight:1.4}}>{ev.text}</span>
+      </div>
+    ))}
+  </div>;
+}
+
 function DisplayScreen({room, code, t, lang}) {
   const i = UI[lang]||UI.de;
   const q = room?.q;
@@ -2298,19 +2378,36 @@ function DisplayScreen({room, code, t, lang}) {
           </div>
         </>}
 
-        {/* Joker Status */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10}}>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>JOKER</p>
+        {/* Joker Status + Earned */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flexShrink:0}}>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>JOKER-INVENTAR</p>
           {pl.map(p=>{
             const jk=(room?.jokers||{})[p.id]||[];
-            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+            const newJk=(room?.newJokersThisRound||{})[p.id];
+            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6,
+              background:newJk?gold+'18':'transparent',borderRadius:6,
+              padding:newJk?'3px 6px':'0',transition:'all .4s'}}>
               <span style={{fontSize:11,color:'#6e5e54',flex:1,
                 overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-              <span style={{fontSize:13}}>
-                {jk.length>0?jk.map(j=>jokerIcon(j)).join(''):<span style={{color:'#3a2a1e'}}>—</span>}
-              </span>
+              <div style={{display:'flex',alignItems:'center',gap:3}}>
+                {jk.length>0
+                  ? jk.map((j,ii)=><span key={ii} style={{fontSize:13}}>{jokerIcon(j)}</span>)
+                  : <span style={{fontSize:11,color:'#3a2a1e'}}>—</span>}
+                {newJk&&<span style={{fontSize:10,color:gold,fontWeight:700,
+                  background:gold+'33',borderRadius:4,padding:'1px 5px',marginLeft:2,
+                  animation:'popIn .4s ease both'}}>+{jokerIcon(newJk)}</span>}
+              </div>
             </div>;
           })}
+        </div>
+
+        {/* Chat / Event Feed */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flex:1,
+          display:'flex',flexDirection:'column',minHeight:0}}>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px',flexShrink:0}}>
+            EVENTS
+          </p>
+          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon}/>
         </div>
 
         {/* QR */}
