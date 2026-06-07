@@ -93,7 +93,7 @@ const UI = {
     question:"FRAGE",reveal:"AUFLÖSUNG",
     yourTip:"DEIN TIPP",changeTip:"🔄 TIPP ÄNDERN",tipIn:"Antwort in",
     tipSubmitted:"✓ Tipp abgegeben!",waitingAll:"Warte auf alle...",
-    haveTipped:"haben {i.dispTipped}",discuss:"💬 Tippt erst, dann diskutiert!",
+    haveTipped:"getippt",discuss:"💬 Tippt erst, dann diskutiert!",
     betting:"WETTEN",whoClosest:"Wer trifft\'s am besten?",
     betCorrect:"+1 Punkt extra",betSet:"Wette gesetzt!",waitRevealBet:"Warte auf Auflösung...",
     closestLabel:"🎯 AM NÄCHSTEN dran",farthestLabel:"💀 AM WEITESTEN daneben",
@@ -133,7 +133,7 @@ const UI = {
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
     scanJoin2:"Scan & mitspielen!",
-    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"{i.dispNoEvents}",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",
+    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -2724,7 +2724,6 @@ function App(){
   function listenRoom(c){
     if(unsubRef.current)unsubRef.current();
     unsubRef.current=dbListen(c,r=>{
-      console.log("🔥 listenRoom callback:", r?.phase, "room:", !!r);
       if(!r)return;
       try{
       setRoom({...r});
@@ -2966,6 +2965,7 @@ function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];enabledJokersRef.current=[];
   }
 
+  const i=UI[lang]||UI.de;
   return <ErrorBoundary>
 
     {/* Floating Gastgeber button – visible for host during entire game */}
@@ -2994,14 +2994,7 @@ function App(){
         <p style={{fontWeight:700,fontSize:18}}>{(UI[lang]||UI.de).kicked}</p>
         <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
       </div>}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<div style={{minHeight:'100vh',background:t.bg,color:t.text,padding:24,fontFamily:'monospace'}}>
-      <p style={{color:'#39d98a',fontSize:18,fontWeight:700}}>✅ Lobby geladen!</p>
-      <p>Code: {code}</p>
-      <p>Host: {room.hostId===myId?'Ja':'Nein'}</p>
-      <p>Spieler: {JSON.stringify(Object.keys(room.players||{}))}</p>
-      <p>Phase: {room.phase}</p>
-      <button onClick={()=>{{const i=UI[lang]||UI.de;console.log('i keys:',Object.keys(i));}}}>Test i</button>
-    </div>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
@@ -3010,11 +3003,7 @@ function App(){
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
-    {/* Debug catch-all: remove in production */}
-    {!['home','lobby','jokerSetup','categories','question','betting','results','final'].includes(screen)&&
-      <div style={{padding:20,background:'#1a0a0a',color:'#ff6666',minHeight:'100vh',fontFamily:'monospace'}}>
-        <p>Debug: screen="{screen}", room={room?'✅':'null'}, code={code||'null'}</p>
-      </div>}
+
   </ErrorBoundary>;
 }
 
