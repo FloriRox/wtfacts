@@ -133,6 +133,7 @@ const UI = {
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
     scanJoin2:"Scan & mitspielen!",
+    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>`Besser als ${p}% weltweit`,dailyStreak:(n)=>`🔥 ${n} Tage am Stück`,kickPlayer:"Kick",kickConfirm:(n)=>`${n} wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -189,6 +190,7 @@ const UI = {
     hintLabel:"💡 HINT",
     pts:"pts",
     scanJoin2:"Scan to play!",
+    dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>`Better than ${p}% worldwide`,dailyStreak:(n)=>`🔥 ${n} day streak`,kickPlayer:"Kick",kickConfirm:(n)=>`Really kick ${n}?`,kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -245,6 +247,7 @@ const UI = {
     hintLabel:"💡 PISTA",
     pts:"puntos",
     scanJoin2:"¡Escanear y jugar!",
+    dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>`Mejor que el ${p}% mundial`,dailyStreak:(n)=>`🔥 ${n} días seguidos`,kickPlayer:"Expulsar",kickConfirm:(n)=>`¿Expulsar a ${n}?`,kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -1103,10 +1106,101 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
 
 /* AfkButton inline in screens */
 
+
+/* ─── DAILY CHALLENGE ──────────────────────────────────── */
+function getDailyKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDailyQuestion(lang) {
+  const hash = getDailyKey().split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const cats = Object.values(QUESTIONS['adult']);
+  const pool = cats.flat();
+  return pool[hash % pool.length];
+}
+
+function DailyChallengeScreen({t, lang, onBack}) {
+  const i = UI[lang]||UI.de;
+  const [phase, setPhase] = React.useState('play');
+  const [guess, setGuess] = React.useState('');
+  const [result, setResult] = React.useState(null);
+  const [rank, setRank] = React.useState(null);
+  const [streak, setStreak] = React.useState(0);
+  const q = getDailyQuestion(lang);
+  const todayKey = getDailyKey();
+  const storageKey = `em_daily_${todayKey}`;
+
+  React.useEffect(()=>{
+    const saved = localStorage.getItem(storageKey);
+    if(saved){ setResult(JSON.parse(saved)); setPhase('done'); }
+    let s=0;
+    for(let n=1;n<=365;n++){
+      const d=new Date(); d.setDate(d.getDate()-n);
+      const k=`em_daily_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if(localStorage.getItem(k)) s++; else break;
+    }
+    setStreak(s);
+  },[]);
+
+  async function submit(){
+    const g=parseFloat(guess.replace(',','.'));
+    if(isNaN(g)) return;
+    const diff=Math.abs(g-q.a), exact=diff===0;
+    const res={guess:g,answer:q.a,diff,exact,date:todayKey};
+    localStorage.setItem(storageKey,JSON.stringify(res));
+    setResult(res); setPhase('result');
+    saveGlobalStats({diff,exact,isNewGame:true,mode:'adult'},lang);
+    const r=await getGlobalRank(diff); setRank(r);
+  }
+
+  const pct=result?Math.max(0,Math.min(100,Math.round(100*(1-result.diff/Math.max(result.answer,1))))):0;
+
+  return <div style={{...page,animation:'fu .3s ease both'}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+      <button onClick={onBack} style={{background:'none',border:'none',color:t.muted,fontSize:22,cursor:'pointer'}}>←</button>
+      <div>
+        <p style={{fontWeight:700,fontSize:16,margin:0}}>{i.dailyChallenge}</p>
+        <p style={{fontSize:12,color:t.muted,margin:0}}>{getDailyKey()}{streak>0?` · ${i.dailyStreak(streak)}`:''}</p>
+      </div>
+    </div>
+    {phase==='play'&&<>
+      <Card t={t} style={{marginBottom:16}}>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>{i.dailyChallenge.toUpperCase()}</p>
+        <p style={{fontSize:18,fontWeight:700,lineHeight:1.4}}>{q.q}</p>
+        {q.unit&&<p style={{color:t.gold,fontSize:13,marginTop:6}}>{i.tipIn}: <strong>{q.unit}</strong></p>}
+      </Card>
+      <Card t={t} style={{marginBottom:16}}>
+        <input type="number" value={guess} onChange={e=>setGuess(e.target.value)}
+          placeholder="Deine Schätzung..."
+          style={{width:'100%',padding:'12px 14px',fontSize:20,fontWeight:700,
+            background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:t.radius,
+            color:t.text,textAlign:'center',boxSizing:'border-box'}}/>
+      </Card>
+      <Btn t={t} full onClick={submit} disabled={!guess}>{i.dailyPlay}</Btn>
+    </>}
+    {(phase==='result'||phase==='done')&&result&&<>
+      <Card t={t} style={{marginBottom:16,textAlign:'center'}}>
+        <div style={{fontSize:48,marginBottom:8}}>{result.exact?'🎯':pct>80?'🔥':pct>50?'👍':'😅'}</div>
+        <p style={{fontSize:14,color:t.muted,marginBottom:4}}>{q.q}</p>
+        <p style={{fontSize:28,fontWeight:800,color:t.gold,margin:'8px 0'}}>{fmtNum(result.answer)} <span style={{fontSize:14}}>{q.unit}</span></p>
+        <p style={{fontSize:14,color:t.muted}}>Dein Tipp: <strong style={{color:t.text}}>{fmtNum(result.guess)}</strong> · ±<strong style={{color:result.exact?t.green:t.accent}}>{fmtNum(result.diff)}</strong></p>
+      </Card>
+      {rank!==null&&<Card t={t} style={{marginBottom:16,textAlign:'center',background:t.gold+'18',border:`1.5px solid ${t.gold}44`}}>
+        <p style={{fontSize:18,fontWeight:700,color:t.gold,margin:0}}>{i.dailyRank(rank)}</p>
+      </Card>}
+      {phase==='done'&&<Card t={t} style={{marginBottom:16,textAlign:'center'}}>
+        <p style={{color:t.muted,fontSize:14,margin:0}}>{i.dailyDone}</p>
+      </Card>}
+      <Btn t={t} full variant="secondary" onClick={onBack}>← Zurück</Btn>
+    </>}
+  </div>;
+}
+
 /* ─── HOME ────────────────────────────────────────── */
 function HomeScreen({onHost,onJoin,lang,onSetLang}){
   const i=UI[lang]||UI.de;
-  const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":"landing");
+  const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
   const[mode,setMode]=useState("adult");
@@ -1397,13 +1491,14 @@ function CategoryScreen({mode,onStart,t,lang}){
 }
 
 /* ─── LOBBY ───────────────────────────────────────── */
-function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
+function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
   const i=UI[lang]||UI.de;
   const[copied,setCopied]=useState(false);
   const isHost=room.hostId===myId;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const link=inviteUrl(code);
-  function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});}
+  function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); }
+  function addPlayer(){ if(navigator.share){navigator.share({title:'EstiMates',text:'Komm mitspielen!',url:link});}else{copy();} }
   return <div style={{...page,animation:"fu .3s ease both"}}>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
@@ -1420,12 +1515,23 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang}){
             <Avatar name={p.name} t={t}/>
             <span style={{flex:1,fontWeight:600}}>{p.name}</span>
             {p.id===room.hostId&&<Pill t={t} color={t.gold}>{i.hostLabel}</Pill>}
+            {isHost&&p.id!==myId&&onKick&&<button onClick={()=>onKick(p.id)}
+              style={{padding:'3px 10px',borderRadius:t.radius,border:`1px solid ${t.danger}44`,
+                background:'transparent',color:t.danger,fontSize:11,cursor:'pointer',fontWeight:600}}>
+              {i.kickPlayer}
+            </button>}
             {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>{i.youLabel}</Pill>}
           </div>
         ))}
       </div>
       <QRCode url={link} t={t} lang={lang}/>
     </Card>
+    <Btn t={t} full onClick={addPlayer} style={{marginBottom:8}}>➕ Spieler einladen</Btn>
+    {isHost&&<Btn t={t} full variant="secondary"
+      onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
+      style={{marginBottom:8,borderColor:t.gold+'88',color:t.gold}}>
+      📺 {i.displayMode}
+    </Btn>}
     {isHost
       ?<Btn t={t} onClick={onGoJokerSetup} full>{i.continueBtn}</Btn>
       :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
@@ -1898,6 +2004,115 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
   </div>;
 }
 
+
+/* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
+function DisplayScreen({room, code, t, lang}) {
+  const i = UI[lang]||UI.de;
+  const q = room?.q;
+  const pl = (room?.order||[]).map(id=>room?.players?.[id]).filter(Boolean);
+  const guesses = room?.guesses||{};
+  const scores = room?.scores||{};
+  const phase = room?.phase||'question';
+  const tippedCount = pl.filter(p=>guesses[p.id]!=null).length;
+  const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
+  const medals = ['🥇','🥈','🥉'];
+
+  const inviteLink = inviteUrl(code);
+  const [qr, setQr] = useState(null);
+  useEffect(()=>{
+    if(!code) return;
+    import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js').then(()=>{
+      window.QRCode.toDataURL(inviteLink,{width:180,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
+        .then(url=>setQr(url)).catch(()=>{});
+    }).catch(()=>{});
+  },[code]);
+
+  const bg = '#0f0a06';
+  const gold = t.gold;
+  const accent = t.accent;
+
+  return <div style={{minHeight:'100vh',background:bg,color:'#f2ece6',fontFamily:t.fontBody,
+    display:'flex',flexDirection:'column',padding:'32px 48px',gap:24}}>
+
+    {/* Header */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div style={{display:'flex',alignItems:'baseline',gap:4}}>
+        <span style={{fontSize:28,fontWeight:900,color:accent}}>Esti</span>
+        <span style={{fontSize:28,fontWeight:900,color:gold}}>Mates</span>
+      </div>
+      <div style={{textAlign:'center'}}>
+        <p style={{fontSize:13,color:'#6e5e54',margin:0}}>{i.displayMode}</p>
+        <p style={{fontSize:22,fontWeight:800,letterSpacing:2,color:gold,margin:0}}>#{code}</p>
+      </div>
+      {qr&&<img src={qr} style={{width:80,height:80,borderRadius:8}}/>}
+    </div>
+
+    {/* Main content */}
+    {phase==='question'&&q&&<>
+      <div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',gap:24}}>
+        <div style={{background:'#1a120a',borderRadius:16,padding:'32px 40px',border:`1.5px solid ${gold}33`}}>
+          <p style={{fontSize:13,fontWeight:700,color:'#6e5e54',letterSpacing:.8,marginBottom:16}}>FRAGE</p>
+          <p style={{fontSize:36,fontWeight:800,lineHeight:1.3,margin:0}}>{q.q}</p>
+          {q.unit&&<p style={{color:gold,fontSize:18,marginTop:12}}>Antwort in: <strong>{q.unit}</strong></p>}
+        </div>
+
+        {/* Players grid */}
+        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:12}}>
+          {pl.map(p=>{
+            const tipped = guesses[p.id]!=null;
+            return <div key={p.id} style={{background:tipped?gold+'22':'#1a120a',
+              border:`1.5px solid ${tipped?gold:'#2a1a0e'}`,borderRadius:12,padding:'16px 12px',
+              textAlign:'center',transition:'all .3s'}}>
+              <p style={{fontSize:24,margin:'0 0 4px'}}>{tipped?'✅':'⏳'}</p>
+              <p style={{fontSize:14,fontWeight:600,margin:0}}>{p.name}</p>
+            </div>;
+          })}
+        </div>
+        <p style={{textAlign:'center',color:'#6e5e54',fontSize:16}}>
+          {tippedCount}/{pl.length} {i.haveTipped}
+        </p>
+      </div>
+    </>}
+
+    {phase==='reveal'&&q&&<>
+      <div style={{flex:1,display:'flex',gap:32,alignItems:'flex-start'}}>
+        {/* Answer */}
+        <div style={{flex:1}}>
+          <div style={{background:gold+'22',borderRadius:16,padding:'24px 32px',border:`2px solid ${gold}`,marginBottom:20}}>
+            <p style={{fontSize:13,fontWeight:700,color:'#6e5e54',marginBottom:8}}>ANTWORT</p>
+            <p style={{fontSize:48,fontWeight:900,color:gold,margin:0}}>{fmtNum(q.a)} <span style={{fontSize:20}}>{q.unit}</span></p>
+          </div>
+          {/* Rankings */}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {sorted.map((p,idx)=>{
+              const g=guesses[p.id];
+              const diff=g!=null?Math.abs(g-q.a):null;
+              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,
+                background:'#1a120a',borderRadius:10,padding:'10px 16px',
+                border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`}}>
+                <span style={{fontSize:20,width:28}}>{medals[idx]||`${idx+1}.`}</span>
+                <span style={{flex:1,fontWeight:idx===0?700:400}}>{p.name}</span>
+                <span style={{color:'#6e5e54'}}>{g!=null?fmtNum(g):'–'}</span>
+                <span style={{color:diff===0?'#39d98a':diff<q.a*.1?gold:'#6e5e54',fontWeight:700,minWidth:60,textAlign:'right'}}>
+                  {diff!=null?`±${fmtNum(diff)}`:'–'}
+                </span>
+                <span style={{color:gold,fontWeight:800,minWidth:40,textAlign:'right'}}>{scores[p.id]||0}P</span>
+              </div>;
+            })}
+          </div>
+        </div>
+      </div>
+    </>}
+
+    {/* Footer */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+      borderTop:`1px solid #2a1a0e`,paddingTop:16}}>
+      <p style={{color:'#6e5e54',fontSize:13,margin:0}}>playestimates.app</p>
+      <p style={{color:'#6e5e54',fontSize:13,margin:0}}>Scan to join: #{code}</p>
+    </div>
+  </div>;
+}
+
 /* ─── FINAL ───────────────────────────────────────── */
 function FinalScreen({room,myId,t,onRestart,lang}){
   const i=UI[lang]||UI.de;
@@ -2065,10 +2280,21 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App(){
+  const isDisplayMode = new URLSearchParams(location.search).get('mode')==='display';
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
   const[code,setCode]=useState(null);
   const[myId]=useState(()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  // Auto-connect in display mode
+  useEffect(()=>{
+    if(!isDisplayMode) return;
+    const roomCode = new URLSearchParams(location.search).get('room');
+    if(!roomCode) return;
+    setCode(roomCode);
+    const roomRef = ref(db,`rooms/${roomCode}`);
+    const unsub = onValue(roomRef, snap=>{ if(snap.exists()) setRoom(snap.val()); });
+    return ()=>unsub();
+  },[]);
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
@@ -2289,6 +2515,18 @@ export default function App(){
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
   }
 
+  async function handleKick(playerId){
+    if(!room||room.hostId!==myId) return;
+    const playerName=room.players?.[playerId]?.name||'?';
+    if(!window.confirm(`${playerName} wirklich kicken?`)) return;
+    const newOrder=(room.order||[]).filter(id=>id!==playerId);
+    const updates={};
+    updates[`rooms/${code}/order`]=newOrder;
+    updates[`rooms/${code}/kicked/${playerId}`]=true;
+    updates[`rooms/${code}/players/${playerId}`]=null;
+    await update(ref(db),updates);
+  }
+
   async function handleSkip(){
     // Fully atomic – re-fetch then write in one patch
     const r=await dbGet(code);
@@ -2317,10 +2555,21 @@ export default function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];enabledJokersRef.current=[];
   }
 
+  // Gastgeber-Modus: ?mode=display&room=XXXX
+  if(isDisplayMode && code && room) {
+    return <ErrorBoundary><DisplayScreen room={room} code={code} t={t} lang={lang}/></ErrorBoundary>;
+  }
+
   return <ErrorBoundary>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
-    {screen==="lobby"&&room&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang}/>}
+    {screen==='lobby'&&room&&(room.kicked||{})[myId]&&
+      <div style={{...page,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,textAlign:'center'}}>
+        <div style={{fontSize:56}}>🚪</div>
+        <p style={{fontWeight:700,fontSize:18}}>{(UI[lang]||UI.de).kicked}</p>
+        <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
+      </div>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
