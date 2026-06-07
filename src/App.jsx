@@ -2991,7 +2991,14 @@ function App(){
         <p style={{fontWeight:700,fontSize:18}}>{(UI[lang]||UI.de).kicked}</p>
         <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
       </div>}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick}/>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<div style={{minHeight:'100vh',background:t.bg,color:t.text,padding:24,fontFamily:'monospace'}}>
+      <p style={{color:'#39d98a',fontSize:18,fontWeight:700}}>✅ Lobby geladen!</p>
+      <p>Code: {code}</p>
+      <p>Host: {room.hostId===myId?'Ja':'Nein'}</p>
+      <p>Spieler: {JSON.stringify(Object.keys(room.players||{}))}</p>
+      <p>Phase: {room.phase}</p>
+      <button onClick={()=>{{const i=UI[lang]||UI.de;console.log('i keys:',Object.keys(i));}}}>Test i</button>
+    </div>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
