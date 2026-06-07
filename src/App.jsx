@@ -2048,6 +2048,23 @@ function DisplayScreen({room, code, t, lang}) {
     </div>
 
     {/* Main content */}
+    {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&<>
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24}}>
+        <div style={{fontSize:64}}>🎮</div>
+        <p style={{fontSize:28,fontWeight:800,textAlign:'center'}}>Bereit zum Spielen!</p>
+        <p style={{fontSize:18,color:'#6e5e54',textAlign:'center'}}>Host startet das Spiel gleich...</p>
+        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:12,marginTop:16,width:'100%'}}>
+          {pl.map(p=><div key={p.id} style={{background:'#1a120a',border:`1.5px solid #2a1a0e`,
+            borderRadius:12,padding:'16px 12px',textAlign:'center'}}>
+            <p style={{fontSize:24,margin:'0 0 4px'}}>👤</p>
+            <p style={{fontSize:14,fontWeight:600,margin:0}}>{p.name}</p>
+          </div>)}
+        </div>
+        <p style={{color:'#6e5e54',fontSize:14,marginTop:8}}>
+          {pl.length} Spieler verbunden · Scan to join: #{code}
+        </p>
+      </div>
+    </>}
     {phase==='question'&&q&&<>
       <div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',gap:24}}>
         <div style={{background:'#1a120a',borderRadius:16,padding:'32px 40px',border:`1.5px solid ${gold}33`}}>
@@ -2286,7 +2303,7 @@ export function DisplayApp() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState(false);
   const lang = localStorage.getItem('em_lang')||'de';
-  const t = THEMES.warm;
+  const t = ADULT;
 
   useEffect(()=>{
     if(!roomCode){ setError(true); return; }
