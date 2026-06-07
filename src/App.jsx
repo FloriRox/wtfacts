@@ -1293,11 +1293,11 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
 function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang}){
   const i=UI[lang]||UI.de;
-  const[withJokers,setWithJokers]=useState(false);
+  const[withJokers,setWithJokers]=useState(true);
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
-  const[debugModeLocal,setDebugModeLocal]=useState(!!debugModeInit);
+  const[debugModeLocal,setDebugModeLocal]=useState(true);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
   return <div style={{
@@ -2012,241 +2012,312 @@ function DisplayScreen({room, code, t, lang}) {
   const pl = (room?.order||[]).map(id=>room?.players?.[id]).filter(Boolean);
   const guesses = room?.guesses||{};
   const scores = room?.scores||{};
+  const rs = room?.roundScores||{};
   const bets = room?.bets||{};
   const phase = room?.phase||'lobby';
+  const afkPlayers = room?.afkPlayers||{};
   const tippedCount = pl.filter(p=>guesses[p.id]!=null).length;
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
 
-  // QR code
+  // Ranked for results
+  const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
+    .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
+    .sort((a,b)=>a.diff-b.diff) : [];
+  const minDiff = ranked[0]?.diff??Infinity;
+  const closestIds = ranked.filter(r=>r.diff===minDiff).map(r=>r.id);
+
+  // Global session stats
+  const history = room?.history||[];
+  const exactHits = {}, diffTotals = {}, diffCounts = {}, jokerTotals = {};
+  pl.forEach(p=>{
+    exactHits[p.id]=0; diffTotals[p.id]=0; diffCounts[p.id]=0; jokerTotals[p.id]=0;
+  });
+  history.forEach(round=>{
+    const rGuesses=round.guesses||{}, rAnswer=round.answer;
+    pl.forEach(p=>{
+      const g=rGuesses[p.id];
+      if(g!=null&&g!==-999999&&rAnswer!=null){
+        const d=Math.abs(g-rAnswer);
+        diffTotals[p.id]+=d; diffCounts[p.id]++;
+        if(d===0) exactHits[p.id]++;
+      }
+    });
+    const rJokers=round.jokerUsed||{};
+    pl.forEach(p=>{ if(rJokers[p.id]) jokerTotals[p.id]++; });
+  });
+
+  // QR
   const [qr, setQr] = useState(null);
   useEffect(()=>{
     if(!code) return;
     const link = inviteUrl(code);
     import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js').then(()=>{
-      window.QRCode.toDataURL(link,{width:160,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
+      window.QRCode.toDataURL(link,{width:140,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
         .then(url=>setQr(url)).catch(()=>{});
     }).catch(()=>{});
   },[code]);
 
-  // Joker animations
-  const [jokerAnim, setJokerAnim] = useState(null); // {type, from, to}
+  // Joker animation overlay
+  const [jokerAnim, setJokerAnim] = useState(null);
   const prevJokers = useRef({});
   useEffect(()=>{
     const cur = room?.jokers||{};
-    // Detect joker usage by comparing counts
     pl.forEach(p=>{
       const prev = prevJokers.current[p.id]||[];
       const curr = cur[p.id]||[];
       if(prev.length > curr.length){
-        // A joker was used - which one?
-        const used = prev.find(j=>!curr.includes(j)||prev.filter(x=>x===j).length > curr.filter(x=>x===j).length);
+        const used = prev.find(j=>!curr.includes(j)||
+          prev.filter(x=>x===j).length > curr.filter(x=>x===j).length);
         if(used){
-          // Find target for sabotage
-          const target = used==='sabotage' ? pl.find(x=>x.id!==(room?.sabotaged&&Object.keys(room.sabotaged||{}).slice(-1)[0])) : null;
-          setJokerAnim({type:used, from:p.name, to:target?.name});
-          setTimeout(()=>setJokerAnim(null), 3000);
+          const sabotageTarget = used==='sabotage' ?
+            pl.find(x=>x.id!==(room?.sabotaged&&Object.entries(room.sabotaged||{}).slice(-1)[0]?.[0])) : null;
+          setJokerAnim({type:used, from:p.name, to:sabotageTarget?.name});
+          setTimeout(()=>setJokerAnim(null), 3500);
         }
       }
     });
-    prevJokers.current = cur;
-  },[room?.jokers]);
+    prevJokers.current = JSON.parse(JSON.stringify(cur));
+  },[JSON.stringify(room?.jokers)]);
 
-  // Reveal animation state
+  // Reveal animation
   const [revealed, setRevealed] = useState(false);
   useEffect(()=>{
-    if(phase==='reveal'){ setTimeout(()=>setRevealed(true), 400); }
+    if(phase==='reveal'||phase==='results'){ setTimeout(()=>setRevealed(true),400); }
     else setRevealed(false);
   },[phase]);
 
+  const jokerIcon = j=>j==='skip'?'⏭️':j==='hint'?'💡':j==='double'?'✖️2':j==='sabotage'?'💣':j==='change'?'🔄':'🃏';
+  const jokerColor = j=>j==='sabotage'?'#cc2244':j==='double'?'#39d98a':gold;
+
   const css = `
-    @keyframes flyIn { from{transform:translateX(-60px);opacity:0} to{transform:translateX(0);opacity:1} }
-    @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
-    @keyframes bombFly { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(120px,-40px) scale(1.4)} 100%{transform:translate(240px,0) scale(0.8);opacity:0} }
-    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
-    @keyframes glow { 0%,100%{box-shadow:0 0 0 0 ${gold}44} 50%{box-shadow:0 0 24px 8px ${gold}88} }
-    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-    @keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes flyIn{from{transform:translateX(-40px);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes popIn{from{transform:scale(0.4);opacity:0}to{transform:scale(1);opacity:1}}
+    @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${gold}44}50%{box-shadow:0 0 20px 6px ${gold}88}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+    @keyframes pulse2{0%,100%{opacity:1}50%{opacity:0.4}}
+    @keyframes bomb{0%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(80px,-30px) rotate(180deg) scale(1.5)}100%{transform:translate(160px,0) rotate(360deg) scale(0.5);opacity:0}}
   `;
 
   return <div style={{minHeight:'100vh',background:'#0f0a06',color:'#f2ece6',
     fontFamily:t.fontBody,display:'flex',flexDirection:'column',overflow:'hidden'}}>
     <style>{css}</style>
 
-    {/* ── Joker Animation Overlay ── */}
-    {jokerAnim&&<div style={{position:'fixed',inset:0,zIndex:100,pointerEvents:'none',
-      display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{background:'#0f0a06',border:`2px solid ${jokerAnim.type==='sabotage'?'#cc2244':gold}`,
-        borderRadius:20,padding:'24px 40px',textAlign:'center',animation:'popIn .4s ease both',
-        boxShadow:`0 0 40px ${jokerAnim.type==='sabotage'?'#cc224488':gold+'88'}`}}>
-        <div style={{fontSize:56,marginBottom:8}}>
-          {jokerAnim.type==='sabotage'?'💣':jokerAnim.type==='skip'?'⏭️':
-           jokerAnim.type==='hint'?'💡':jokerAnim.type==='double'?'✖️2':
-           jokerAnim.type==='change'?'🔄':'🃏'}
+    {/* Joker Overlay */}
+    {jokerAnim&&<div style={{position:'fixed',inset:0,zIndex:200,pointerEvents:'none',
+      display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.6)'}}>
+      <div style={{background:'#0f0a06',border:`3px solid ${jokerColor(jokerAnim.type)}`,
+        borderRadius:24,padding:'32px 56px',textAlign:'center',
+        animation:'popIn .4s ease both',
+        boxShadow:`0 0 60px ${jokerColor(jokerAnim.type)}66`}}>
+        <div style={{fontSize:72,marginBottom:12,
+          animation:jokerAnim.type==='sabotage'?'bomb .8s ease 0.5s both':'none'}}>
+          {jokerIcon(jokerAnim.type)}
         </div>
-        <p style={{fontSize:22,fontWeight:800,color:jokerAnim.type==='sabotage'?'#cc2244':gold,margin:'0 0 4px'}}>
+        <p style={{fontSize:28,fontWeight:900,color:jokerColor(jokerAnim.type),margin:'0 0 6px'}}>
           {jokerAnim.from} spielt einen Joker!
         </p>
-        {jokerAnim.to&&<p style={{fontSize:18,color:'#f2ece6',margin:0,animation:'shake .5s ease 1s both'}}>
-          💣 → {jokerAnim.to}
+        {jokerAnim.to&&<p style={{fontSize:22,color:'#f2ece6',margin:0,
+          animation:'shake .5s ease 1s both'}}>
+          💣 → <strong>{jokerAnim.to}</strong>
         </p>}
       </div>
     </div>}
 
-    {/* ── Header ── */}
+    {/* Header */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-      padding:'16px 32px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
-      <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-        <span style={{fontSize:24,fontWeight:900,color:accent}}>Esti</span>
-        <span style={{fontSize:24,fontWeight:900,color:gold}}>Mates</span>
+      padding:'12px 28px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
+      <div style={{display:'flex',alignItems:'baseline',gap:3}}>
+        <span style={{fontSize:22,fontWeight:900,color:accent}}>Esti</span>
+        <span style={{fontSize:22,fontWeight:900,color:gold}}>Mates</span>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:24}}>
-        {phase==='question'&&q&&<div style={{display:'flex',alignItems:'center',gap:8}}>
-          <div style={{width:120,height:6,background:'#2a1a0e',borderRadius:3,overflow:'hidden'}}>
-            <div style={{height:'100%',width:`${(tippedCount/Math.max(pl.length,1))*100}%`,
-              background:gold,borderRadius:3,transition:'width .4s'}}/>
-          </div>
-          <span style={{fontSize:13,color:'#6e5e54'}}>{tippedCount}/{pl.length}</span>
-        </div>}
-        <span style={{fontSize:18,fontWeight:800,letterSpacing:2,color:gold}}>#{code}</span>
+      {phase==='question'&&<div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:140,height:5,background:'#2a1a0e',borderRadius:3,overflow:'hidden'}}>
+          <div style={{height:'100%',background:gold,borderRadius:3,transition:'width .4s',
+            width:`${(tippedCount/Math.max(pl.length,1))*100}%`}}/>
+        </div>
+        <span style={{fontSize:12,color:'#6e5e54'}}>{tippedCount}/{pl.length} getippt</span>
+      </div>}
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <span style={{fontSize:16,fontWeight:800,color:gold,letterSpacing:2}}>#{code}</span>
+        {qr&&<img src={qr} style={{width:48,height:48,borderRadius:5,opacity:.6}}/>}
       </div>
-      {qr&&<img src={qr} style={{width:56,height:56,borderRadius:6,opacity:.7}}/>}
     </div>
 
-    {/* ── Main: Two-column layout ── */}
-    <div style={{flex:1,display:'flex',gap:0,overflow:'hidden'}}>
+    {/* Two-column body */}
+    <div style={{flex:1,display:'flex',overflow:'hidden'}}>
 
-      {/* ── LEFT: Live question / answer ── */}
-      <div style={{flex:3,padding:'24px 32px',display:'flex',flexDirection:'column',
-        borderRight:'1px solid #2a1a0e',gap:20}}>
+      {/* ── LEFT: Live content ── */}
+      <div style={{flex:'0 0 68%',padding:'20px 28px',display:'flex',flexDirection:'column',
+        gap:16,borderRight:'1px solid #2a1a0e',overflow:'hidden'}}>
 
-        {/* Lobby */}
-        {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&<div style={{
-          flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
-          <div style={{fontSize:72,animation:'pulse2 2s ease infinite'}}>🎮</div>
-          <p style={{fontSize:36,fontWeight:900,textAlign:'center',margin:0}}>Bereit?</p>
-          <p style={{fontSize:18,color:'#6e5e54',textAlign:'center',margin:0}}>
-            Host bereitet das Spiel vor...
-          </p>
-          <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
-            {pl.map(p=><div key={p.id} style={{background:'#1a120a',border:`1.5px solid #2a1a0e`,
-              borderRadius:12,padding:'10px 18px',fontSize:15,fontWeight:600,
-              animation:'flyIn .4s ease both'}}>
-              👤 {p.name}
-            </div>)}
-          </div>
-        </div>}
+        {/* LOBBY */}
+        {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&
+          <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
+            justifyContent:'center',gap:20}}>
+            <div style={{fontSize:64,animation:'pulse2 2s ease infinite'}}>🎮</div>
+            <p style={{fontSize:32,fontWeight:900,margin:0}}>Bereit?</p>
+            <p style={{fontSize:16,color:'#6e5e54',margin:0}}>Host bereitet das Spiel vor...</p>
+            <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
+              {pl.map((p,idx)=><div key={p.id} style={{background:'#1a120a',
+                border:'1.5px solid #2a1a0e',borderRadius:12,padding:'8px 16px',
+                fontSize:14,fontWeight:600,animation:`flyIn .4s ease ${idx*0.1}s both`}}>
+                👤 {p.name}
+              </div>)}
+            </div>
+          </div>}
 
-        {/* Question phase */}
+        {/* QUESTION */}
         {phase==='question'&&q&&<>
-          <div style={{background:'#1a120a',borderRadius:16,padding:'28px 32px',
-            border:`1.5px solid ${gold}33`,flex:1}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,marginBottom:16,margin:'0 0 16px'}}>
-              FRAGE
-            </p>
-            <p style={{fontSize:'clamp(20px,3vw,32px)',fontWeight:800,lineHeight:1.3,margin:'0 0 16px'}}>
-              {q.q}
-            </p>
-            {q.unit&&<div style={{display:'inline-block',background:gold+'22',border:`1px solid ${gold}55`,
-              borderRadius:8,padding:'6px 14px',color:gold,fontWeight:700,fontSize:16}}>
+          <div style={{background:'#1a120a',borderRadius:14,padding:'20px 24px',
+            border:`1.5px solid ${gold}33`}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>FRAGE</p>
+            <p style={{fontSize:'clamp(18px,2.5vw,28px)',fontWeight:800,lineHeight:1.4,margin:'0 0 12px'}}>{q.q}</p>
+            {q.unit&&<span style={{background:gold+'22',border:`1px solid ${gold}55`,
+              borderRadius:8,padding:'4px 12px',color:gold,fontWeight:700,fontSize:14}}>
               Antwort in: {q.unit}
-            </div>}
+            </span>}
           </div>
-          {/* Player tip grid */}
-          <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:10}}>
+          {/* Player tips grid - shows guesses live */}
+          <div style={{flex:1,display:'grid',
+            gridTemplateColumns:`repeat(${Math.min(Math.ceil(pl.length/2),4)},1fr)`,
+            gap:8,alignContent:'start'}}>
             {pl.map(p=>{
-              const tipped = guesses[p.id]!=null;
-              return <div key={p.id} style={{
-                background:tipped?gold+'22':'#1a120a',
-                border:`1.5px solid ${tipped?gold:'#2a1a0e'}`,
-                borderRadius:12,padding:'12px 8px',textAlign:'center',
-                transition:'all .5s',
+              const g=guesses[p.id]; const tipped=g!=null; const timedOut=g===-999999;
+              return <div key={p.id} style={{background:tipped?gold+'1a':'#1a120a',
+                border:`1.5px solid ${tipped?gold:'#2a1a0e'}`,borderRadius:12,
+                padding:'12px 10px',textAlign:'center',transition:'all .4s',
                 animation:tipped?'glow .8s ease':'none'}}>
-                <div style={{fontSize:20,marginBottom:4}}>{tipped?'✅':'⏳'}</div>
-                <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                <div style={{fontSize:18,marginBottom:3}}>{timedOut?'⏱️':tipped?'✅':'⏳'}</div>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:2,
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                <div style={{fontSize:16,fontWeight:800,color:gold}}>
+                  {tipped&&!timedOut?fmtNum(g):'—'}
+                </div>
               </div>;
             })}
           </div>
         </>}
 
-        {/* Reveal phase */}
-        {phase==='reveal'&&q&&<>
-          <div style={{background:gold+'22',borderRadius:16,padding:'24px 32px',
-            border:`2px solid ${gold}`,animation:revealed?'popIn .6s ease both':'none'}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>ANTWORT</p>
-            <p style={{fontSize:'clamp(36px,6vw,64px)',fontWeight:900,color:gold,margin:'0 0 4px'}}>
-              {fmtNum(q.a)}
-              <span style={{fontSize:'0.4em',marginLeft:8,color:'#6e5e54'}}>{q.unit}</span>
-            </p>
+        {/* RESULTS / REVEAL */}
+        {(phase==='results'||phase==='reveal')&&q&&<>
+          {/* Answer */}
+          <div style={{background:gold+'22',borderRadius:14,padding:'16px 24px',
+            border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>ANTWORT</p>
+            <div style={{display:'flex',alignItems:'baseline',gap:10}}>
+              <span style={{fontSize:'clamp(32px,5vw,56px)',fontWeight:900,color:gold}}>
+                {fmtNum(q.a)}
+              </span>
+              <span style={{fontSize:18,color:'#6e5e54'}}>{q.unit}</span>
+            </div>
           </div>
-          <div style={{flex:1,display:'flex',flexDirection:'column',gap:8,overflowY:'auto'}}>
-            {sorted.map((p,idx)=>{
-              const g=guesses[p.id]; const diff=g!=null?Math.abs(g-q.a):null;
-              const exact=diff===0;
-              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,
-                background:idx===0?gold+'18':'#1a120a',
-                border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`,
-                borderRadius:10,padding:'10px 16px',
-                animation:`slideUp .4s ease ${idx*0.1}s both`}}>
-                <span style={{fontSize:18,width:28,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-                <span style={{flex:1,fontWeight:idx===0?700:400,fontSize:15}}>{p.name}</span>
-                <span style={{color:'#6e5e54',fontFamily:t.fontMono,fontSize:13}}>{g!=null?fmtNum(g):'–'}</span>
-                <span style={{color:exact?'#39d98a':diff!=null&&diff<q.a*.05?gold:'#6e5e54',
-                  fontWeight:700,minWidth:64,textAlign:'right',fontFamily:t.fontMono,fontSize:13}}>
-                  {diff!=null?`±${fmtNum(diff)}`:'–'}
+          {/* Full results table */}
+          <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
+            {ranked.map((p,idx)=>{
+              const isClosest=closestIds.includes(p.id);
+              const roundPts=rs[p.id]||0;
+              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
+                background:isClosest?gold+'18':'#1a120a',
+                border:`1px solid ${isClosest?gold+'66':'#2a1a0e'}`,
+                borderRadius:10,padding:'10px 14px',
+                animation:`slideUp .4s ease ${idx*0.08}s both`}}>
+                <span style={{fontSize:18,width:26,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+                <span style={{flex:1,fontWeight:isClosest?700:400,fontSize:14}}>{p.name}</span>
+                <span style={{fontFamily:t.fontMono,fontSize:13,color:'#6e5e54',minWidth:50,textAlign:'right'}}>
+                  {fmtNum(p.guess)}
                 </span>
-                <span style={{color:gold,fontWeight:800,minWidth:36,textAlign:'right'}}>{scores[p.id]||0}P</span>
+                <span style={{fontFamily:t.fontMono,fontSize:13,fontWeight:700,minWidth:56,textAlign:'right',
+                  color:p.diff===0?'#39d98a':p.diff<q.a*.05?gold:'#b0a090'}}>
+                  ±{fmtNum(p.diff)}
+                </span>
+                {roundPts>0&&<div style={{background:gold+'33',border:`1px solid ${gold}`,
+                  borderRadius:6,padding:'2px 8px',color:gold,fontWeight:800,fontSize:13,flexShrink:0}}>
+                  +{roundPts}P
+                </div>}
               </div>;
             })}
           </div>
         </>}
+
+        {/* FINAL */}
+        {phase==='final'&&<div style={{flex:1,display:'flex',flexDirection:'column',
+          alignItems:'center',justifyContent:'center',gap:16}}>
+          <div style={{fontSize:64}}>🏆</div>
+          <p style={{fontSize:32,fontWeight:900,color:gold,margin:0}}>
+            {sorted[0]?.name} gewinnt!
+          </p>
+          <p style={{fontSize:20,color:'#6e5e54',margin:0}}>
+            {scores[sorted[0]?.id]||0} {i.pts}
+          </p>
+        </div>}
       </div>
 
-      {/* ── RIGHT: Live Scoreboard ── */}
-      <div style={{flex:1,padding:'24px 20px',display:'flex',flexDirection:'column',gap:16,
-        minWidth:220,maxWidth:300}}>
-        <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>RANGLISTE</p>
-        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8,overflowY:'auto'}}>
+      {/* ── RIGHT: Scoreboard + Live Stats ── */}
+      <div style={{flex:1,padding:'16px 16px',display:'flex',flexDirection:'column',
+        gap:12,overflow:'hidden'}}>
+
+        {/* Rangliste */}
+        <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>RANGLISTE</p>
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {sorted.map((p,idx)=>(
-            <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
+            <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
               background:idx===0?gold+'18':'#181310',
-              border:`1px solid ${idx===0?gold+'44':'#2a1a0e'}`,
-              borderRadius:10,padding:'10px 12px',
-              transition:'all .5s',
+              border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`,
+              borderRadius:9,padding:'8px 10px',transition:'all .5s',
               animation:'flyIn .4s ease both'}}>
-              <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-              <span style={{flex:1,fontSize:14,fontWeight:idx===0?700:400,
+              <span style={{fontSize:14,width:22,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+              <span style={{flex:1,fontSize:13,fontWeight:idx===0?700:400,
                 overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-              <span style={{color:idx===0?gold:'#6e5e54',fontWeight:800,fontSize:16}}>
-                {scores[p.id]||0}
-                <span style={{fontSize:10,marginLeft:2}}>P</span>
+              <span style={{color:idx===0?gold:'#6e5e54',fontWeight:800,fontSize:15,flexShrink:0}}>
+                {scores[p.id]||0}<span style={{fontSize:10,marginLeft:2}}>P</span>
               </span>
             </div>
           ))}
         </div>
 
-        {/* Joker stats */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:12}}>
-          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>JOKER</p>
+        {/* Live Statistiken */}
+        {history.length>0&&<>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'4px 0 0'}}>STATISTIKEN</p>
+          <div style={{display:'flex',flexDirection:'column',gap:4,overflowY:'auto',flex:1}}>
+            {sorted.map(p=>{
+              const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
+              return <div key={p.id} style={{background:'#181310',borderRadius:8,
+                padding:'7px 10px',fontSize:12}}>
+                <div style={{fontWeight:600,marginBottom:3,
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                <div style={{display:'flex',gap:10,color:'#6e5e54'}}>
+                  <span>💥 {exactHits[p.id]||0}×</span>
+                  <span>Ø±{avg!=null?fmtNum(avg):'–'}</span>
+                  <span>🃏 {jokerTotals[p.id]||0}</span>
+                </div>
+              </div>;
+            })}
+          </div>
+        </>}
+
+        {/* Joker Status */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10}}>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>JOKER</p>
           {pl.map(p=>{
             const jk=(room?.jokers||{})[p.id]||[];
-            if(!jk.length) return null;
-            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-              <span style={{fontSize:12,color:'#6e5e54',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-              <span style={{fontSize:14}}>{jk.map((j,i)=>(
-                j==='skip'?'⏭️':j==='hint'?'💡':j==='double'?'✖️':
-                j==='sabotage'?'💣':j==='change'?'🔄':'🃏'
-              )).join('')}</span>
+            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+              <span style={{fontSize:11,color:'#6e5e54',flex:1,
+                overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+              <span style={{fontSize:13}}>
+                {jk.length>0?jk.map(j=>jokerIcon(j)).join(''):<span style={{color:'#3a2a1e'}}>—</span>}
+              </span>
             </div>;
           })}
         </div>
 
-        {/* QR at bottom */}
-        <div style={{textAlign:'center',opacity:.5}}>
-          {qr&&<img src={qr} style={{width:80,height:80,borderRadius:6}}/>}
-          <p style={{fontSize:11,color:'#6e5e54',margin:'4px 0 0'}}>Scan to join</p>
-        </div>
+        {/* QR */}
+        {qr&&<div style={{textAlign:'center',opacity:.4,marginTop:'auto'}}>
+          <img src={qr} style={{width:64,height:64,borderRadius:5}}/>
+          <p style={{fontSize:10,color:'#6e5e54',margin:'3px 0 0'}}>Scan to join</p>
+        </div>}
       </div>
     </div>
   </div>;
