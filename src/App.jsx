@@ -171,7 +171,7 @@ const UI = {
     worstGuesser:"Worst Guesser",exactHits:"Exact Hits",
     jokerKing:"Joker King",sabotageKing:"Sabotage King",
     sabotaged:"💣 sabotaged by",tooSlow:"Too slow!",
-    globalRank:(p)=>`🌍 You\'re better than ${p}% of all players worldwide`,
+    globalRank:(p)=>`🌍 You are better than ${p}% of all players worldwide`,
     wins:(name,pts)=>`${name} wins with ${pts} points! 🎊`,
     roundsPlayed:"rounds played",lobbyWaiting:"Waiting for players",
     hostLabel:"HOST",youLabel:"YOU",
