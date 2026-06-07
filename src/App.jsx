@@ -93,7 +93,7 @@ const UI = {
     question:"FRAGE",reveal:"AUFLÖSUNG",
     yourTip:"DEIN TIPP",changeTip:"🔄 TIPP ÄNDERN",tipIn:"Antwort in",
     tipSubmitted:"✓ Tipp abgegeben!",waitingAll:"Warte auf alle...",
-    haveTipped:"haben getippt",discuss:"💬 Tippt erst, dann diskutiert!",
+    haveTipped:"haben {i.dispTipped}",discuss:"💬 Tippt erst, dann diskutiert!",
     betting:"WETTEN",whoClosest:"Wer trifft\'s am besten?",
     betCorrect:"+1 Punkt extra",betSet:"Wette gesetzt!",waitRevealBet:"Warte auf Auflösung...",
     closestLabel:"🎯 AM NÄCHSTEN dran",farthestLabel:"💀 AM WEITESTEN daneben",
@@ -133,7 +133,7 @@ const UI = {
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
     scanJoin2:"Scan & mitspielen!",
-    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",
+    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"{i.dispNoEvents}",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -190,7 +190,7 @@ const UI = {
     hintLabel:"💡 HINT",
     pts:"pts",
     scanJoin2:"Scan to play!",
-    dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",
+    dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -247,7 +247,7 @@ const UI = {
     hintLabel:"💡 PISTA",
     pts:"puntos",
     scanJoin2:"¡Escanear y jugar!",
-    dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",
+    dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -1418,7 +1418,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 /* ─── CATEGORY SELECTION ─────────────────────────── */
 function CategoryScreen({mode,onStart,t,lang}){
   const i=UI[lang]||UI.de;
-  const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked}));
+  const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked})).sort((a,b)=>a.name.localeCompare(b.name));
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
   const[selected,setSelected]=useState(allCats);
   function toggle(c,locked){
@@ -2008,7 +2008,7 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
 /* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
 
 /* ─── CHAT FEED (Display Mode) ─────────────────────── */
-function ChatFeed({room, pl, gold, jokerIcon}) {
+function ChatFeed({room, pl, gold, jokerIcon, i}) {
   const [events, setEvents] = useState([]);
   const feedRef = useRef(null);
   const prevRoom = useRef(null);
@@ -2019,44 +2019,85 @@ function ChatFeed({room, pl, gold, jokerIcon}) {
     const newEvents = [];
     const now = Date.now();
 
-    // Joker used
+    // Joker used – ROT (bedrohlich/aggressiv)
     const curJokers = room.jokers||{}, prevJokers = prev.jokers||{};
     pl.forEach(p=>{
       const cur=(curJokers[p.id]||[]).length;
       const prv=(prevJokers[p.id]||[]).length;
       if(cur<prv){
-        const used = (prevJokers[p.id]||[]).find(j=>!(curJokers[p.id]||[]).includes(j)||
+        const used=(prevJokers[p.id]||[]).find(j=>!(curJokers[p.id]||[]).includes(j)||
           (prevJokers[p.id]||[]).filter(x=>x===j).length>(curJokers[p.id]||[]).filter(x=>x===j).length);
-        if(used) newEvents.push({id:now+Math.random(),emoji:jokerIcon(used),
-          text:`${p.name} spielt ${used}-Joker`,color:used==='sabotage'?'#cc2244':gold,ts:now});
+        if(used){
+          const colors={sabotage:'#ff3355',skip:'#ff8855',hint:'#aaaaaa',
+                        double:'#55ffaa',change:'#aaaaaa',extra:'#aaaaaa'};
+          const labels={sabotage:'sabotiert!',skip:'überspringt',hint:'deckt Hint auf',
+                        double:'verdoppelt Punkte',change:'ändert Tipp',extra:'50/50-Joker'};
+          newEvents.push({id:now+Math.random(),type:'joker_used',
+            emoji:jokerIcon(used),
+            text:p.name+' '+(labels[used]||'Joker'),
+            color:colors[used]||'#ff8855',ts:now});
+        }
       }
     });
 
-    // Joker earned
-    const newJk = room.newJokersThisRound||{}, prevJk = prev.newJokersThisRound||{};
+    // Joker earned – ORANGE (positiv/belohnend)
+    const newJk=room.newJokersThisRound||{}, prevJk=prev.newJokersThisRound||{};
     pl.forEach(p=>{
       if(newJk[p.id]&&!prevJk[p.id])
-        newEvents.push({id:now+Math.random(),emoji:'🎁',
-          text:`${p.name} erhält ${jokerIcon(newJk[p.id])}`,color:gold,ts:now});
+        newEvents.push({id:now+Math.random(),type:'joker_earned',
+          emoji:'🎁',
+          text:p.name+' '+i.dispEarned+' '+jokerIcon(newJk[p.id]),
+          color:'#ff8c2a',ts:now});
     });
 
-    // Exact hit
+    // Exact hit – GRÜN (perfekt)
     const curG=room.guesses||{}, prevG=prev.guesses||{};
     const answer=room.q?.a;
     pl.forEach(p=>{
-      if(curG[p.id]!=null&&prevG[p.id]==null&&answer!=null){
+      if(curG[p.id]!=null&&prevG[p.id]==null&&answer!=null)
         if(Math.abs(curG[p.id]-answer)===0)
-          newEvents.push({id:now+Math.random(),emoji:'🎯',
-            text:`${p.name} trifft EXAKT!`,color:'#39d98a',ts:now});
+          newEvents.push({id:now+Math.random(),type:'exact',
+            emoji:'🎯',
+            text:p.name+' '+i.dispExact,
+            color:'#39d98a',ts:now});
+    });
+
+    // Tipp eingegangen – GRAU (neutral/info)
+    pl.forEach(p=>{
+      if(curG[p.id]!=null&&curG[p.id]!==-999999&&prevG[p.id]==null&&answer!=null)
+        if(Math.abs(curG[p.id]-answer)!==0) // kein Exact (der hat eigenen Event)
+          newEvents.push({id:now+Math.random(),type:'guess',
+            emoji:'✏️',
+            text:p.name+' '+i.dispGuessed,
+            color:'#6e5e54',ts:now});
+    });
+
+    // Sabotage Ziel – DUNKELROT
+    const curSab=room.sabotaged||{}, prevSab=prev.sabotaged||{};
+    pl.forEach(p=>{
+      if(curSab[p.id]&&!prevSab[p.id]){
+        const saboteur=pl.find(x=>x.id===curSab[p.id]);
+        newEvents.push({id:now+Math.random(),type:'joker_used',
+          emoji:'💥',
+          text:p.name+' '+(i?.dispSabotaged||'sabotaged')+(saboteur?' '+(i?.dispSaboteur||'by')+' '+saboteur.name:'')+'!',
+          color:'#ff3355',ts:now});
       }
     });
 
-    // New phase
+    // Phase change – WEISS FETT (strukturgebend)
     if(room.phase!==prev.phase){
-      const labels={question:'Neue Runde!',results:'Auflösung!',final:'Spiel beendet!'};
+      const labels={
+        question:'─── Neue Runde ───',
+        results:'─── Auflösung ───',
+        betting:'─── Wetten ───',
+        final:'─── Spiel beendet ───'
+      };
+      const emojis={question:'🎮',results:'📊',betting:'🎲',final:'🏆'};
       if(labels[room.phase])
-        newEvents.push({id:now+Math.random(),emoji:room.phase==='final'?'🏆':'🔔',
-          text:labels[room.phase],color:'#f2ece6',ts:now});
+        newEvents.push({id:now+Math.random(),type:'phase',
+          emoji:emojis[room.phase]||'🔔',
+          text:labels[room.phase],
+          color:'#f2ece6',ts:now});
     }
 
     if(newEvents.length>0){
@@ -2075,12 +2116,20 @@ function ChatFeed({room, pl, gold, jokerIcon}) {
     {events.length===0&&<p style={{fontSize:11,color:'#3a2a1e',textAlign:'center',
       marginTop:12}}>Noch keine Events...</p>}
     {events.map(ev=>(
-      <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:6,
-        background:'#181310',borderRadius:8,padding:'6px 10px',
+      <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:7,
+        background:ev.type==='phase'?'#221a0e':ev.type==='exact'?'#0d2218':
+                   ev.type==='joker_earned'?'#1f1408':ev.type==='joker_used'?'#1a0a0a':'#181310',
+        borderRadius:8,padding:'7px 10px',
         borderLeft:`3px solid ${ev.color}`,
         animation:'slideUp .3s ease both',flexShrink:0}}>
-        <span style={{fontSize:16,flexShrink:0}}>{ev.emoji}</span>
-        <span style={{fontSize:12,color:'#f2ece6',lineHeight:1.4}}>{ev.text}</span>
+        <span style={{fontSize:ev.type==='phase'?18:15,flexShrink:0,marginTop:1}}>{ev.emoji}</span>
+        <span style={{
+          fontSize:ev.type==='phase'?13:11,
+          fontWeight:ev.type==='phase'?800:ev.type==='exact'?700:400,
+          color:ev.color,
+          lineHeight:1.4,
+          letterSpacing:ev.type==='phase'?.5:0
+        }}>{ev.text}</span>
       </div>
     ))}
   </div>;
@@ -2218,7 +2267,7 @@ function DisplayScreen({room, code, t, lang}) {
           <div style={{height:'100%',background:gold,borderRadius:3,transition:'width .4s',
             width:`${(tippedCount/Math.max(pl.length,1))*100}%`}}/>
         </div>
-        <span style={{fontSize:12,color:'#6e5e54'}}>{tippedCount}/{pl.length} getippt</span>
+        <span style={{fontSize:12,color:'#6e5e54'}}>{tippedCount}/{pl.length} {i.dispTipped}</span>
       </div>}
       <div style={{display:'flex',alignItems:'center',gap:12}}>
         <span style={{fontSize:16,fontWeight:800,color:gold,letterSpacing:2}}>#{code}</span>
@@ -2238,8 +2287,8 @@ function DisplayScreen({room, code, t, lang}) {
           <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
             justifyContent:'center',gap:20}}>
             <div style={{fontSize:64,animation:'pulse2 2s ease infinite'}}>🎮</div>
-            <p style={{fontSize:32,fontWeight:900,margin:0}}>Bereit?</p>
-            <p style={{fontSize:16,color:'#6e5e54',margin:0}}>Host bereitet das Spiel vor...</p>
+            <p style={{fontSize:32,fontWeight:900,margin:0}}>{i.dispReady}</p>
+            <p style={{fontSize:16,color:'#6e5e54',margin:0}}>{i.dispHostPrep}</p>
             <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
               {pl.map((p,idx)=><div key={p.id} style={{background:'#1a120a',
                 border:'1.5px solid #2a1a0e',borderRadius:12,padding:'8px 16px',
@@ -2253,11 +2302,11 @@ function DisplayScreen({room, code, t, lang}) {
         {phase==='question'&&q&&<>
           <div style={{background:'#1a120a',borderRadius:14,padding:'20px 24px',
             border:`1.5px solid ${gold}33`}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>FRAGE</p>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>{i.dispQuestion}</p>
             <p style={{fontSize:'clamp(18px,2.5vw,28px)',fontWeight:800,lineHeight:1.4,margin:'0 0 12px'}}>{q.q}</p>
             {q.unit&&<span style={{background:gold+'22',border:`1px solid ${gold}55`,
               borderRadius:8,padding:'4px 12px',color:gold,fontWeight:700,fontSize:14}}>
-              Antwort in: {q.unit}
+              {i.tipIn}: {q.unit}
             </span>}
           </div>
           {/* Player tips grid - shows guesses live */}
@@ -2286,7 +2335,7 @@ function DisplayScreen({room, code, t, lang}) {
           {/* Answer */}
           <div style={{background:gold+'22',borderRadius:14,padding:'16px 24px',
             border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>ANTWORT</p>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>{i.dispAnswer}</p>
             <div style={{display:'flex',alignItems:'baseline',gap:10}}>
               <span style={{fontSize:'clamp(32px,5vw,56px)',fontWeight:900,color:gold}}>
                 {fmtNum(q.a)}
@@ -2327,7 +2376,7 @@ function DisplayScreen({room, code, t, lang}) {
           alignItems:'center',justifyContent:'center',gap:16}}>
           <div style={{fontSize:64}}>🏆</div>
           <p style={{fontSize:32,fontWeight:900,color:gold,margin:0}}>
-            {sorted[0]?.name} gewinnt!
+            {sorted[0]?.name} {i.dispWins}
           </p>
           <p style={{fontSize:20,color:'#6e5e54',margin:0}}>
             {scores[sorted[0]?.id]||0} {i.pts}
@@ -2340,7 +2389,7 @@ function DisplayScreen({room, code, t, lang}) {
         gap:12,overflow:'hidden'}}>
 
         {/* Rangliste */}
-        <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>RANGLISTE</p>
+        <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>{i.dispRanking}</p>
         <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {sorted.map((p,idx)=>(
             <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
@@ -2360,7 +2409,7 @@ function DisplayScreen({room, code, t, lang}) {
 
         {/* Live Statistiken */}
         {history.length>0&&<>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'4px 0 0'}}>STATISTIKEN</p>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'4px 0 0'}}>{i.dispStats}</p>
           <div style={{display:'flex',flexDirection:'column',gap:4,overflowY:'auto',flex:1}}>
             {sorted.map(p=>{
               const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
@@ -2380,7 +2429,7 @@ function DisplayScreen({room, code, t, lang}) {
 
         {/* Joker Status + Earned */}
         <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flexShrink:0}}>
-          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>JOKER-INVENTAR</p>
+          <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px'}}>{i.dispJoker}</p>
           {pl.map(p=>{
             const jk=(room?.jokers||{})[p.id]||[];
             const newJk=(room?.newJokersThisRound||{})[p.id];
@@ -2405,15 +2454,15 @@ function DisplayScreen({room, code, t, lang}) {
         <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flex:1,
           display:'flex',flexDirection:'column',minHeight:0}}>
           <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 6px',flexShrink:0}}>
-            EVENTS
+            {i.dispEvents}
           </p>
-          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon}/>
+          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i}/>
         </div>
 
         {/* QR */}
         {qr&&<div style={{textAlign:'center',opacity:.4,marginTop:'auto'}}>
           <img src={qr} style={{width:64,height:64,borderRadius:5}}/>
-          <p style={{fontSize:10,color:'#6e5e54',margin:'3px 0 0'}}>Scan to join</p>
+          <p style={{fontSize:10,color:'#6e5e54',margin:'3px 0 0'}}>{i.dispScanJoin}</p>
         </div>}
       </div>
     </div>
