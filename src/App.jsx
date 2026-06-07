@@ -2745,7 +2745,11 @@ function App(){
     setMode(m);
     const c=genCode();
     setCode(c);
+    setLoadTxt("Raum wird erstellt...");
+    setLoading(true);
     await dbSet(c,{code:c,mode:m,lang,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
+    setLoading(false);
+    setScreen("lobby");
     listenRoom(c);
   }
 
@@ -2753,8 +2757,12 @@ function App(){
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
+    setLoadTxt("Betrete Raum...");
+    setLoading(true);
     const r=await dbGet(c);
     await dbPatch(c,{players:{...r.players,[myId]:{id:myId,name}},order:[...(r.order||[]),myId]});
+    setLoading(false);
+    setScreen("lobby");
     listenRoom(c);
   }
 
@@ -2954,11 +2962,11 @@ function App(){
   }
 
   return <ErrorBoundary>
-    {/* Fallback: screen is set but room not yet loaded → show spinner */}
-    {screen!=='home'&&!room&&!loading&&<div style={{minHeight:'100vh',background:t.bg,
+    {/* Fallback: room code set but room data not yet loaded */}
+    {code&&!room&&!loading&&screen!=='home'&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
-      <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>Verbinde...</p>
+      <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>Verbinde mit Raum...</p>
     </div>}
     {/* Floating Gastgeber button – visible for host during entire game */}
     {code&&room&&room.hostId===myId&&screen!=='home'&&screen!=='final'&&
