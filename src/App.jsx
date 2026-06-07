@@ -2279,22 +2279,47 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function App(){
-  const isDisplayMode = new URLSearchParams(location.search).get('mode')==='display';
+export default /* ─── DISPLAY APP (Gastgeber-Modus – eigenständig) ─── */
+export function DisplayApp() {
+  const params = new URLSearchParams(location.search);
+  const roomCode = params.get('room');
+  const [room, setRoom] = useState(null);
+  const [error, setError] = useState(false);
+  const lang = localStorage.getItem('em_lang')||'de';
+  const t = THEMES.warm;
+
+  useEffect(()=>{
+    if(!roomCode){ setError(true); return; }
+    const roomRef = ref(db,`rooms/${roomCode}`);
+    const unsub = onValue(roomRef, snap=>{
+      if(snap.exists()) setRoom(snap.val());
+      else setError(true);
+    });
+    return ()=>unsub();
+  },[roomCode]);
+
+  if(error) return <div style={{minHeight:'100vh',background:'#0f0a06',color:'#f2ece6',
+    display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
+    <div style={{fontSize:48}}>📺</div>
+    <p style={{fontSize:18,fontWeight:700}}>Raum nicht gefunden</p>
+    <p style={{fontSize:14,color:'#6e5e54'}}>URL: ?mode=display&room=RAUMCODE</p>
+  </div>;
+
+  if(!room) return <div style={{minHeight:'100vh',background:'#0f0a06',color:'#f2ece6',
+    display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
+    <div style={{fontSize:48}}>⏳</div>
+    <p style={{fontSize:18,color:'#6e5e54'}}>Verbinde mit Raum #{roomCode}...</p>
+  </div>;
+
+  return <ErrorBoundary><DisplayScreen room={room} code={roomCode} t={t} lang={lang}/></ErrorBoundary>;
+}
+
+function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
   const[code,setCode]=useState(null);
   const[myId]=useState(()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
-  // Auto-connect in display mode
-  useEffect(()=>{
-    if(!isDisplayMode) return;
-    const roomCode = new URLSearchParams(location.search).get('room');
-    if(!roomCode) return;
-    setCode(roomCode);
-    const roomRef = ref(db,`rooms/${roomCode}`);
-    const unsub = onValue(roomRef, snap=>{ if(snap.exists()) setRoom(snap.val()); });
-    return ()=>unsub();
-  },[]);
+
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
@@ -2555,11 +2580,6 @@ export default function App(){
     usedIdsRef.current=[];selectedCatsRef.current=[];enabledJokersRef.current=[];
   }
 
-  // Gastgeber-Modus: ?mode=display&room=XXXX
-  if(isDisplayMode && code && room) {
-    return <ErrorBoundary><DisplayScreen room={room} code={code} t={t} lang={lang}/></ErrorBoundary>;
-  }
-
   return <ErrorBoundary>
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
@@ -2580,3 +2600,5 @@ export default function App(){
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
   </ErrorBoundary>;
 }
+
+export default App;
