@@ -1212,7 +1212,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
   async function submit(){
     if(!name.trim()){setError(i.enterName);return;}
     setError("");
-    if(tab==="host"){onHost(name.trim(),mode);}
+    if(tab==="host"){localStorage.setItem('em_lastname',name.trim());onHost(name.trim(),mode);}
     else{
       const c=code.trim().toUpperCase();
       if(!c){setError(i.enterCode);return;}
@@ -2701,6 +2701,14 @@ function App(){
   useEffect(()=>{
     QUESTIONS=QUESTIONS_MAP[lang]||QUESTIONS_MAP.de;
     QUESTIONS_RAW=QUESTIONS_RAW_MAP[lang]||QUESTIONS_RAW_MAP.de;
+    // Auto-reconnect if room code in URL and a name was stored
+    const urlRoom = new URLSearchParams(location.search).get('room');
+    const storedName = localStorage.getItem('em_lastname');
+    if(urlRoom && storedName && !room) {
+      setCode(urlRoom);
+      listenRoom(urlRoom);
+      setScreen('lobby');
+    }
   },[]);
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
@@ -2946,6 +2954,12 @@ function App(){
   }
 
   return <ErrorBoundary>
+    {/* Fallback: screen is set but room not yet loaded → show spinner */}
+    {screen!=='home'&&!room&&!loading&&<div style={{minHeight:'100vh',background:t.bg,
+      display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
+      <Spinner t={t}/>
+      <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>Verbinde...</p>
+    </div>}
     {/* Floating Gastgeber button – visible for host during entire game */}
     {code&&room&&room.hostId===myId&&screen!=='home'&&screen!=='final'&&
       <button onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
