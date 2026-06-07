@@ -2279,15 +2279,15 @@ function DisplayScreen({room, code, t, lang}) {
     <div style={{flex:1,display:'flex',overflow:'hidden'}}>
 
       {/* ── LEFT: Live content ── */}
-      <div style={{flex:'0 0 63%',padding:'20px 28px',display:'flex',flexDirection:'column',
+      <div style={{flex:'0 0 58%',padding:'16px 24px',display:'flex',flexDirection:'column',
         gap:16,borderRight:'1px solid #2a1a0e',overflow:'hidden'}}>
 
         {/* LOBBY */}
         {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&
           <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
             justifyContent:'center',gap:20}}>
-            <div style={{fontSize:64,animation:'pulse2 2s ease infinite'}}>🎮</div>
-            <p style={{fontSize:32,fontWeight:900,margin:0}}>{i.dispReady}</p>
+            <div style={{fontSize:48,animation:'pulse2 2s ease infinite'}}>🎮</div>
+            <p style={{fontSize:26,fontWeight:900,margin:0}}>{i.dispReady}</p>
             <p style={{fontSize:16,color:'#6e5e54',margin:0}}>{i.dispHostPrep}</p>
             <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
               {pl.map((p,idx)=><div key={p.id} style={{background:'#1a120a',
@@ -2300,10 +2300,10 @@ function DisplayScreen({room, code, t, lang}) {
 
         {/* QUESTION */}
         {phase==='question'&&q&&<>
-          <div style={{background:'#1a120a',borderRadius:14,padding:'20px 24px',
+          <div style={{background:'#1a120a',borderRadius:12,padding:'14px 18px',
             border:`1.5px solid ${gold}33`}}>
             <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>{i.dispQuestion}</p>
-            <p style={{fontSize:'clamp(18px,2.5vw,28px)',fontWeight:800,lineHeight:1.4,margin:'0 0 12px'}}>{q.q}</p>
+            <p style={{fontSize:'clamp(14px,1.8vw,20px)',fontWeight:800,lineHeight:1.4,margin:'0 0 10px'}}>{q.q}</p>
             {q.unit&&<span style={{background:gold+'22',border:`1px solid ${gold}55`,
               borderRadius:8,padding:'4px 12px',color:gold,fontWeight:700,fontSize:14}}>
               {i.tipIn}: {q.unit}
@@ -2333,7 +2333,7 @@ function DisplayScreen({room, code, t, lang}) {
         {/* RESULTS / REVEAL */}
         {(phase==='results'||phase==='reveal')&&q&&<>
           {/* Answer */}
-          <div style={{background:gold+'22',borderRadius:14,padding:'16px 24px',
+          <div style={{background:gold+'22',borderRadius:12,padding:'12px 18px',
             border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
             <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>{i.dispAnswer}</p>
             <div style={{display:'flex',alignItems:'baseline',gap:10}}>
@@ -2385,8 +2385,8 @@ function DisplayScreen({room, code, t, lang}) {
       </div>
 
       {/* ── RIGHT: Scoreboard + Live Stats ── */}
-      <div style={{flex:'0 0 37%',padding:'20px 24px',display:'flex',flexDirection:'column',
-        gap:0,overflow:'hidden',minWidth:280}}>
+      <div style={{flex:'0 0 42%',padding:'16px 20px',display:'flex',flexDirection:'column',
+        gap:0,overflow:'hidden',minWidth:0}}>
 
         {/* ── Rangliste ── */}
         <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
@@ -2415,7 +2415,7 @@ function DisplayScreen({room, code, t, lang}) {
         {history.length>0&&<>
           <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase',borderTop:'1px solid #2a1a0e',
-            paddingTop:14}}>{i.dispStats}</p>
+            paddingTop:10}}>{i.dispStats}</p>
           <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>
             {sorted.map(p=>{
               const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
@@ -2435,7 +2435,7 @@ function DisplayScreen({room, code, t, lang}) {
         </>}
 
         {/* ── Joker Inventar ── */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:14,marginBottom:14,flexShrink:0}}>
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,marginBottom:10,flexShrink:0}}>
           <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase'}}>{i.dispJoker}</p>
           {pl.map(p=>{
@@ -2459,7 +2459,7 @@ function DisplayScreen({room, code, t, lang}) {
         </div>
 
         {/* ── Event Feed ── */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:14,flex:1,
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flex:1,
           display:'flex',flexDirection:'column',minHeight:0}}>
           <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase',flexShrink:0}}>{i.dispEvents}</p>
