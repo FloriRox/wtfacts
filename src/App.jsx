@@ -2724,7 +2724,9 @@ function App(){
   function listenRoom(c){
     if(unsubRef.current)unsubRef.current();
     unsubRef.current=dbListen(c,r=>{
+      console.log("🔥 listenRoom callback:", r?.phase, "room:", !!r);
       if(!r)return;
+      try{
       setRoom({...r});
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
@@ -2740,6 +2742,7 @@ function App(){
         },5000);
       }
       if(r.phase==="betting"){advanceBetPhaseRef.current=false;}
+      }catch(err){console.error("🔴 listenRoom error:",err);}
     });
   }
 
