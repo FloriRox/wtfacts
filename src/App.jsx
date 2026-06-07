@@ -2012,123 +2012,246 @@ function DisplayScreen({room, code, t, lang}) {
   const pl = (room?.order||[]).map(id=>room?.players?.[id]).filter(Boolean);
   const guesses = room?.guesses||{};
   const scores = room?.scores||{};
-  const phase = room?.phase||'question';
+  const bets = room?.bets||{};
+  const phase = room?.phase||'lobby';
   const tippedCount = pl.filter(p=>guesses[p.id]!=null).length;
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
+  const gold = t.gold; const accent = t.accent;
 
-  const inviteLink = inviteUrl(code);
+  // QR code
   const [qr, setQr] = useState(null);
   useEffect(()=>{
     if(!code) return;
+    const link = inviteUrl(code);
     import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js').then(()=>{
-      window.QRCode.toDataURL(inviteLink,{width:180,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
+      window.QRCode.toDataURL(link,{width:160,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
         .then(url=>setQr(url)).catch(()=>{});
     }).catch(()=>{});
   },[code]);
 
-  const bg = '#0f0a06';
-  const gold = t.gold;
-  const accent = t.accent;
+  // Joker animations
+  const [jokerAnim, setJokerAnim] = useState(null); // {type, from, to}
+  const prevJokers = useRef({});
+  useEffect(()=>{
+    const cur = room?.jokers||{};
+    // Detect joker usage by comparing counts
+    pl.forEach(p=>{
+      const prev = prevJokers.current[p.id]||[];
+      const curr = cur[p.id]||[];
+      if(prev.length > curr.length){
+        // A joker was used - which one?
+        const used = prev.find(j=>!curr.includes(j)||prev.filter(x=>x===j).length > curr.filter(x=>x===j).length);
+        if(used){
+          // Find target for sabotage
+          const target = used==='sabotage' ? pl.find(x=>x.id!==(room?.sabotaged&&Object.keys(room.sabotaged||{}).slice(-1)[0])) : null;
+          setJokerAnim({type:used, from:p.name, to:target?.name});
+          setTimeout(()=>setJokerAnim(null), 3000);
+        }
+      }
+    });
+    prevJokers.current = cur;
+  },[room?.jokers]);
 
-  return <div style={{minHeight:'100vh',background:bg,color:'#f2ece6',fontFamily:t.fontBody,
-    display:'flex',flexDirection:'column',padding:'32px 48px',gap:24}}>
+  // Reveal animation state
+  const [revealed, setRevealed] = useState(false);
+  useEffect(()=>{
+    if(phase==='reveal'){ setTimeout(()=>setRevealed(true), 400); }
+    else setRevealed(false);
+  },[phase]);
 
-    {/* Header */}
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+  const css = `
+    @keyframes flyIn { from{transform:translateX(-60px);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes bombFly { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(120px,-40px) scale(1.4)} 100%{transform:translate(240px,0) scale(0.8);opacity:0} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+    @keyframes glow { 0%,100%{box-shadow:0 0 0 0 ${gold}44} 50%{box-shadow:0 0 24px 8px ${gold}88} }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  `;
+
+  return <div style={{minHeight:'100vh',background:'#0f0a06',color:'#f2ece6',
+    fontFamily:t.fontBody,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+    <style>{css}</style>
+
+    {/* ── Joker Animation Overlay ── */}
+    {jokerAnim&&<div style={{position:'fixed',inset:0,zIndex:100,pointerEvents:'none',
+      display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{background:'#0f0a06',border:`2px solid ${jokerAnim.type==='sabotage'?'#cc2244':gold}`,
+        borderRadius:20,padding:'24px 40px',textAlign:'center',animation:'popIn .4s ease both',
+        boxShadow:`0 0 40px ${jokerAnim.type==='sabotage'?'#cc224488':gold+'88'}`}}>
+        <div style={{fontSize:56,marginBottom:8}}>
+          {jokerAnim.type==='sabotage'?'💣':jokerAnim.type==='skip'?'⏭️':
+           jokerAnim.type==='hint'?'💡':jokerAnim.type==='double'?'✖️2':
+           jokerAnim.type==='change'?'🔄':'🃏'}
+        </div>
+        <p style={{fontSize:22,fontWeight:800,color:jokerAnim.type==='sabotage'?'#cc2244':gold,margin:'0 0 4px'}}>
+          {jokerAnim.from} spielt einen Joker!
+        </p>
+        {jokerAnim.to&&<p style={{fontSize:18,color:'#f2ece6',margin:0,animation:'shake .5s ease 1s both'}}>
+          💣 → {jokerAnim.to}
+        </p>}
+      </div>
+    </div>}
+
+    {/* ── Header ── */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+      padding:'16px 32px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
       <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-        <span style={{fontSize:28,fontWeight:900,color:accent}}>Esti</span>
-        <span style={{fontSize:28,fontWeight:900,color:gold}}>Mates</span>
+        <span style={{fontSize:24,fontWeight:900,color:accent}}>Esti</span>
+        <span style={{fontSize:24,fontWeight:900,color:gold}}>Mates</span>
       </div>
-      <div style={{textAlign:'center'}}>
-        <p style={{fontSize:13,color:'#6e5e54',margin:0}}>{i.displayMode}</p>
-        <p style={{fontSize:22,fontWeight:800,letterSpacing:2,color:gold,margin:0}}>#{code}</p>
+      <div style={{display:'flex',alignItems:'center',gap:24}}>
+        {phase==='question'&&q&&<div style={{display:'flex',alignItems:'center',gap:8}}>
+          <div style={{width:120,height:6,background:'#2a1a0e',borderRadius:3,overflow:'hidden'}}>
+            <div style={{height:'100%',width:`${(tippedCount/Math.max(pl.length,1))*100}%`,
+              background:gold,borderRadius:3,transition:'width .4s'}}/>
+          </div>
+          <span style={{fontSize:13,color:'#6e5e54'}}>{tippedCount}/{pl.length}</span>
+        </div>}
+        <span style={{fontSize:18,fontWeight:800,letterSpacing:2,color:gold}}>#{code}</span>
       </div>
-      {qr&&<img src={qr} style={{width:80,height:80,borderRadius:8}}/>}
+      {qr&&<img src={qr} style={{width:56,height:56,borderRadius:6,opacity:.7}}/>}
     </div>
 
-    {/* Main content */}
-    {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&<>
-      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24}}>
-        <div style={{fontSize:64}}>🎮</div>
-        <p style={{fontSize:28,fontWeight:800,textAlign:'center'}}>Bereit zum Spielen!</p>
-        <p style={{fontSize:18,color:'#6e5e54',textAlign:'center'}}>Host startet das Spiel gleich...</p>
-        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:12,marginTop:16,width:'100%'}}>
-          {pl.map(p=><div key={p.id} style={{background:'#1a120a',border:`1.5px solid #2a1a0e`,
-            borderRadius:12,padding:'16px 12px',textAlign:'center'}}>
-            <p style={{fontSize:24,margin:'0 0 4px'}}>👤</p>
-            <p style={{fontSize:14,fontWeight:600,margin:0}}>{p.name}</p>
-          </div>)}
-        </div>
-        <p style={{color:'#6e5e54',fontSize:14,marginTop:8}}>
-          {pl.length} Spieler verbunden · Scan to join: #{code}
-        </p>
-      </div>
-    </>}
-    {phase==='question'&&q&&<>
-      <div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',gap:24}}>
-        <div style={{background:'#1a120a',borderRadius:16,padding:'32px 40px',border:`1.5px solid ${gold}33`}}>
-          <p style={{fontSize:13,fontWeight:700,color:'#6e5e54',letterSpacing:.8,marginBottom:16}}>FRAGE</p>
-          <p style={{fontSize:36,fontWeight:800,lineHeight:1.3,margin:0}}>{q.q}</p>
-          {q.unit&&<p style={{color:gold,fontSize:18,marginTop:12}}>Antwort in: <strong>{q.unit}</strong></p>}
-        </div>
+    {/* ── Main: Two-column layout ── */}
+    <div style={{flex:1,display:'flex',gap:0,overflow:'hidden'}}>
 
-        {/* Players grid */}
-        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:12}}>
-          {pl.map(p=>{
-            const tipped = guesses[p.id]!=null;
-            return <div key={p.id} style={{background:tipped?gold+'22':'#1a120a',
-              border:`1.5px solid ${tipped?gold:'#2a1a0e'}`,borderRadius:12,padding:'16px 12px',
-              textAlign:'center',transition:'all .3s'}}>
-              <p style={{fontSize:24,margin:'0 0 4px'}}>{tipped?'✅':'⏳'}</p>
-              <p style={{fontSize:14,fontWeight:600,margin:0}}>{p.name}</p>
-            </div>;
-          })}
-        </div>
-        <p style={{textAlign:'center',color:'#6e5e54',fontSize:16}}>
-          {tippedCount}/{pl.length} {i.haveTipped}
-        </p>
-      </div>
-    </>}
+      {/* ── LEFT: Live question / answer ── */}
+      <div style={{flex:3,padding:'24px 32px',display:'flex',flexDirection:'column',
+        borderRight:'1px solid #2a1a0e',gap:20}}>
 
-    {phase==='reveal'&&q&&<>
-      <div style={{flex:1,display:'flex',gap:32,alignItems:'flex-start'}}>
-        {/* Answer */}
-        <div style={{flex:1}}>
-          <div style={{background:gold+'22',borderRadius:16,padding:'24px 32px',border:`2px solid ${gold}`,marginBottom:20}}>
-            <p style={{fontSize:13,fontWeight:700,color:'#6e5e54',marginBottom:8}}>ANTWORT</p>
-            <p style={{fontSize:48,fontWeight:900,color:gold,margin:0}}>{fmtNum(q.a)} <span style={{fontSize:20}}>{q.unit}</span></p>
+        {/* Lobby */}
+        {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&<div style={{
+          flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
+          <div style={{fontSize:72,animation:'pulse2 2s ease infinite'}}>🎮</div>
+          <p style={{fontSize:36,fontWeight:900,textAlign:'center',margin:0}}>Bereit?</p>
+          <p style={{fontSize:18,color:'#6e5e54',textAlign:'center',margin:0}}>
+            Host bereitet das Spiel vor...
+          </p>
+          <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
+            {pl.map(p=><div key={p.id} style={{background:'#1a120a',border:`1.5px solid #2a1a0e`,
+              borderRadius:12,padding:'10px 18px',fontSize:15,fontWeight:600,
+              animation:'flyIn .4s ease both'}}>
+              👤 {p.name}
+            </div>)}
           </div>
-          {/* Rankings */}
-          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            {sorted.map((p,idx)=>{
-              const g=guesses[p.id];
-              const diff=g!=null?Math.abs(g-q.a):null;
-              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,
-                background:'#1a120a',borderRadius:10,padding:'10px 16px',
-                border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`}}>
-                <span style={{fontSize:20,width:28}}>{medals[idx]||`${idx+1}.`}</span>
-                <span style={{flex:1,fontWeight:idx===0?700:400}}>{p.name}</span>
-                <span style={{color:'#6e5e54'}}>{g!=null?fmtNum(g):'–'}</span>
-                <span style={{color:diff===0?'#39d98a':diff<q.a*.1?gold:'#6e5e54',fontWeight:700,minWidth:60,textAlign:'right'}}>
-                  {diff!=null?`±${fmtNum(diff)}`:'–'}
-                </span>
-                <span style={{color:gold,fontWeight:800,minWidth:40,textAlign:'right'}}>{scores[p.id]||0}P</span>
+        </div>}
+
+        {/* Question phase */}
+        {phase==='question'&&q&&<>
+          <div style={{background:'#1a120a',borderRadius:16,padding:'28px 32px',
+            border:`1.5px solid ${gold}33`,flex:1}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,marginBottom:16,margin:'0 0 16px'}}>
+              FRAGE
+            </p>
+            <p style={{fontSize:'clamp(20px,3vw,32px)',fontWeight:800,lineHeight:1.3,margin:'0 0 16px'}}>
+              {q.q}
+            </p>
+            {q.unit&&<div style={{display:'inline-block',background:gold+'22',border:`1px solid ${gold}55`,
+              borderRadius:8,padding:'6px 14px',color:gold,fontWeight:700,fontSize:16}}>
+              Antwort in: {q.unit}
+            </div>}
+          </div>
+          {/* Player tip grid */}
+          <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(pl.length,4)},1fr)`,gap:10}}>
+            {pl.map(p=>{
+              const tipped = guesses[p.id]!=null;
+              return <div key={p.id} style={{
+                background:tipped?gold+'22':'#1a120a',
+                border:`1.5px solid ${tipped?gold:'#2a1a0e'}`,
+                borderRadius:12,padding:'12px 8px',textAlign:'center',
+                transition:'all .5s',
+                animation:tipped?'glow .8s ease':'none'}}>
+                <div style={{fontSize:20,marginBottom:4}}>{tipped?'✅':'⏳'}</div>
+                <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
               </div>;
             })}
           </div>
+        </>}
+
+        {/* Reveal phase */}
+        {phase==='reveal'&&q&&<>
+          <div style={{background:gold+'22',borderRadius:16,padding:'24px 32px',
+            border:`2px solid ${gold}`,animation:revealed?'popIn .6s ease both':'none'}}>
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>ANTWORT</p>
+            <p style={{fontSize:'clamp(36px,6vw,64px)',fontWeight:900,color:gold,margin:'0 0 4px'}}>
+              {fmtNum(q.a)}
+              <span style={{fontSize:'0.4em',marginLeft:8,color:'#6e5e54'}}>{q.unit}</span>
+            </p>
+          </div>
+          <div style={{flex:1,display:'flex',flexDirection:'column',gap:8,overflowY:'auto'}}>
+            {sorted.map((p,idx)=>{
+              const g=guesses[p.id]; const diff=g!=null?Math.abs(g-q.a):null;
+              const exact=diff===0;
+              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,
+                background:idx===0?gold+'18':'#1a120a',
+                border:`1px solid ${idx===0?gold+'55':'#2a1a0e'}`,
+                borderRadius:10,padding:'10px 16px',
+                animation:`slideUp .4s ease ${idx*0.1}s both`}}>
+                <span style={{fontSize:18,width:28,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+                <span style={{flex:1,fontWeight:idx===0?700:400,fontSize:15}}>{p.name}</span>
+                <span style={{color:'#6e5e54',fontFamily:t.fontMono,fontSize:13}}>{g!=null?fmtNum(g):'–'}</span>
+                <span style={{color:exact?'#39d98a':diff!=null&&diff<q.a*.05?gold:'#6e5e54',
+                  fontWeight:700,minWidth:64,textAlign:'right',fontFamily:t.fontMono,fontSize:13}}>
+                  {diff!=null?`±${fmtNum(diff)}`:'–'}
+                </span>
+                <span style={{color:gold,fontWeight:800,minWidth:36,textAlign:'right'}}>{scores[p.id]||0}P</span>
+              </div>;
+            })}
+          </div>
+        </>}
+      </div>
+
+      {/* ── RIGHT: Live Scoreboard ── */}
+      <div style={{flex:1,padding:'24px 20px',display:'flex',flexDirection:'column',gap:16,
+        minWidth:220,maxWidth:300}}>
+        <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:0}}>RANGLISTE</p>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8,overflowY:'auto'}}>
+          {sorted.map((p,idx)=>(
+            <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
+              background:idx===0?gold+'18':'#181310',
+              border:`1px solid ${idx===0?gold+'44':'#2a1a0e'}`,
+              borderRadius:10,padding:'10px 12px',
+              transition:'all .5s',
+              animation:'flyIn .4s ease both'}}>
+              <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+              <span style={{flex:1,fontSize:14,fontWeight:idx===0?700:400,
+                overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+              <span style={{color:idx===0?gold:'#6e5e54',fontWeight:800,fontSize:16}}>
+                {scores[p.id]||0}
+                <span style={{fontSize:10,marginLeft:2}}>P</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Joker stats */}
+        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:12}}>
+          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>JOKER</p>
+          {pl.map(p=>{
+            const jk=(room?.jokers||{})[p.id]||[];
+            if(!jk.length) return null;
+            return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+              <span style={{fontSize:12,color:'#6e5e54',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+              <span style={{fontSize:14}}>{jk.map((j,i)=>(
+                j==='skip'?'⏭️':j==='hint'?'💡':j==='double'?'✖️':
+                j==='sabotage'?'💣':j==='change'?'🔄':'🃏'
+              )).join('')}</span>
+            </div>;
+          })}
+        </div>
+
+        {/* QR at bottom */}
+        <div style={{textAlign:'center',opacity:.5}}>
+          {qr&&<img src={qr} style={{width:80,height:80,borderRadius:6}}/>}
+          <p style={{fontSize:11,color:'#6e5e54',margin:'4px 0 0'}}>Scan to join</p>
         </div>
       </div>
-    </>}
-
-    {/* Footer */}
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-      borderTop:`1px solid #2a1a0e`,paddingTop:16}}>
-      <p style={{color:'#6e5e54',fontSize:13,margin:0}}>playestimates.app</p>
-      <p style={{color:'#6e5e54',fontSize:13,margin:0}}>Scan to join: #{code}</p>
     </div>
   </div>;
 }
+
 
 /* ─── FINAL ───────────────────────────────────────── */
 function FinalScreen({room,myId,t,onRestart,lang}){
