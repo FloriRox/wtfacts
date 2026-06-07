@@ -2631,13 +2631,15 @@ function FinalScreen({room,myId,t,onRestart,lang}){
 
 /* ─── ROOT APP ────────────────────────────────────── */
 class ErrorBoundary extends React.Component {
-  constructor(props){super(props);this.state={error:null};}
+  constructor(props){super(props);this.state={error:null,info:null};}
   static getDerivedStateFromError(e){return{error:e};}
+  componentDidCatch(e,info){console.error("🔴 EstiMates Error:",e,info);this.setState({info});}
   render(){
     if(this.state.error)return <div style={{padding:20,color:"red",fontFamily:"monospace",background:"#fff",minHeight:"100vh"}}>
-      <h2>🔴 Error (share with developer):</h2>
+      <h2>🔴 Fehler – bitte Screenshot machen:</h2>
       <pre style={{fontSize:12,whiteSpace:"pre-wrap"}}>{this.state.error?.message}</pre>
       <pre style={{fontSize:11,whiteSpace:"pre-wrap",color:"#666"}}>{this.state.error?.stack}</pre>
+      {this.state.info&&<pre style={{fontSize:10,whiteSpace:"pre-wrap",color:"#999"}}>{this.state.info?.componentStack}</pre>}
       <button onClick={()=>this.setState({error:null})} style={{marginTop:16,padding:"8px 16px"}}>Retry</button>
     </div>;
     return this.props.children;
@@ -2748,10 +2750,9 @@ function App(){
     setLoadTxt("Raum wird erstellt...");
     setLoading(true);
     await dbSet(c,{code:c,mode:m,lang,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
-    setScreen("lobby");
     listenRoom(c);
-    // loading stops when room data arrives (handled in listenRoom callback)
     setLoading(false);
+    setScreen("lobby");
   }
 
   async function handleJoin(c,name,m,roomLang){
@@ -2762,10 +2763,9 @@ function App(){
     setLoading(true);
     const r=await dbGet(c);
     await dbPatch(c,{players:{...r.players,[myId]:{id:myId,name}},order:[...(r.order||[]),myId]});
-    setScreen("lobby");
     listenRoom(c);
-    // loading stops when room data arrives (handled in listenRoom callback)
     setLoading(false);
+    setScreen("lobby");
   }
 
   async function handleGoJokerSetup(){
@@ -3000,6 +3000,11 @@ function App(){
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
+    {/* Debug catch-all: remove in production */}
+    {!['home','lobby','jokerSetup','categories','question','betting','results','final'].includes(screen)&&
+      <div style={{padding:20,background:'#1a0a0a',color:'#ff6666',minHeight:'100vh',fontFamily:'monospace'}}>
+        <p>Debug: screen="{screen}", room={room?'✅':'null'}, code={code||'null'}</p>
+      </div>}
   </ErrorBoundary>;
 }
 
