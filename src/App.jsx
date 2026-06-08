@@ -3022,8 +3022,8 @@ function DisplayScreen({room, code, t, lang}) {
                   {scores[p.id]||0}
                   <span style={{fontSize:10,marginLeft:2,fontWeight:400}}>P</span>
                 </span>
-              </div>;}
-            )}
+              </div>;
+            })}
           </div>
         </>}
 
