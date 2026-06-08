@@ -2910,7 +2910,7 @@ function DisplayScreen({room, code, t, lang}) {
               const pts=scores[p.id]||0;
               const medals=['🥇','🥈','🥉'];
               const sb=(room.steckbriefe||{})[p.id];
-              const displayName=sb?.kampfname||p.name;
+              const displayName=sb?.kampfname?`${p.name} aka ${sb.kampfname}`:p.name;
               return <div key={p.id} style={{
                 background:tipped?gold+'1a':'#1a120a',
                 border:`1.5px solid ${rank===0?gold:tipped?gold+'66':'#2a1a0e'}`,
