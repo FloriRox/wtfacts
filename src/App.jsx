@@ -1210,7 +1210,7 @@ function DailyChallengeScreen({t, lang, onBack}) {
 
 /* ─── HOME ────────────────────────────────────────── */
 
-function HomeScreen({onHost,onJoin,lang,onSetLang}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1299,6 +1299,26 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
     </Card>
+    {/* Account */}
+    <div style={{marginTop:16,textAlign:'center'}}>
+      {isAnonymous
+        ? <button onClick={onShowLogin}
+            style={{background:'none',border:`1px solid ${t.border}`,
+              borderRadius:t.radius,padding:'8px 20px',color:t.muted,
+              fontSize:13,cursor:'pointer',fontFamily:t.fontBody}}>
+            🔐 Anmelden / Statistiken speichern
+          </button>
+        : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+            <span style={{fontSize:13,color:t.muted}}>✅ {userName||'Angemeldet'}</span>
+            <button onClick={onSignOut}
+              style={{background:'none',border:'none',color:t.muted,
+                fontSize:12,cursor:'pointer',textDecoration:'underline',
+                fontFamily:t.fontBody}}>
+              Abmelden
+            </button>
+          </div>
+      }
+    </div>
   </div>;
 }
 
@@ -3230,7 +3250,7 @@ function App(){
         📺
       </button>}
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
-    {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang}/>}
+    {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);}}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
