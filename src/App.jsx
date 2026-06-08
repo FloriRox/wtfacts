@@ -1233,13 +1233,28 @@ function QRScanner({t, i, onScan}) {
     activeRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video:{ facingMode:'environment', width:{ideal:640}, height:{ideal:480} }
+        video:{
+          facingMode:'environment',
+          width:{ideal:1280}, height:{ideal:720},
+          focusMode:'continuous',
+          advanced:[{focusMode:'continuous'}]
+        }
       });
       streamRef.current = stream;
+      // Enable continuous autofocus if supported
+      const track = stream.getVideoTracks()[0];
+      if(track && track.getCapabilities){
+        const caps = track.getCapabilities();
+        if(caps.focusMode && caps.focusMode.includes('continuous')){
+          await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+        }
+      }
       const video = videoRef.current;
       if(!video){ stopScan(); return; }
       video.srcObject = stream;
       await video.play();
+      // Wait a moment for camera to stabilize before scanning
+      await new Promise(r=>setTimeout(r,800));
       tick();
     } catch(e) {
       setError('Kamera nicht verfügbar');
