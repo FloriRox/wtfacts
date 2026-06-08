@@ -1463,14 +1463,6 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           </button>}
         </div>
         <Logo t={ADULT} size="lg"/>
-        {onShowOnboarding&&<button onClick={onShowOnboarding}
-          title={i.demoLabel||'Demo'}
-          style={{position:'absolute',top:8,right:8,background:'none',
-            border:`1px solid ${ADULT.muted}55`,borderRadius:100,
-            padding:'5px 12px',color:ADULT.muted,fontSize:12,cursor:'pointer',
-            fontFamily:ADULT.fontBody,fontWeight:600}}>
-          Demo
-        </button>}
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
           <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
           <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
