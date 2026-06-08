@@ -1406,16 +1406,22 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     <div style={{height:1,background:t.border,margin:"4px 0 10px"}}/>
 
     {/* ── Debug ── */}
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-      <p style={{fontSize:11,color:t.muted}}>{i.debugMode}</p>
-      <button onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}}
-        style={{padding:"5px 14px",borderRadius:t.radius,
-          background:debugModeLocal?t.accent+"22":t.surface,
-          border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
-          color:debugModeLocal?t.accent:t.muted,
-          fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
-        {debugModeLocal?i.debugOn:i.debugOff}
-      </button>
+    <div onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}}
+      style={{display:"flex",alignItems:"center",gap:10,
+        padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
+        background:debugModeLocal?t.accent+"18":t.surface,
+        border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
+        marginBottom:14,transition:"all .15s"}}>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:700,fontSize:12,color:debugModeLocal?t.accent:t.text}}>{i.debugMode}</div>
+      </div>
+      <div style={{width:18,height:18,borderRadius:4,flexShrink:0,
+        background:debugModeLocal?t.accent:t.surface,
+        border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
+        display:"flex",alignItems:"center",justifyContent:"center",
+        color:"#fff",fontSize:11}}>
+        {debugModeLocal?"✓":""}
+      </div>
     </div>
 
     {/* ── Betting ── */}
