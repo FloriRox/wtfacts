@@ -2396,16 +2396,25 @@ function DisplayScreen({room, code, t, lang}) {
 
         {/* RESULTS / REVEAL */}
         {(phase==='results'||phase==='reveal')&&q&&<>
-          {/* Answer */}
-          <div style={{background:gold+'22',borderRadius:12,padding:'12px 18px',
+          {/* Question + Answer + Hint */}
+          <div style={{background:gold+'22',borderRadius:12,padding:'14px 20px',
             border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>{i.dispAnswer}</p>
-            <div style={{display:'flex',alignItems:'baseline',gap:10}}>
-              <span style={{fontSize:'clamp(32px,5vw,56px)',fontWeight:900,color:gold}}>
+            {/* Question */}
+            <p style={{fontSize:13,color:'#c8b8a8',margin:'0 0 8px',lineHeight:1.4}}>{q.q}</p>
+            {/* Answer */}
+            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 4px'}}>{i.dispAnswer}</p>
+            <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:q.hint?10:0}}>
+              <span style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold}}>
                 {fmtNum(q.a)}
               </span>
-              <span style={{fontSize:18,color:'#6e5e54'}}>{q.unit}</span>
+              <span style={{fontSize:16,color:'#6e5e54'}}>{q.unit}</span>
             </div>
+            {/* Hint */}
+            {q.hint&&<div style={{background:'#1a120a',borderRadius:8,padding:'8px 12px',
+              borderLeft:`3px solid ${gold}`}}>
+              <span style={{fontSize:12,color:gold,fontWeight:600}}>💡 </span>
+              <span style={{fontSize:12,color:'#c8b8a8'}}>{q.hint}</span>
+            </div>}
           </div>
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
@@ -2413,8 +2422,8 @@ function DisplayScreen({room, code, t, lang}) {
               const isClosest=closestIds.includes(p.id);
               const roundPts=rs[p.id]||0;
               return <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
-                background:isClosest?gold+'18':'#1a120a',
-                border:`1px solid ${isClosest?gold+'66':'#2a1a0e'}`,
+                background:p.diff===0?'#39d98a22':isClosest?gold+'18':'#1a120a',
+                border:`1px solid ${p.diff===0?'#39d98a':isClosest?gold+'66':'#2a1a0e'}`,
                 borderRadius:10,padding:'10px 14px',
                 animation:`slideUp .4s ease ${idx*0.08}s both`}}>
                 <span style={{fontSize:18,width:26,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
@@ -2423,8 +2432,9 @@ function DisplayScreen({room, code, t, lang}) {
                   {fmtNum(p.guess)}
                 </span>
                 <span style={{fontFamily:t.fontMono,fontSize:13,fontWeight:700,minWidth:56,textAlign:'right',
-                  color:p.diff===0?'#39d98a':p.diff<q.a*.05?gold:'#b0a090'}}>
-                  ±{fmtNum(p.diff)}
+                  color:p.diff===0?'#39d98a':p.diff<q.a*.05?gold:'#b0a090',
+                fontWeight:p.diff===0?800:600}}>
+                  {p.diff===0?'🎯 EXAKT':'±'+fmtNum(p.diff)}
                 </span>
                 {roundPts>0&&<div style={{background:gold+'33',border:`1px solid ${gold}`,
                   borderRadius:6,padding:'2px 8px',color:gold,fontWeight:800,fontSize:13,flexShrink:0}}>
