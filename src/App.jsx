@@ -3499,6 +3499,7 @@ function App(){
 
   // Auto-reconnect once myId is ready
   const autoJoinedRef = React.useRef(false);
+  const prevRoomRef = useRef(null);
   useEffect(()=>{
     if(!myId || autoJoinedRef.current) return;
     const urlRoom = new URLSearchParams(location.search).get('room');
@@ -3528,8 +3529,9 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
-      if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;
-        if((r.qIdx||0)===0) setShowCountdown(true);}
+      // Show countdown only on very first question (categories→question transition)
+      if(r.phase==="question"&&prevRoomRef.current?.phase==="categories") setShowCountdown(true);
+      if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
       // Safety: if advancing got stuck, reset it after 5s
       if(r.advancing && r.phase==="question"){
         setTimeout(async()=>{
@@ -3604,6 +3606,7 @@ function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
+    setShowCountdown(true);
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
