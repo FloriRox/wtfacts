@@ -2909,27 +2909,36 @@ function DisplayScreen({room, code, t, lang}) {
               const g=guesses[p.id]; const tipped=g!=null; const timedOut=g===-999999;
               const pts=scores[p.id]||0;
               const medals=['🥇','🥈','🥉'];
+              const sb=(room.steckbriefe||{})[p.id];
+              const displayName=sb?.kampfname||p.name;
               return <div key={p.id} style={{
                 background:tipped?gold+'1a':'#1a120a',
                 border:`1.5px solid ${rank===0?gold:tipped?gold+'66':'#2a1a0e'}`,
-                borderRadius:12,padding:'10px 8px',textAlign:'center',
+                borderRadius:12,padding:'8px 6px',textAlign:'center',
                 transition:'all .6s',
                 animation:tipped?'glow .8s ease':'none',
                 position:'relative'}}>
                 {/* Rank badge */}
-                <div style={{position:'absolute',top:5,left:6,fontSize:11,opacity:.7}}>
+                <div style={{position:'absolute',top:4,left:5,fontSize:10,opacity:.7}}>
                   {medals[rank]||`${rank+1}.`}
                 </div>
-                {/* Status icon */}
-                <div style={{fontSize:16,marginBottom:2,marginTop:2}}>
-                  {timedOut?'⏱️':tipped?'✅':'⏳'}
+                {/* Selfie avatar */}
+                <div style={{width:36,height:36,borderRadius:'50%',overflow:'hidden',
+                  margin:'4px auto 4px',border:`2px solid ${tipped?gold:'#2a1a0e'}`}}>
+                  {sb?.selfie
+                    ? <img src={sb.selfie} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    : <div style={{width:'100%',height:'100%',background:'#2a1a0e',
+                        display:'flex',alignItems:'center',justifyContent:'center',
+                        fontSize:16,color:tipped?gold:'#6e5e54'}}>
+                        {timedOut?'⏱️':tipped?'✅':'⏳'}
+                      </div>}
                 </div>
-                {/* Name */}
-                <div style={{fontSize:12,fontWeight:700,marginBottom:3,
+                {/* Spitzname */}
+                <div style={{fontSize:11,fontWeight:700,marginBottom:2,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
-                  color:rank===0?gold:'#f2ece6'}}>{p.name}</div>
+                  color:rank===0?gold:'#f2ece6'}}>{displayName}</div>
                 {/* Tip value */}
-                <div style={{fontSize:15,fontWeight:800,color:gold,marginBottom:2}}>
+                <div style={{fontSize:14,fontWeight:800,color:gold,marginBottom:1}}>
                   {tipped&&!timedOut?fmtNum(g):'—'}
                 </div>
                 {/* Points */}
@@ -3011,34 +3020,7 @@ function DisplayScreen({room, code, t, lang}) {
       <div style={{flex:'0 0 42%',padding:'16px 20px',display:'flex',flexDirection:'column',
         gap:0,overflow:'hidden',minWidth:0}}>
 
-        {/* ── Kompakte Rangliste (nur bei Reveal/Results) ── */}
-        {(phase==='results'||phase==='reveal'||phase==='final')&&<>
-          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
-            margin:'0 0 8px',textTransform:'uppercase'}}>{i.dispRanking}</p>
-          <div style={{display:'flex',flexDirection:'column',gap:5,marginBottom:12}}>
-            {sorted.map((p,idx)=>{
-              const sb=(room.steckbriefe||{})[p.id];
-              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
-                background:idx===0?gold+'22':'#181310',
-                border:`1.5px solid ${idx===0?gold+'66':'#2a1a0e'}`,
-                borderRadius:9,padding:'8px 12px',transition:'all .5s',
-                animation:'flyIn .4s ease both'}}>
-                <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-                {sb?.selfie
-                  ? <img src={sb.selfie} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
-                  : <div style={{width:28,height:28,borderRadius:'50%',background:'#2a1a0e',border:`1px solid ${gold}33`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>👤</div>}
-                <span style={{flex:1,fontSize:13,fontWeight:idx===0?800:500,
-                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
-                  color:idx===0?'#f2ece6':'#c8b8a8'}}>{p.name}</span>
-                <span style={{color:idx===0?gold:'#8e7e6e',fontWeight:900,
-                  fontSize:idx===0?17:14,flexShrink:0}}>
-                  {scores[p.id]||0}
-                  <span style={{fontSize:10,marginLeft:2,fontWeight:400}}>P</span>
-                </span>
-              </div>;
-            })}
-          </div>
-        </>}
+
 
         {/* ── Live Statistiken ── */}
         {history.length>0&&<>
