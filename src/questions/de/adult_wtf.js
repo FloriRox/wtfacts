@@ -120,7 +120,7 @@ export default [
   {q:"Wie viele Gramm wiegt die menschliche Gebärmutter?",a:60,unit:"Gramm",hint:"Kleiner als eine Faust – kann auf 1kg wachsen.",emoji:"👶"},
   {q:"Wie viele Mal niest man durchschnittlich pro Tag?",a:4,unit:"Mal",hint:"Mehrmals täglich – ganz normal.",emoji:"🤧"},
   {q:"Wie viele Gramm Zähne-Schmutz (Plaque) bilden sich täglich?",a:500,unit:"Milligramm",hint:"0,5g täglich ohne Zähneputzen.",emoji:"🦷"},
-  {q:"Wie viele Meter wächst das Haar eines Menschen wenn es nie geschnitten wird?",a:15,unit:"mm/Tag",hint:"0,15mm täglich – 5cm im Monat.",emoji:"💇"},
+  {q:"Wie viele Millimeter wächst das Haar eines Menschen pro Tag?",a:0.35,unit:"mm/Tag",hint:"Ca. 1cm pro Monat – 15cm pro Jahr.",emoji:"💇"},
   {q:"Wie viele Gramm Sperma schluckt eine Frau bei Fellatio?",a:3,unit:"Gramm",hint:"3ml – enthält Zink und Proteine.",emoji:"💦"},
   {q:"Wie viele Stunden pro Leben verbringt ein Mensch im Orgasmus?",a:1,unit:"Stunde",hint:"6 Sekunden × 5.778 Mal = ca. 1 Stunde.",emoji:"😮"},
   {q:"Wie viele Personen werden täglich durch Blitze getroffen?",a:2000,unit:"Personen",hint:"Täglich – 40-50 davon tödlich.",emoji:"⚡"},
