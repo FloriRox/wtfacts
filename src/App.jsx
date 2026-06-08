@@ -141,6 +141,8 @@ const UI = {
     pts:"Punkte",
     onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
     onboarding:[{emoji:"🎯",title:"Willkommen bei EstiMates!",text:"Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde."},{emoji:"💡",title:"So funktioniert's",text:"Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?"},{emoji:"🃏",title:"Joker & Wetten",text:"Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln."},{emoji:"🏆",title:"Raum erstellen & spielen",text:"Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?"}],
+    allIn:"💥 Ich weiß es sicher!",allInActive:"💥 All-In aktiv!",allInHint:"Richtig = 2× Punkte · Falsch = Minus",
+    countdownReady:"Bereit?",steckbriefTitle:"Stell dich vor!",steckbriefSkip:"Überspringen",steckbriefDone:"Fertig!",steckbriefKampfname:"Kampfname / Spitzname",steckbriefBeruf:"Beruf oder Rolle",steckbriefStaerke:"Deine geheime Stärke",steckbriefHobby:"Hobby",steckbriefFact:"Fun Fact über mich",steckbriefFeind:"Mein größter Feind im Raum",
     feedbackTitle:"Hat dir EstiMates Spaß gemacht?",feedbackYes:"⭐ App bewerten",feedbackNo:"💬 Feedback geben",feedbackBug:"🐛 Fehler melden",feedbackBugSubject:"Fehler in EstiMates",feedbackBugBody:"Frage: \nRichtige Antwort laut App: \nWas stimmt nicht: \n\nVielen Dank! Du erhältst einen Belohnungs-Code per E-Mail.",feedbackThanks:"Danke für dein Feedback!",feedbackReward:"Als Dankeschön senden wir dir einen 2h-Vollzugang-Code per E-Mail 🎁",
     disclaimer:"Alle Fragen dienen der Unterhaltung. Wir übernehmen keine Gewähr für Richtigkeit oder Aktualität der Inhalte.",
     demoLabel:"Demo",demoNext:"Nächste Frage →",demoGuess:"Deine Schätzung...",demoSubmit:"Schätzung abgeben ✓",demoAnswerLabel:"ANTWORT",demoTip:"Dein Tipp",demoDeviation:"Abweichung",
@@ -205,6 +207,8 @@ const UI = {
     pts:"pts",
     onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
     onboarding:[{emoji:"🎯",title:"Welcome to EstiMates!",text:"The guessing game for your group. Estimate numbers as accurately as possible – whoever is closest wins the round."},{emoji:"💡",title:"How it works",text:"A question appears – everyone types their guess at the same time. Then it's revealed: who was closest?"},{emoji:"🃏",title:"Jokers & Betting",text:"Good guesses earn you jokers. Use them to sabotage others, reveal hints or double your points. Before each round you can bet on the best or worst guesser."},{emoji:"🏆",title:"Create a room & play",text:"Create a room and share the code with your friends. Everyone joins on their phone – no download needed. Want to try a quick demo round?"}],
+    allIn:"💥 I know this one!",allInActive:"💥 All-In active!",allInHint:"Correct = 2× points · Wrong = minus",
+    countdownReady:"Ready?",steckbriefTitle:"Introduce yourself!",steckbriefSkip:"Skip",steckbriefDone:"Done!",steckbriefKampfname:"Nickname / Battle name",steckbriefBeruf:"Job or role",steckbriefStaerke:"Your secret strength",steckbriefHobby:"Hobby",steckbriefFact:"Fun fact about me",steckbriefFeind:"My biggest rival here",
     feedbackTitle:"Did you enjoy EstiMates?",feedbackYes:"⭐ Rate the app",feedbackNo:"💬 Give feedback",feedbackBug:"🐛 Report an error",feedbackBugSubject:"Error in EstiMates",feedbackBugBody:"Question: \nAnswer shown in app: \nWhat is wrong: \n\nThank you! You will receive a reward code by email.",feedbackThanks:"Thanks for your feedback!",feedbackReward:"As a thank you we will send you a 2h full-access code by email 🎁",
     disclaimer:"All questions are for entertainment purposes only. We do not guarantee the accuracy or currentness of any content.",
     demoLabel:"Demo",demoNext:"Next question →",demoGuess:"Your guess...",demoSubmit:"Submit guess ✓",demoAnswerLabel:"ANSWER",demoTip:"Your guess",demoDeviation:"Deviation",
@@ -269,6 +273,8 @@ const UI = {
     pts:"puntos",
     onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
     onboarding:[{emoji:"🎯",title:"¡Bienvenido a EstiMates!",text:"El juego de estimación para tu grupo. Estima números con la mayor precisión posible – quien esté más cerca gana la ronda."},{emoji:"💡",title:"¿Cómo funciona?",text:"Aparece una pregunta – todos escriben su estimación al mismo tiempo. Luego se revela: ¿quién estaba más cerca?"},{emoji:"🃏",title:"Comodines y apuestas",text:"Las buenas estimaciones te dan comodines. Úsalos para sabotear a otros, revelar pistas o duplicar tus puntos."},{emoji:"🏆",title:"Crear sala y jugar",text:"Crea una sala y comparte el código con tus amigos. Todos se unen con su móvil – sin descarga. ¿Quieres probar una ronda de demostración?"}],
+    allIn:"💥 ¡Lo sé seguro!",allInActive:"💥 All-In activo!",allInHint:"Correcto = 2× puntos · Incorrecto = menos",
+    countdownReady:"¿Listos?",steckbriefTitle:"¡Preséntate!",steckbriefSkip:"Saltar",steckbriefDone:"¡Listo!",steckbriefKampfname:"Apodo / Nombre de batalla",steckbriefBeruf:"Trabajo o rol",steckbriefStaerke:"Tu fuerza secreta",steckbriefHobby:"Afición",steckbriefFact:"Dato curioso sobre mí",steckbriefFeind:"Mi mayor rival aquí",
     feedbackTitle:"¿Te gustó EstiMates?",feedbackYes:"⭐ Valorar la app",feedbackNo:"💬 Dar feedback",feedbackBug:"🐛 Reportar un error",feedbackBugSubject:"Error en EstiMates",feedbackBugBody:"Pregunta: \nRespuesta en la app: \nQué está mal: \n\n¡Gracias! Recibirás un código de recompensa por email.",feedbackThanks:"¡Gracias por tu feedback!",feedbackReward:"Como agradecimiento te enviaremos un código de acceso completo de 2h por email 🎁",
     disclaimer:"Todas las preguntas son solo para entretenimiento. No garantizamos la exactitud ni actualidad de los contenidos.",
     demoLabel:"Demo",demoNext:"Siguiente pregunta →",demoGuess:"Tu estimación...",demoSubmit:"Enviar estimación ✓",demoAnswerLabel:"RESPUESTA",demoTip:"Tu estimación",demoDeviation:"Desviación",
@@ -820,6 +826,12 @@ function calcRound(room){
     // Bet counts if the player picked ANY of the tied closest/farthest
     if(closestIds.includes(bet.closest)) pts+=1;
     if(farthestIds.includes(bet.farthest)) pts+=1;
+    // All-In: richtig → 2× (zusätzlich zu double), falsch → -1
+    const isAllIn = !!(room.allIn||{})[id];
+    if(isAllIn){
+      if(diff===0||(!anyExact&&closestIds.includes(id))) pts=pts*2;
+      else pts=-1;
+    }
     roundScores[id]=doubleActive?pts*2:pts;
   });
   const newScores={...room.scores};
@@ -1395,6 +1407,99 @@ function OnboardingScreen({t, lang, onDone}) {
   </div>;
 }
 
+
+/* ─── STECKBRIEF SCREEN ─────────────────────────── */
+function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
+  const i = UI[lang]||UI.de;
+  const fields = [
+    {key:'kampfname', label:i.steckbriefKampfname, emoji:'🏷️', placeholder:'z.B. Der Schätzkönig'},
+    {key:'beruf',     label:i.steckbriefBeruf,     emoji:'💼', placeholder:'z.B. Profi-Schätzer'},
+    {key:'staerke',   label:i.steckbriefStaerke,   emoji:'🎯', placeholder:'z.B. Bauchgefühl'},
+    {key:'hobby',     label:i.steckbriefHobby,     emoji:'🎨', placeholder:'z.B. Zahlen raten'},
+    {key:'fact',      label:i.steckbriefFact,       emoji:'🔥', placeholder:'z.B. Ich schlafe stehend'},
+    {key:'feind',     label:i.steckbriefFeind,      emoji:'😈', placeholder:'z.B. Niemand... noch'},
+  ];
+  const [vals, setVals] = React.useState({});
+  const [busy, setBusy] = React.useState(false);
+
+  async function save() {
+    setBusy(true);
+    const steckbrief = {...vals, name: playerName};
+    await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
+    onDone();
+  }
+
+  return <div style={{minHeight:'100vh',background:t.bg,display:'flex',
+    flexDirection:'column',maxWidth:520,margin:'0 auto',padding:'20px 16px 40px'}}>
+    <h2 style={{fontSize:20,fontWeight:900,color:t.accent,margin:'0 0 4px',
+      fontFamily:t.fontTitle}}>{i.steckbriefTitle}</h2>
+    <p style={{fontSize:13,color:t.muted,margin:'0 0 20px'}}>
+      {playerName} · {lang==='de'?'wird auf dem Beamer gezeigt':'shown on the big screen'}
+    </p>
+    <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
+      {fields.map(f=>(
+        <div key={f.key}>
+          <p style={{fontSize:12,color:t.muted,margin:'0 0 4px',fontWeight:600}}>
+            {f.emoji} {f.label}
+          </p>
+          <input value={vals[f.key]||''} onChange={e=>setVals(v=>({...v,[f.key]:e.target.value}))}
+            placeholder={f.placeholder}
+            style={{width:'100%',padding:'10px 12px',background:t.surface,
+              border:`1.5px solid ${t.border}`,borderRadius:t.radius,
+              color:t.text,fontSize:14,fontFamily:t.fontBody,boxSizing:'border-box'}}/>
+        </div>
+      ))}
+    </div>
+    <div style={{display:'flex',gap:10,marginTop:20}}>
+      <button onClick={onDone}
+        style={{flex:1,padding:'11px',borderRadius:t.radius,background:'none',
+          border:`1px solid ${t.border}`,color:t.muted,fontSize:13,cursor:'pointer',
+          fontFamily:t.fontBody}}>
+        {i.steckbriefSkip}
+      </button>
+      <Btn t={t} onClick={save} disabled={busy} style={{flex:2}}>
+        {i.steckbriefDone} ✓
+      </Btn>
+    </div>
+  </div>;
+}
+
+/* ─── COUNTDOWN OVERLAY ──────────────────────────── */
+function CountdownOverlay({t, lang, onDone}) {
+  const i = UI[lang]||UI.de;
+  const [count, setCount] = React.useState(3);
+  const [phase, setPhase] = React.useState('count'); // count | go
+
+  React.useEffect(()=>{
+    if(phase==='go'){
+      const t = setTimeout(onDone, 800);
+      return ()=>clearTimeout(t);
+    }
+    if(count > 0){
+      const t = setTimeout(()=>setCount(c=>c-1), 900);
+      return ()=>clearTimeout(t);
+    } else {
+      setPhase('go');
+    }
+  },[count, phase]);
+
+  const isGo = phase==='go';
+  return <div style={{position:'fixed',inset:0,zIndex:500,
+    background:'rgba(0,0,0,0.92)',display:'flex',alignItems:'center',
+    justifyContent:'center',flexDirection:'column',gap:8}}>
+    <div key={isGo?'go':count} style={{
+      fontSize:isGo?80:120,fontWeight:900,
+      color:isGo?'#39d98a':count===1?'#e8360a':count===2?'#ff8c2a':'#f2ece6',
+      fontFamily:'Arial Black,sans-serif',lineHeight:1,
+      animation:'popIn .3s ease both'}}>
+      {isGo?'GO!':count}
+    </div>
+    {!isGo&&<p style={{fontSize:16,color:'#6e5e54',letterSpacing:2}}>
+      {i.countdownReady}
+    </p>}
+  </div>;
+}
+
 function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
@@ -1556,6 +1661,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:true);
   const[withBets,setWithBets]=useState(true);
   const[betModes,setBetModes]=useState(["best","worst"]);
+  const[withSteckbrief,setWithSteckbrief]=useState(false);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
   return <div style={{
@@ -1673,6 +1779,30 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
       </div>
     </div>
 
+    {/* ── Steckbrief ── */}
+    <div style={{marginBottom:14}}>
+      <div onClick={()=>setWithSteckbrief(p=>!p)}
+        style={{display:"flex",alignItems:"center",gap:10,
+          padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
+          background:withSteckbrief?t.gold+"18":t.surface,
+          border:`1.5px solid ${withSteckbrief?t.gold:t.border}`,
+          transition:"all .15s"}}>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:700,fontSize:12,color:withSteckbrief?t.gold:t.text}}>
+            👤 Spieler-Steckbrief (Gastgeber-Modus)
+          </div>
+          <div style={{fontSize:10,color:t.muted}}>Spieler stellen sich vor dem Spiel vor</div>
+        </div>
+        <div style={{width:18,height:18,borderRadius:4,flexShrink:0,
+          background:withSteckbrief?t.gold:t.surface,
+          border:`1.5px solid ${withSteckbrief?t.gold:t.border}`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          color:"#fff",fontSize:11}}>
+          {withSteckbrief?"✓":""}
+        </div>
+      </div>
+    </div>
+
     {/* ── Betting ── */}
     <div style={{marginTop:14,marginBottom:10}}>
       <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>
@@ -1713,7 +1843,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
       </div>}
     </div>
 
-    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes)}>
+    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief)}>
       {i.continueBtn}
     </Btn>
   </div>;
@@ -1846,6 +1976,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
 function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
+  const[allIn,setAllIn]=useState(false);
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
@@ -1888,8 +2019,9 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
     if(changeAllowed){
       await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
     }
-    onGuess(n);
+    onGuess(n, allIn);
     setVal("");
+    setAllIn(false);
   }
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
@@ -1984,6 +2116,18 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
               style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
             <Btn t={t} onClick={submit} disabled={!val}
               style={{flexShrink:0}}>OK ✓</Btn>
+          </div>
+          {/* All-In toggle */}
+          <button onClick={()=>setAllIn(a=>!a)}
+            style={{width:'100%',marginTop:8,padding:'8px',borderRadius:t.radius,
+              background:allIn?t.accent+'33':'none',
+              border:`1px solid ${allIn?t.accent:t.border}`,
+              color:allIn?t.accent:t.muted,fontSize:13,fontWeight:allIn?700:400,
+              cursor:'pointer',fontFamily:t.fontBody,transition:'all .2s'}}>
+            {allIn?i.allInActive:i.allIn}
+          </button>
+          {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>{i.allInHint}</p>}
+          <div style={{display:'none'}}>
           </div>
           <p style={{marginTop:8,color:t.muted,fontSize:12}}>
             {i.discuss}
@@ -2448,6 +2592,75 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
   </div>;
 }
 
+
+/* ─── HISTOGRAM ─────────────────────────────────── */
+function TippHistogram({room, t, lang, gold}) {
+  const q = room.q;
+  const guesses = room.guesses||{};
+  const players = room.players||{};
+  const answer = q?.a;
+
+  if(!q || !answer) return null;
+
+  const vals = Object.entries(guesses)
+    .filter(([,v])=>v!=null&&v!==-999999)
+    .map(([id,v])=>({id, val:parseFloat(v), name:(players[id]?.name||'?')}));
+
+  if(vals.length < 2) return null;
+
+  // Build bins
+  const allVals = [...vals.map(v=>v.val), answer];
+  const min = Math.min(...allVals) * 0.7;
+  const max = Math.max(...allVals) * 1.3;
+  const BINS = 8;
+  const binW = (max - min) / BINS;
+  const bins = Array(BINS).fill(0).map((_,i)=>({
+    from: min + i*binW,
+    to: min + (i+1)*binW,
+    players: [],
+  }));
+
+  vals.forEach(p=>{
+    const idx = Math.min(Math.floor((p.val - min) / binW), BINS-1);
+    if(idx>=0) bins[idx].players.push(p);
+  });
+
+  const maxCount = Math.max(...bins.map(b=>b.players.length), 1);
+  const answerPct = ((answer - min) / (max - min)) * 100;
+
+  return <div style={{padding:'12px 14px',background:t.surface,
+    borderRadius:t.radius,border:`1px solid ${t.border}`,marginBottom:8}}>
+    <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,
+      margin:'0 0 10px',textTransform:'uppercase'}}>📊 Tipp-Verteilung</p>
+    <div style={{display:'flex',alignItems:'flex-end',gap:3,height:80,position:'relative'}}>
+      {bins.map((bin,i)=>{
+        const h = (bin.players.length/maxCount)*100;
+        const isAnswer = answer>=bin.from && answer<bin.to;
+        return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',
+          alignItems:'center',justifyContent:'flex-end',height:'100%',gap:2}}>
+          {bin.players.length>0&&<span style={{fontSize:9,color:gold,fontWeight:700}}>
+            {bin.players.map(p=>p.name[0]).join('')}
+          </span>}
+          <div style={{width:'100%',height:`${Math.max(h,4)}%`,
+            background:isAnswer?'#39d98a':gold+'88',
+            borderRadius:'3px 3px 0 0',
+            border:isAnswer?`2px solid #39d98a`:'none',
+            transition:'height .5s ease',minHeight:4}}/>
+        </div>;
+      })}
+      {/* Answer line */}
+      <div style={{position:'absolute',bottom:0,
+        left:`${answerPct}%`,transform:'translateX(-50%)',
+        width:2,height:'100%',background:'#39d98a',zIndex:2}}/>
+    </div>
+    <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(min)}</span>
+      <span style={{fontSize:10,color:'#39d98a',fontWeight:700}}>✓ {fmtNum(answer)}</span>
+      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(max)}</span>
+    </div>
+  </div>;
+}
+
 function DisplayScreen({room, code, t, lang}) {
   const i = UI[lang]||UI.de;
   const q = room?.q;
@@ -2684,6 +2897,8 @@ function DisplayScreen({room, code, t, lang}) {
               <span style={{fontSize:12,color:'#c8b8a8'}}>{q.hint}</span>
             </div>}
           </div>
+          {/* Histogram */}
+          <TippHistogram room={room} t={{surface:'#1a120a',border:'#2a1a0e',radius:12,muted:'#6e5e54',text:'#f2ece6'}} lang={lang} gold={gold}/>
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
             {ranked.map((p,idx)=>{
@@ -3232,6 +3447,8 @@ function App(){
   const[authReady,setAuthReady]=useState(false);
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
+  const[showSteckbrief,setShowSteckbrief]=useState(false);
+  const[showCountdown,setShowCountdown]=useState(false);
   const[isAnonymous,setIsAnonymous]=useState(true);
   const[userName,setUserName]=useState(null);
   const[isPro,setIsPro]=useState(false);
@@ -3306,7 +3523,8 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
-      if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
+      if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;
+        if((r.qIdx||0)===0) setShowCountdown(true);}
       // Safety: if advancing got stuck, reset it after 5s
       if(r.advancing && r.phase==="question"){
         setTimeout(async()=>{
@@ -3331,6 +3549,8 @@ function App(){
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
+    // Show steckbrief if enabled
+    if(r.steckbriefEnabled) setShowSteckbrief(true);
   }
 
   async function handleJoin(c,name,m,roomLang){
@@ -3344,15 +3564,17 @@ function App(){
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
+    // Show steckbrief if enabled
+    if(r.steckbriefEnabled) setShowSteckbrief(true);
   }
 
   async function handleGoJokerSetup(){
     await dbPatch(code,{phase:"jokerSetup"});
   }
 
-  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs, withBets=true, betModes=["best","worst"]){
+  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs, withBets=true, betModes=["best","worst"], withSteckbrief=false){
     enabledJokersRef.current=enabledJokers;
-    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,withBets:!!withBets,withBestWorst:betModes.length>0,betBest:betModes.includes("best"),betWorst:betModes.includes("worst"),phase:"categories"});
+    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,withBets:!!withBets,withBestWorst:betModes.length>0,betBest:betModes.includes("best"),betWorst:betModes.includes("worst"),steckbriefEnabled:!!withSteckbrief,phase:"categories"});
   }
 
   async function handleGoCategories(){
@@ -3363,11 +3585,12 @@ function App(){
     selectedCatsRef.current=selectedCats;
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
-  async function handleGuess(val){
+  async function handleGuess(val, isAllIn=false){
     await update(ref(db,`rooms/${code}/guesses`),{[myId]:val});
+    if(isAllIn) await update(ref(db,`rooms/${code}/allIn`),{[myId]:true});
   }
 
   // Auto-advance: all guesses in → betting or results
@@ -3502,7 +3725,7 @@ function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
   }
 
   async function handleKick(playerId){
@@ -3584,6 +3807,8 @@ function App(){
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
+    {showCountdown&&<CountdownOverlay t={t} lang={lang} onDone={()=>setShowCountdown(false)}/>}
+    {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
