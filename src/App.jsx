@@ -140,6 +140,8 @@ const UI = {
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
     onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
+    onboarding:[{emoji:"🎯",title:"Willkommen bei EstiMates!",text:"Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde."},{emoji:"💡",title:"So funktioniert's",text:"Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?"},{emoji:"🃏",title:"Joker & Wetten",text:"Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln."},{emoji:"🏆",title:"Raum erstellen & spielen",text:"Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?"}],
+    demoLabel:"Demo",demoNext:"Nächste Frage →",demoGuess:"Deine Schätzung...",demoSubmit:"Schätzung abgeben ✓",demoAnswerLabel:"ANTWORT",demoTip:"Dein Tipp",demoDeviation:"Abweichung",
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
@@ -200,6 +202,8 @@ const UI = {
     hintLabel:"💡 HINT",
     pts:"pts",
     onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
+    onboarding:[{emoji:"🎯",title:"Welcome to EstiMates!",text:"The guessing game for your group. Estimate numbers as accurately as possible – whoever is closest wins the round."},{emoji:"💡",title:"How it works",text:"A question appears – everyone types their guess at the same time. Then it's revealed: who was closest?"},{emoji:"🃏",title:"Jokers & Betting",text:"Good guesses earn you jokers. Use them to sabotage others, reveal hints or double your points. Before each round you can bet on the best or worst guesser."},{emoji:"🏆",title:"Create a room & play",text:"Create a room and share the code with your friends. Everyone joins on their phone – no download needed. Want to try a quick demo round?"}],
+    demoLabel:"Demo",demoNext:"Next question →",demoGuess:"Your guess...",demoSubmit:"Submit guess ✓",demoAnswerLabel:"ANSWER",demoTip:"Your guess",demoDeviation:"Deviation",
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
@@ -260,6 +264,8 @@ const UI = {
     hintLabel:"💡 PISTA",
     pts:"puntos",
     onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
+    onboarding:[{emoji:"🎯",title:"¡Bienvenido a EstiMates!",text:"El juego de estimación para tu grupo. Estima números con la mayor precisión posible – quien esté más cerca gana la ronda."},{emoji:"💡",title:"¿Cómo funciona?",text:"Aparece una pregunta – todos escriben su estimación al mismo tiempo. Luego se revela: ¿quién estaba más cerca?"},{emoji:"🃏",title:"Comodines y apuestas",text:"Las buenas estimaciones te dan comodines. Úsalos para sabotear a otros, revelar pistas o duplicar tus puntos."},{emoji:"🏆",title:"Crear sala y jugar",text:"Crea una sala y comparte el código con tus amigos. Todos se unen con su móvil – sin descarga. ¿Quieres probar una ronda de demostración?"}],
+    demoLabel:"Demo",demoNext:"Siguiente pregunta →",demoGuess:"Tu estimación...",demoSubmit:"Enviar estimación ✓",demoAnswerLabel:"RESPUESTA",demoTip:"Tu estimación",demoDeviation:"Desviación",
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
@@ -1188,7 +1194,7 @@ function DailyChallengeScreen({t, lang, onBack}) {
       </Card>
       <Card t={t} style={{marginBottom:16}}>
         <input type="number" value={guess} onChange={e=>setGuess(e.target.value)}
-          placeholder="Deine Schätzung..."
+          placeholder={i.demoGuess||'...'}
           style={{width:'100%',padding:'12px 14px',fontSize:20,fontWeight:700,
             background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:t.radius,
             color:t.text,textAlign:'center',boxSizing:'border-box'}}/>
@@ -1217,38 +1223,28 @@ function DailyChallengeScreen({t, lang, onBack}) {
 
 
 /* ─── ONBOARDING ────────────────────────────────── */
-const ONBOARDING_SLIDES = (i, t) => [
-  {
-    emoji: '🎯',
-    title: 'Willkommen bei EstiMates!',
-    text: 'Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde.',
-    color: t.accent,
-  },
-  {
-    emoji: '💡',
-    title: "So funktioniert's",
-    text: 'Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?',
-    color: t.gold,
-  },
-  {
-    emoji: '🃏',
-    title: 'Joker & Wetten',
-    text: 'Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln. Vor der Runde kannst du auf den Besten oder Schlechtesten wetten.',
-    color: '#39d98a',
-  },
-  {
-    emoji: '🏆',
-    title: 'Raum erstellen & spielen',
-    text: 'Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?',
-    color: t.gold,
-  },
-];
+const SLIDE_COLORS = (t) => [t.accent, t.gold, '#39d98a', t.gold];
+const ONBOARDING_SLIDES = (i, t) =>
+  (i.onboarding||[]).map((s,idx) => ({...s, color: SLIDE_COLORS(t)[idx]||t.gold}));
 
-const DEMO_QUESTIONS = [
-  {q:'Wie viele Stunden schläft ein Mensch durchschnittlich pro Nacht?', a:7, unit:'Stunden', hint:'Empfehlung: 7–9 Stunden.', emoji:'😴'},
-  {q:'Wie viele Knochen hat ein erwachsener Mensch?', a:206, unit:'Knochen', hint:'Babies haben ~270, viele verschmelzen.', emoji:'🦴'},
-  {q:'Wie viele Kilometer ist die Entfernung von der Erde zum Mond?', a:384400, unit:'km', hint:'Ca. 1,3 Lichtsekunden entfernt.', emoji:'🌙'},
-];
+const DEMO_QUESTIONS_I18N = {
+  de: [
+    {q:'Wie viele Stunden schläft ein Mensch durchschnittlich pro Nacht?', a:7, unit:'Stunden', hint:'Empfehlung: 7–9 Stunden.', emoji:'😴'},
+    {q:'Wie viele Knochen hat ein erwachsener Mensch?', a:206, unit:'Knochen', hint:'Babies haben ~270, viele verschmelzen.', emoji:'🦴'},
+    {q:'Wie viele Kilometer ist die Entfernung von der Erde zum Mond?', a:384400, unit:'km', hint:'Ca. 1,3 Lichtsekunden entfernt.', emoji:'🌙'},
+  ],
+  en: [
+    {q:'How many hours does a person sleep on average per night?', a:7, unit:'hours', hint:'Recommendation: 7–9 hours.', emoji:'😴'},
+    {q:'How many bones does an adult human have?', a:206, unit:'bones', hint:'Babies have ~270, many fuse together.', emoji:'🦴'},
+    {q:'How many kilometers is the distance from Earth to the Moon?', a:384400, unit:'km', hint:'About 1.3 light-seconds away.', emoji:'🌙'},
+  ],
+  es: [
+    {q:'¿Cuántas horas duerme una persona de media por noche?', a:7, unit:'horas', hint:'Recomendación: 7–9 horas.', emoji:'😴'},
+    {q:'¿Cuántos huesos tiene un humano adulto?', a:206, unit:'huesos', hint:'Los bebés tienen ~270, muchos se fusionan.', emoji:'🦴'},
+    {q:'¿Cuántos kilómetros hay entre la Tierra y la Luna?', a:384400, unit:'km', hint:'A unos 1,3 segundos luz de distancia.', emoji:'🌙'},
+  ],
+};
+const DEMO_QUESTIONS = (lang) => DEMO_QUESTIONS_I18N[lang]||DEMO_QUESTIONS_I18N.de;
 
 function OnboardingScreen({t, lang, onDone}) {
   const i = UI[lang]||UI.de;
@@ -1261,7 +1257,7 @@ function OnboardingScreen({t, lang, onDone}) {
   const slides = ONBOARDING_SLIDES(i, t);
   const totalSlides = slides.length;
   const inDemo = step >= totalSlides;
-  const demoQ = DEMO_QUESTIONS[demoStep];
+  const demoQ = DEMO_QUESTIONS(lang)[demoStep];
 
   function submitGuess() {
     const g = parseFloat(guess.replace(',','.'));
@@ -1272,7 +1268,7 @@ function OnboardingScreen({t, lang, onDone}) {
   }
 
   function nextDemo() {
-    if(demoStep < DEMO_QUESTIONS.length - 1) {
+    if(demoStep < DEMO_QUESTIONS(lang).length - 1) {
       setDemoStep(s => s+1);
       setDemoPhase('play');
       setGuess('');
@@ -1354,20 +1350,20 @@ function OnboardingScreen({t, lang, onDone}) {
     {demoPhase==='play'&&<>
       <Card t={t} style={{marginBottom:16}}>
         <input type="number" value={guess} onChange={e=>setGuess(e.target.value)}
-          placeholder="Deine Schätzung..."
+          placeholder={i.demoGuess||'...'}
           onKeyDown={e=>e.key==='Enter'&&submitGuess()}
           style={{width:'100%',padding:'12px 14px',fontSize:22,fontWeight:800,
             background:t.surface,border:`1.5px solid ${t.border}`,
             borderRadius:t.radius,color:t.text,textAlign:'center',
             boxSizing:'border-box'}}/>
       </Card>
-      <Btn t={t} full onClick={submitGuess} disabled={!guess}>Schätzung abgeben ✓</Btn>
+      <Btn t={t} full onClick={submitGuess} disabled={!guess}>{i.demoSubmit||'✓'}</Btn>
     </>}
 
     {demoPhase==='result'&&<>
       <Card t={t} style={{marginBottom:16,textAlign:'center',
         background:t.gold+'18',border:`2px solid ${t.gold}`}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:1,margin:'0 0 8px'}}>ANTWORT</p>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:1,margin:'0 0 8px'}}>{i.demoAnswerLabel}</p>
         <p style={{fontSize:40,fontWeight:900,color:t.gold,margin:'0 0 4px'}}>
           {fmtNum(demoQ.a)} <span style={{fontSize:18}}>{demoQ.unit}</span>
         </p>
@@ -1443,7 +1439,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         </div>
         <Logo t={ADULT} size="lg"/>
         {onShowOnboarding&&<button onClick={onShowOnboarding}
-          title="Demo & Spielanleitung"
+          title={i.demoLabel||'Demo'}
           style={{position:'absolute',top:8,right:8,background:'none',
             border:`1px solid ${ADULT.muted}55`,borderRadius:100,
             padding:'5px 12px',color:ADULT.muted,fontSize:12,cursor:'pointer',
