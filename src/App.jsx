@@ -141,6 +141,7 @@ const UI = {
     pts:"Punkte",
     onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
     onboarding:[{emoji:"🎯",title:"Willkommen bei EstiMates!",text:"Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde."},{emoji:"💡",title:"So funktioniert's",text:"Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?"},{emoji:"🃏",title:"Joker & Wetten",text:"Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln."},{emoji:"🏆",title:"Raum erstellen & spielen",text:"Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?"}],
+    disclaimer:"Alle Fragen dienen der Unterhaltung. Wir übernehmen keine Gewähr für Richtigkeit oder Aktualität der Inhalte.",
     demoLabel:"Demo",demoNext:"Nächste Frage →",demoGuess:"Deine Schätzung...",demoSubmit:"Schätzung abgeben ✓",demoAnswerLabel:"ANTWORT",demoTip:"Dein Tipp",demoDeviation:"Abweichung",
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
@@ -203,6 +204,7 @@ const UI = {
     pts:"pts",
     onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
     onboarding:[{emoji:"🎯",title:"Welcome to EstiMates!",text:"The guessing game for your group. Estimate numbers as accurately as possible – whoever is closest wins the round."},{emoji:"💡",title:"How it works",text:"A question appears – everyone types their guess at the same time. Then it's revealed: who was closest?"},{emoji:"🃏",title:"Jokers & Betting",text:"Good guesses earn you jokers. Use them to sabotage others, reveal hints or double your points. Before each round you can bet on the best or worst guesser."},{emoji:"🏆",title:"Create a room & play",text:"Create a room and share the code with your friends. Everyone joins on their phone – no download needed. Want to try a quick demo round?"}],
+    disclaimer:"All questions are for entertainment purposes only. We do not guarantee the accuracy or currentness of any content.",
     demoLabel:"Demo",demoNext:"Next question →",demoGuess:"Your guess...",demoSubmit:"Submit guess ✓",demoAnswerLabel:"ANSWER",demoTip:"Your guess",demoDeviation:"Deviation",
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
@@ -265,6 +267,7 @@ const UI = {
     pts:"puntos",
     onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
     onboarding:[{emoji:"🎯",title:"¡Bienvenido a EstiMates!",text:"El juego de estimación para tu grupo. Estima números con la mayor precisión posible – quien esté más cerca gana la ronda."},{emoji:"💡",title:"¿Cómo funciona?",text:"Aparece una pregunta – todos escriben su estimación al mismo tiempo. Luego se revela: ¿quién estaba más cerca?"},{emoji:"🃏",title:"Comodines y apuestas",text:"Las buenas estimaciones te dan comodines. Úsalos para sabotear a otros, revelar pistas o duplicar tus puntos."},{emoji:"🏆",title:"Crear sala y jugar",text:"Crea una sala y comparte el código con tus amigos. Todos se unen con su móvil – sin descarga. ¿Quieres probar una ronda de demostración?"}],
+    disclaimer:"Todas las preguntas son solo para entretenimiento. No garantizamos la exactitud ni actualidad de los contenidos.",
     demoLabel:"Demo",demoNext:"Siguiente pregunta →",demoGuess:"Tu estimación...",demoSubmit:"Enviar estimación ✓",demoAnswerLabel:"RESPUESTA",demoTip:"Tu estimación",demoDeviation:"Desviación",
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
@@ -1312,6 +1315,11 @@ function OnboardingScreen({t, lang, onDone}) {
           {i.onboardingSkip}
         </button>
       </div>
+      {step===totalSlides-1&&i.disclaimer&&<p style={{
+        fontSize:11,color:t.muted,textAlign:'center',
+        maxWidth:340,lineHeight:1.5,marginTop:16,opacity:.7}}>
+        ⚠️ {i.disclaimer}
+      </p>}
     </div>;
   }
 
