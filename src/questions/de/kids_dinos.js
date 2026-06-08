@@ -240,7 +240,7 @@ export default [
   {q:"Wie viele Tonnen wog ein Giraffatitan?",a:60,unit:"Tonnen",hint:"Afrikanischer Verwandter des Brachiosaurus.",emoji:"🦕"},
   {q:"Wie lang war ein Gorgosaurus in Metern?",a:9,unit:"Meter",hint:"Kleinerer Verwandter des T-Rex.",emoji:"🦖"},
   {q:"Wie lang war ein Stygimoloch-Horn in cm?",a:15,unit:"cm",hint:"Kopfhörner für Kämpfe.",emoji:"🦖"},
-  {q:"Wie schwer war das größte Dinosaurier-Ei in Gramm?",a:5000,unit:"Gramm",hint:"5kg – das schwerste bekannte Ei (Stand ~2024).",emoji:"🥚"},
+  {q:"Wie schwer war das größte Dinosaurier-Ei in Kilogramm?",a:5,unit:"Kilogramm",hint:"5kg – das schwerste bekannte Ei (Stand ~2024).",emoji:"🥚"},
   {q:"Wie viele Kilometer wanderte ein Jobaria täglich?",a:20,unit:"km",hint:"Afrikanischer Langhals-Sauropode.",emoji:"🦕"},
   {q:"Wie lang war ein Therizinosaurus-Klaue in cm?",a:70,unit:"cm",hint:"Längste Krallen im Tierreich.",emoji:"🦅"},
   {q:"Wie tief war ein Sauropoden-Fußabdruck in cm?",a:40,unit:"cm",hint:"Massive Abdrücke im weichen Boden.",emoji:"👣"},

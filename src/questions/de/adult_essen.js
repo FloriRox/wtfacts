@@ -232,7 +232,7 @@ export default [
   {q:"Wie viele Gramm Zucker hat 100g Balsamico-Essig?",a:17,unit:"Gramm",hint:"Viel Zucker für ein Sauerprodukt.",emoji:"🫙"},
   {q:"Wie viele Tonnen Sushi wird täglich in Japan gegessen?",a:2000,unit:"Tonnen",hint:"Japan bleibt der Weltmarktführer.",emoji:"🍣"},
   {q:"Wie viele kcal hat ein Hotdog (normal)?",a:290,unit:"kcal",hint:"Mit Senf und Ketchup etwas mehr.",emoji:"🌭"},
-  {q:"Wie viele Gramm Calcium hat 100g Parmesan?",a:1184,unit:"Gramm",hint:"Parmesan hat mehr Calcium als fast jedes andere Lebensmittel.",emoji:"🧀"},
+  {q:"Wie viele Kilogramm Calcium hat 100g Parmesan?",a:1.184,unit:"Kilogramm",hint:"Parmesan hat mehr Calcium als fast jedes andere Lebensmittel.",emoji:"🧀"},
   {q:"Wie viele Millionen Tonnen Schokolade produziert die Welt pro Jahr?",a:8,unit:"Millionen Tonnen",hint:"Millionen Tonnen weltweit.",emoji:"🍫"},
   {q:"Wie viele kcal hat 100g Macarons?",a:450,unit:"kcal",hint:"Sehr zuckerreich und kalorienreich.",emoji:"🍬"},
   {q:"Wie viele Gramm Zucker hat ein Red Bull (250ml)?",a:27,unit:"Gramm",hint:"Fast so viel wie Cola.",emoji:"⚡"},
