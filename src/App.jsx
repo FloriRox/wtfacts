@@ -132,6 +132,7 @@ const UI = {
     sabotageCount:(n)=>n+" Sabotagen",
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
+    bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",bestWorstOn:"Bester & Schlechtester",bestWorstOff:"Nur Nächster",
     scanJoin2:"Scan & mitspielen!",
     dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",
     camUnavailable:"Kamera nicht verfügbar",
@@ -189,6 +190,7 @@ const UI = {
     sabotageCount:(n)=>n+" sabotages",
     hintLabel:"💡 HINT",
     pts:"pts",
+    bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",bestWorstOn:"Best & Worst Bettor",bestWorstOff:"Closest only",
     scanJoin2:"Scan to play!",
     dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",
     camUnavailable:"Camera not available",
@@ -246,6 +248,7 @@ const UI = {
     sabotageCount:(n)=>n+" sabotajes",
     hintLabel:"💡 PISTA",
     pts:"puntos",
+    bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",bestWorstOn:"Mejor y peor apostador",bestWorstOff:"Solo el más cercano",
     scanJoin2:"¡Escanear y jugar!",
     dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",
     camUnavailable:"Cámara no disponible",
@@ -1298,6 +1301,8 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
   const[debugModeLocal,setDebugModeLocal]=useState(true);
+  const[withBets,setWithBets]=useState(true);
+  const[withBestWorst,setWithBestWorst]=useState(true);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
   return <div style={{
@@ -1409,7 +1414,38 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
       </button>
     </div>
 
-    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs)}>
+    {/* ── Betting ── */}
+    <div style={{marginTop:14,marginBottom:10}}>
+      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>
+        {i.bettingSection}
+      </p>
+      <div style={{display:"flex",gap:8,marginBottom:withBets?8:0}}>
+        {[{v:true,label:i.bettingOn},{v:false,label:i.bettingOff}].map(o=>(
+          <button key={String(o.v)} onClick={()=>setWithBets(o.v)}
+            style={{flex:1,padding:"10px 6px",borderRadius:t.radius,
+              background:withBets===o.v?t.gold+"22":t.surface,
+              border:`1.5px solid ${withBets===o.v?t.gold:t.border}`,
+              color:withBets===o.v?t.gold:t.muted,
+              fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody}}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {withBets&&<div style={{display:"flex",gap:8}}>
+        {[{v:true,label:i.bestWorstOn},{v:false,label:i.bestWorstOff}].map(o=>(
+          <button key={String(o.v)} onClick={()=>setWithBestWorst(o.v)}
+            style={{flex:1,padding:"8px 6px",borderRadius:t.radius,
+              background:withBestWorst===o.v?t.accent+"18":t.surface,
+              border:`1.5px solid ${withBestWorst===o.v?t.accent:t.border}`,
+              color:withBestWorst===o.v?t.accent:t.muted,
+              fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
+            {o.label}
+          </button>
+        ))}
+      </div>}
+    </div>
+
+    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,withBestWorst)}>
       {i.continueBtn}
     </Btn>
   </div>;
@@ -2774,9 +2810,9 @@ function App(){
     await dbPatch(code,{phase:"jokerSetup"});
   }
 
-  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs){
+  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs, withBets=true, withBestWorst=true){
     enabledJokersRef.current=enabledJokers;
-    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,phase:"categories"});
+    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,withBets:!!withBets,withBestWorst:!!withBestWorst,phase:"categories"});
   }
 
   async function handleGoCategories(){
@@ -2828,7 +2864,11 @@ function App(){
           const histEntry={guesses:g,answer:r.q?.a,bets:{},closestId:result.closestId,farthestId:result.farthestId};
           await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers,advancing:false});
         } else {
-          await dbPatch(code,{phase:"betting",advancing:false});
+          if(room.withBets===false){
+            await dbPatch(code,{phase:"results",advancing:false});
+          } else {
+            await dbPatch(code,{phase:"betting",advancing:false});
+          }
         }
       };
       advance();
