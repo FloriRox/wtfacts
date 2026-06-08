@@ -1304,7 +1304,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
-  const[debugModeLocal,setDebugModeLocal]=useState(true);
+  const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:true);
   const[withBets,setWithBets]=useState(true);
   const[betModes,setBetModes]=useState(["best","worst"]);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
@@ -2764,7 +2764,7 @@ function App(){
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
-  const[debugMode,setDebugMode]=useState(false);
+  const[debugMode,setDebugMode]=useState(true);
   const[lang,setLangState]=useState(()=>localStorage.getItem("em_lang")||"de");
 
   function setLang(l){
