@@ -139,6 +139,7 @@ const UI = {
     sabotageCount:(n)=>n+" Sabotagen",
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
+    onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
@@ -198,6 +199,7 @@ const UI = {
     sabotageCount:(n)=>n+" sabotages",
     hintLabel:"💡 HINT",
     pts:"pts",
+    onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
@@ -257,6 +259,7 @@ const UI = {
     sabotageCount:(n)=>n+" sabotajes",
     hintLabel:"💡 PISTA",
     pts:"puntos",
+    onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
@@ -1212,7 +1215,180 @@ function DailyChallengeScreen({t, lang, onBack}) {
 
 /* ─── HOME ────────────────────────────────────────── */
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null}){
+
+/* ─── ONBOARDING ────────────────────────────────── */
+const ONBOARDING_SLIDES = (i, t) => [
+  {
+    emoji: '🎯',
+    title: 'Willkommen bei EstiMates!',
+    text: 'Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde.',
+    color: t.accent,
+  },
+  {
+    emoji: '💡',
+    title: 'So funktioniert's',
+    text: 'Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?',
+    color: t.gold,
+  },
+  {
+    emoji: '🃏',
+    title: 'Joker & Wetten',
+    text: 'Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln. Vor der Runde kannst du auf den Besten oder Schlechtesten wetten.',
+    color: '#39d98a',
+  },
+  {
+    emoji: '🏆',
+    title: 'Raum erstellen & spielen',
+    text: 'Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?',
+    color: t.gold,
+  },
+];
+
+const DEMO_QUESTIONS = [
+  {q:'Wie viele Stunden schläft ein Mensch durchschnittlich pro Nacht?', a:7, unit:'Stunden', hint:'Empfehlung: 7–9 Stunden.', emoji:'😴'},
+  {q:'Wie viele Knochen hat ein erwachsener Mensch?', a:206, unit:'Knochen', hint:'Babies haben ~270, viele verschmelzen.', emoji:'🦴'},
+  {q:'Wie viele Kilometer ist die Entfernung von der Erde zum Mond?', a:384400, unit:'km', hint:'Ca. 1,3 Lichtsekunden entfernt.', emoji:'🌙'},
+];
+
+function OnboardingScreen({t, lang, onDone}) {
+  const i = UI[lang]||UI.de;
+  const [step, setStep] = React.useState(0); // 0-3 = slides, 4+ = demo
+  const [demoStep, setDemoStep] = React.useState(0);
+  const [demoPhase, setDemoPhase] = React.useState('play'); // play | result
+  const [guess, setGuess] = React.useState('');
+  const [demoResults, setDemoResults] = React.useState([]);
+
+  const slides = ONBOARDING_SLIDES(i, t);
+  const totalSlides = slides.length;
+  const inDemo = step >= totalSlides;
+  const demoQ = DEMO_QUESTIONS[demoStep];
+
+  function submitGuess() {
+    const g = parseFloat(guess.replace(',','.'));
+    if(isNaN(g)) return;
+    const diff = Math.abs(g - demoQ.a);
+    setDemoResults(prev => [...prev, {guess:g, diff, exact:diff===0}]);
+    setDemoPhase('result');
+  }
+
+  function nextDemo() {
+    if(demoStep < DEMO_QUESTIONS.length - 1) {
+      setDemoStep(s => s+1);
+      setDemoPhase('play');
+      setGuess('');
+    } else {
+      localStorage.setItem('em_onboarded','1');
+      onDone();
+    }
+  }
+
+  // Slide view
+  if(!inDemo) {
+    const slide = slides[step];
+    return <div style={{minHeight:'100vh',background:t.bg,display:'flex',
+      flexDirection:'column',alignItems:'center',justifyContent:'center',
+      padding:'24px 20px',maxWidth:520,margin:'0 auto',animation:'fu .3s ease both'}}>
+
+      {/* Progress dots */}
+      <div style={{display:'flex',gap:8,marginBottom:40}}>
+        {slides.map((_,idx) => (
+          <div key={idx} style={{width:idx===step?24:8,height:8,borderRadius:4,
+            background:idx===step?slide.color:t.border,transition:'all .3s'}}/>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{fontSize:80,marginBottom:24,animation:'popIn .4s ease both'}}>{slide.emoji}</div>
+      <h2 style={{fontSize:24,fontWeight:900,color:slide.color,textAlign:'center',
+        margin:'0 0 16px',fontFamily:t.fontTitle}}>{slide.title}</h2>
+      <p style={{fontSize:16,color:t.muted,textAlign:'center',lineHeight:1.7,
+        margin:'0 0 48px',maxWidth:380}}>{slide.text}</p>
+
+      {/* Buttons */}
+      <div style={{display:'flex',flexDirection:'column',gap:10,width:'100%',maxWidth:340}}>
+        {step < totalSlides - 1
+          ? <Btn t={t} full onClick={()=>setStep(s=>s+1)}>{i.onboardingNext}</Btn>
+          : <Btn t={t} full onClick={()=>setStep(totalSlides)}>{i.onboardingStart}</Btn>
+        }
+        <button onClick={()=>{localStorage.setItem('em_onboarded','1');onDone();}}
+          style={{background:'none',border:'none',color:t.muted,fontSize:13,
+            cursor:'pointer',fontFamily:t.fontBody,padding:'8px'}}>
+          {i.onboardingSkip}
+        </button>
+      </div>
+    </div>;
+  }
+
+  // Demo round
+  return <div style={{...page,animation:'fu .3s ease both'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
+      <p style={{fontSize:12,color:t.muted,margin:0}}>
+        Demo {demoStep+1}/{DEMO_QUESTIONS.length}
+      </p>
+      <button onClick={()=>{localStorage.setItem('em_onboarded','1');onDone();}}
+        style={{background:'none',border:'none',color:t.muted,fontSize:12,
+          cursor:'pointer',fontFamily:t.fontBody,textDecoration:'underline'}}>
+        {i.onboardingSkip}
+      </button>
+    </div>
+
+    {/* Progress bar */}
+    <div style={{height:4,background:t.border,borderRadius:2,marginBottom:24,overflow:'hidden'}}>
+      <div style={{height:'100%',width:`${((demoStep)/(DEMO_QUESTIONS.length))*100}%`,
+        background:t.accent,borderRadius:2,transition:'width .4s'}}/>
+    </div>
+
+    {/* Question card */}
+    <Card t={t} style={{marginBottom:16}}>
+      <div style={{fontSize:32,textAlign:'center',marginBottom:8}}>{demoQ.emoji}</div>
+      <p style={{fontSize:17,fontWeight:700,lineHeight:1.4,textAlign:'center',
+        margin:'0 0 12px'}}>{demoQ.q}</p>
+      {demoQ.unit&&<div style={{textAlign:'center'}}>
+        <span style={{background:t.gold+'22',border:`1px solid ${t.gold}55`,
+          borderRadius:8,padding:'4px 12px',color:t.gold,fontWeight:700,fontSize:13}}>
+          Antwort in: {demoQ.unit}
+        </span>
+      </div>}
+    </Card>
+
+    {demoPhase==='play'&&<>
+      <Card t={t} style={{marginBottom:16}}>
+        <input type="number" value={guess} onChange={e=>setGuess(e.target.value)}
+          placeholder="Deine Schätzung..."
+          onKeyDown={e=>e.key==='Enter'&&submitGuess()}
+          style={{width:'100%',padding:'12px 14px',fontSize:22,fontWeight:800,
+            background:t.surface,border:`1.5px solid ${t.border}`,
+            borderRadius:t.radius,color:t.text,textAlign:'center',
+            boxSizing:'border-box'}}/>
+      </Card>
+      <Btn t={t} full onClick={submitGuess} disabled={!guess}>Schätzung abgeben ✓</Btn>
+    </>}
+
+    {demoPhase==='result'&&<>
+      <Card t={t} style={{marginBottom:16,textAlign:'center',
+        background:t.gold+'18',border:`2px solid ${t.gold}`}}>
+        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:1,margin:'0 0 8px'}}>ANTWORT</p>
+        <p style={{fontSize:40,fontWeight:900,color:t.gold,margin:'0 0 4px'}}>
+          {fmtNum(demoQ.a)} <span style={{fontSize:18}}>{demoQ.unit}</span>
+        </p>
+        <p style={{fontSize:14,color:t.muted,margin:'8px 0 0'}}>
+          Dein Tipp: <strong style={{color:t.text}}>{fmtNum(demoResults[demoResults.length-1]?.guess)}</strong>
+          {' · '}
+          Abweichung: <strong style={{color:demoResults[demoResults.length-1]?.exact?'#39d98a':t.accent}}>
+            {demoResults[demoResults.length-1]?.exact?'🎯 EXAKT!':'±'+fmtNum(demoResults[demoResults.length-1]?.diff)}
+          </strong>
+        </p>
+        {demoQ.hint&&<p style={{fontSize:13,color:t.muted,marginTop:10,
+          fontStyle:'italic'}}>💡 {demoQ.hint}</p>}
+      </Card>
+      <Btn t={t} full onClick={nextDemo}>
+        {demoStep < DEMO_QUESTIONS.length-1 ? 'Nächste Frage →' : i.onboardingDone}
+      </Btn>
+    </>}
+  </div>;
+}
+
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1266,6 +1442,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           ))}
         </div>
         <Logo t={ADULT} size="lg"/>
+        {onShowOnboarding&&<button onClick={onShowOnboarding}
+          title="Demo & Spielanleitung"
+          style={{position:'absolute',top:8,right:8,background:'none',
+            border:`1px solid ${ADULT.muted}55`,borderRadius:100,
+            padding:'5px 12px',color:ADULT.muted,fontSize:12,cursor:'pointer',
+            fontFamily:ADULT.fontBody,fontWeight:600}}>
+          Demo
+        </button>}
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
           <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
           <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
@@ -2946,6 +3130,7 @@ function App(){
   const[myId,setMyId]=useState(null);
   const[authReady,setAuthReady]=useState(false);
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
+  const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[isAnonymous,setIsAnonymous]=useState(true);
   const[userName,setUserName]=useState(null);
   const[isPro,setIsPro]=useState(false);
@@ -3279,7 +3464,9 @@ function App(){
         📺
       </button>}
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
-    {screen==="home"&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);}}/>}
+    {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
+      onDone={()=>setShowOnboarding(false)}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);}} onShowOnboarding={()=>setShowOnboarding(true)}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
