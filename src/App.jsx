@@ -1434,19 +1434,33 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        {/* Language selector - prominent at top */}
-        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:32}}>
-          {["de","en","es"].map(l=>(
-            <button key={l} onClick={()=>onSetLang(l)}
-              style={{padding:"8px 18px",
-                background:lang===l?ADULT.accent:ADULT.surface,
-                border:`2px solid ${lang===l?ADULT.accent:ADULT.border}`,
-                borderRadius:100,color:lang===l?"#fff":ADULT.muted,
-                fontWeight:700,fontSize:13,cursor:"pointer",
-                fontFamily:ADULT.fontBody,transition:"all .2s"}}>
-              {l==="de"?"🇩🇪 Deutsch":l==="en"?"🇬🇧 English":"🇪🇸 Español"}
-            </button>
-          ))}
+        {/* Language selector - compact top row with Demo button */}
+        <div style={{display:"flex",justifyContent:"space-between",
+          alignItems:"center",marginBottom:32,width:"100%",maxWidth:400}}>
+          <select value={lang} onChange={e=>onSetLang(e.target.value)}
+            style={{padding:"8px 14px",
+              background:ADULT.surface,
+              border:`1.5px solid ${ADULT.border}`,
+              borderRadius:100,color:"#f2ece6",
+              fontWeight:700,fontSize:14,cursor:"pointer",
+              fontFamily:ADULT.fontBody,
+              appearance:"none",
+              paddingRight:32,
+              backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e5e54' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+              backgroundRepeat:"no-repeat",
+              backgroundPosition:"right 12px center"}}>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Español</option>
+          </select>
+          {onShowOnboarding&&<button onClick={onShowOnboarding}
+            title={i.demoLabel||"Demo"}
+            style={{padding:"8px 16px",background:"none",
+              border:`1.5px solid ${ADULT.muted}55`,
+              borderRadius:100,color:"#f2ece6",fontSize:13,
+              cursor:"pointer",fontFamily:ADULT.fontBody,fontWeight:600}}>
+            {i.demoLabel||"Demo"}
+          </button>}
         </div>
         <Logo t={ADULT} size="lg"/>
         {onShowOnboarding&&<button onClick={onShowOnboarding}
