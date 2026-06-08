@@ -2732,12 +2732,15 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
         🏆 Statistiken dauerhaft speichern
       </p>
       <p style={{fontSize:12,color:t.muted,margin:'0 0 10px'}}>
-        Streak & Rangliste geräteübergreifend mit Google oder Apple sichern
+        Streak & Rangliste geräteübergreifend sichern
       </p>
-      <Btn t={t} full onClick={onShowLogin} style={{
-        background:t.gold+'22',border:`1.5px solid ${t.gold}`,color:t.gold}}>
-        Mit Google / Apple anmelden
-      </Btn>
+      <button onClick={()=>{console.log("Login button clicked!"); onShowLogin();}}
+        style={{width:'100%',padding:'11px',borderRadius:t.radius,
+          background:t.gold+'33',border:`1.5px solid ${t.gold}`,
+          color:t.gold,fontWeight:700,fontSize:14,cursor:'pointer',
+          fontFamily:t.fontBody}}>
+        🔐 Mit Google anmelden
+      </button>
     </div>}
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
   </div>;
