@@ -3595,15 +3595,9 @@ function App(){
       // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
       const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
       const uid = auth?.currentUser?.uid;
-      console.log('[Steckbrief]', {phase:r.phase, steckbriefEnabled:r.steckbriefEnabled, shown:showSteckbriefShownRef.current, hasPlayer:!!r.players?.[uid], uid});
-      if(r.phase==="lobby"&&r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]){
-        const justEnabled = !prevSteckbrief && r.steckbriefEnabled;
-        const justJoined = !prevRoomRef.current?.players?.[uid] && r.players?.[uid];
-        console.log('[Steckbrief] check:', {justEnabled, justJoined, prevSteckbrief});
-        if(justEnabled || justJoined){
-          showSteckbriefShownRef.current=true;
-          setShowSteckbrief(true);
-        }
+      if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]&&(r.phase==="lobby"||r.phase==="jokerSetup"||r.phase==="categories")){
+        showSteckbriefShownRef.current=true;
+        setShowSteckbrief(true);
       }
       // Show countdown only on very first question (categories→question transition)
       if(r.phase==="question"&&prevRoomRef.current?.phase==="categories") setShowCountdown(true);
@@ -3634,7 +3628,6 @@ function App(){
     setLoading(false);
     setScreen("lobby");
     // Show steckbrief if enabled
-    if(r.steckbriefEnabled) setShowSteckbrief(true);
   }
 
   async function handleJoin(c,name,m,roomLang){
@@ -3663,7 +3656,6 @@ function App(){
     setLoading(false);
     setScreen("lobby");
     // Show steckbrief if enabled
-    if(r.steckbriefEnabled) setShowSteckbrief(true);
   }
 
   async function handleGoJokerSetup(){
