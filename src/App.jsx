@@ -1271,6 +1271,26 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
           {(pills[lang]||pills.de).map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
+        {/* Account button on landing */}
+        <div style={{marginTop:24,textAlign:'center'}}>
+          {isAnonymous
+            ? <button onClick={onShowLogin}
+                style={{background:'none',border:'none',color:ADULT.muted+'88',
+                  fontSize:12,cursor:'pointer',fontFamily:ADULT.fontBody,
+                  textDecoration:'underline'}}>
+                🔐 Anmelden
+              </button>
+            : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
+                <span style={{fontSize:12,color:ADULT.muted}}>✅ {userName||'Angemeldet'}</span>
+                <button onClick={onSignOut}
+                  style={{background:'none',border:'none',color:ADULT.muted,
+                    fontSize:11,cursor:'pointer',textDecoration:'underline',
+                    fontFamily:ADULT.fontBody}}>
+                  Abmelden
+                </button>
+              </div>
+          }
+        </div>
       </div>
     </div>;
   }
