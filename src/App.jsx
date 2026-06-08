@@ -1226,7 +1226,7 @@ const ONBOARDING_SLIDES = (i, t) => [
   },
   {
     emoji: '💡',
-    title: 'So funktioniert's',
+    title: "So funktioniert's",
     text: 'Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?',
     color: t.gold,
   },
