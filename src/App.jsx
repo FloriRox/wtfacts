@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
-import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, OAuthProvider, linkWithPopup } from "firebase/auth";
+import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -2805,18 +2805,31 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
     setBusy(true); setError(null);
     try {
       const currentUser = auth.currentUser;
-      if(currentUser && currentUser.isAnonymous) {
-        await linkWithPopup(currentUser, provider);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if(isMobile) {
+        // Use redirect on mobile (more reliable)
+        if(currentUser && currentUser.isAnonymous) {
+          await linkWithRedirect(currentUser, provider);
+        } else {
+          await signInWithRedirect(auth, provider);
+        }
+        // Page will redirect - result handled on return
       } else {
-        await signInWithPopup(auth, provider);
+        // Use popup on desktop
+        if(currentUser && currentUser.isAnonymous) {
+          await linkWithPopup(currentUser, provider);
+        } else {
+          await signInWithPopup(auth, provider);
+        }
+        onSuccess?.();
+        onClose();
       }
-      onSuccess?.();
-      onClose();
     } catch(e) {
       if(e.code !== 'auth/popup-closed-by-user') {
         setError('Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
       }
-    } finally { setBusy(false); }
+      setBusy(false);
+    }
   }
 
   return <div style={{position:'fixed',inset:0,zIndex:999,
@@ -2882,6 +2895,17 @@ function App(){
   useEffect(()=>{
     QUESTIONS=QUESTIONS_MAP[lang]||QUESTIONS_MAP.de;
     QUESTIONS_RAW=QUESTIONS_RAW_MAP[lang]||QUESTIONS_RAW_MAP.de;
+
+    // Handle redirect result (after Google/Apple redirect login)
+    if(auth) {
+      getRedirectResult(auth).then(result=>{
+        if(result?.user){
+          setMyId(result.user.uid);
+          setIsAnonymous(result.user.isAnonymous);
+          setShowLoginPrompt(false);
+        }
+      }).catch(e=>console.log('Redirect result:', e));
+    }
 
     // Sign in anonymously on first load
     const unsubAuth = auth.onAuthStateChanged(user=>{
