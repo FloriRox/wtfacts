@@ -2725,6 +2725,20 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
     <Btn t={t} variant="secondary" full onClick={()=>setShowCamera(true)} style={{marginBottom:12}}>
       {i.shareBtn}
     </Btn>
+    {isAnonymous&&onShowLogin&&<div style={{marginBottom:12,padding:'14px 16px',
+      borderRadius:t.radius,border:`1.5px solid ${t.gold}44`,
+      background:t.gold+'11',textAlign:'center'}}>
+      <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
+        🏆 Statistiken dauerhaft speichern
+      </p>
+      <p style={{fontSize:12,color:t.muted,margin:'0 0 10px'}}>
+        Streak & Rangliste geräteübergreifend mit Google oder Apple sichern
+      </p>
+      <Btn t={t} full onClick={onShowLogin} style={{
+        background:t.gold+'22',border:`1.5px solid ${t.gold}`,color:t.gold}}>
+        Mit Google / Apple anmelden
+      </Btn>
+    </div>}
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
   </div>;
 }
