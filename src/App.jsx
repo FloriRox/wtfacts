@@ -2579,7 +2579,7 @@ function DisplayScreen({room, code, t, lang}) {
 
 
 /* ─── FINAL ───────────────────────────────────────── */
-function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null}){
+function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null,userName=null}){
   const i=UI[lang]||UI.de;
   const[globalRank,setGlobalRank]=useState(null);
   const[showCamera,setShowCamera]=useState(false);
@@ -2725,22 +2725,29 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
     <Btn t={t} variant="secondary" full onClick={()=>setShowCamera(true)} style={{marginBottom:12}}>
       {i.shareBtn}
     </Btn>
-    {isAnonymous&&onShowLogin&&<div style={{marginBottom:12,padding:'14px 16px',
+    {onShowLogin&&<div style={{marginBottom:12,padding:'14px 16px',
       borderRadius:t.radius,border:`1.5px solid ${t.gold}44`,
       background:t.gold+'11',textAlign:'center'}}>
-      <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
-        🏆 Statistiken dauerhaft speichern
-      </p>
-      <p style={{fontSize:12,color:t.muted,margin:'0 0 10px'}}>
-        Streak & Rangliste geräteübergreifend sichern
-      </p>
-      <button onClick={()=>{console.log("Login button clicked!"); onShowLogin();}}
-        style={{width:'100%',padding:'11px',borderRadius:t.radius,
-          background:t.gold+'33',border:`1.5px solid ${t.gold}`,
-          color:t.gold,fontWeight:700,fontSize:14,cursor:'pointer',
-          fontFamily:t.fontBody}}>
-        🔐 Mit Google anmelden
-      </button>
+      {isAnonymous
+        ? <>
+          <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
+            🏆 Statistiken dauerhaft speichern
+          </p>
+          <p style={{fontSize:12,color:t.muted,margin:'0 0 10px'}}>
+            Streak & Rangliste geräteübergreifend sichern
+          </p>
+          <button onClick={()=>onShowLogin()}
+            style={{width:'100%',padding:'11px',borderRadius:t.radius,
+              background:t.gold+'33',border:`1.5px solid ${t.gold}`,
+              color:t.gold,fontWeight:700,fontSize:14,cursor:'pointer',
+              fontFamily:t.fontBody}}>
+            🔐 Mit Google anmelden
+          </button>
+        </>
+        : <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:0}}>
+            ✅ Angemeldet{userName?' als '+userName:''}
+          </p>
+      }
     </div>}
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
   </div>;
@@ -2883,6 +2890,7 @@ function App(){
   const[authReady,setAuthReady]=useState(false);
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
   const[isAnonymous,setIsAnonymous]=useState(true);
+  const[userName,setUserName]=useState(null);
 
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
@@ -2917,6 +2925,7 @@ function App(){
       if(user){
         setMyId(user.uid);
         setIsAnonymous(user.isAnonymous);
+        setUserName(user.displayName||user.email||null);
         setAuthReady(true);
       } else {
         signInAnonymously(auth).catch(err=>console.error('Auth error:',err));
@@ -3231,7 +3240,7 @@ function App(){
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
-    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)}/>}
+    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName}/>}
 
   </ErrorBoundary>;
 }
