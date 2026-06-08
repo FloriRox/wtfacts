@@ -3595,10 +3595,11 @@ function App(){
       // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
       const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
       const uid = auth?.currentUser?.uid;
+      console.log('[Steckbrief]', {phase:r.phase, steckbriefEnabled:r.steckbriefEnabled, shown:showSteckbriefShownRef.current, hasPlayer:!!r.players?.[uid], uid});
       if(r.phase==="lobby"&&r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]){
-        // Show if: just enabled by host (false→true), or player just joined (new player)
         const justEnabled = !prevSteckbrief && r.steckbriefEnabled;
         const justJoined = !prevRoomRef.current?.players?.[uid] && r.players?.[uid];
+        console.log('[Steckbrief] check:', {justEnabled, justJoined, prevSteckbrief});
         if(justEnabled || justJoined){
           showSteckbriefShownRef.current=true;
           setShowSteckbrief(true);
