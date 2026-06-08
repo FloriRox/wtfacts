@@ -1421,10 +1421,40 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
   ];
   const [vals, setVals] = React.useState({});
   const [busy, setBusy] = React.useState(false);
+  const [selfie, setSelfie] = React.useState(null);
+  const [showCam, setShowCam] = React.useState(false);
+  const videoRef = React.useRef(null);
+  const streamRef = React.useRef(null);
+
+  async function startCam(){
+    setShowCam(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+      streamRef.current = stream;
+      if(videoRef.current){ videoRef.current.srcObject=stream; videoRef.current.play(); }
+    } catch(e){ setShowCam(false); }
+  }
+  function takeSelfie(){
+    const v = videoRef.current;
+    if(!v) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 200; canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    const size = Math.min(v.videoWidth,v.videoHeight);
+    const ox = (v.videoWidth-size)/2, oy = (v.videoHeight-size)/2;
+    ctx.save(); ctx.scale(-1,1); ctx.drawImage(v,-200,0,200,200); ctx.restore();
+    setSelfie(canvas.toDataURL('image/jpeg',0.7));
+    stopCam();
+  }
+  function stopCam(){
+    if(streamRef.current) streamRef.current.getTracks().forEach(t=>t.stop());
+    setShowCam(false);
+  }
+  React.useEffect(()=>()=>stopCam(),[]);
 
   async function save() {
     setBusy(true);
-    const steckbrief = {...vals, name: playerName};
+    const steckbrief = {...vals, name: playerName, selfie: selfie||null};
     await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
     onDone();
   }
@@ -1436,6 +1466,29 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
     <p style={{fontSize:13,color:t.muted,margin:'0 0 20px'}}>
       {playerName} · {lang==='de'?'wird auf dem Beamer gezeigt':'shown on the big screen'}
     </p>
+    {/* Selfie */}
+    <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:16}}>
+      <div style={{width:72,height:72,borderRadius:'50%',overflow:'hidden',
+        background:t.surface,border:`2px solid ${selfie?t.accent:t.border}`,
+        flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+        {selfie
+          ? <img src={selfie} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          : <span style={{fontSize:28}}>👤</span>}
+      </div>
+      <div>
+        {showCam
+          ? <div style={{position:'relative',width:160,height:160,borderRadius:12,overflow:'hidden',background:'#000'}}>
+              <video ref={videoRef} autoPlay playsInline muted style={{width:'100%',height:'100%',objectFit:'cover',transform:'scaleX(-1)'}}/>
+              <button onClick={takeSelfie} style={{position:'absolute',bottom:8,left:'50%',transform:'translateX(-50%)',background:t.accent,border:'none',borderRadius:100,padding:'6px 14px',color:'#fff',fontSize:13,cursor:'pointer',fontWeight:700}}>📸</button>
+            </div>
+          : <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              <button onClick={startCam} style={{padding:'7px 14px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:13,cursor:'pointer',fontFamily:t.fontBody}}>
+                {selfie?i.steckbriefRetake:i.steckbriefSelfie}
+              </button>
+              <p style={{fontSize:11,color:t.muted,margin:0}}>{i.steckbriefSelfieHint}</p>
+            </div>}
+      </div>
+    </div>
     <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
       {fields.map(f=>(
         <div key={f.key}>
@@ -2950,13 +3003,17 @@ function DisplayScreen({room, code, t, lang}) {
           <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
             margin:'0 0 8px',textTransform:'uppercase'}}>{i.dispRanking}</p>
           <div style={{display:'flex',flexDirection:'column',gap:5,marginBottom:12}}>
-            {sorted.map((p,idx)=>(
-              <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
+            {sorted.map((p,idx)=>{
+              const sb=(room.steckbriefe||{})[p.id];
+              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:8,
                 background:idx===0?gold+'22':'#181310',
                 border:`1.5px solid ${idx===0?gold+'66':'#2a1a0e'}`,
                 borderRadius:9,padding:'8px 12px',transition:'all .5s',
                 animation:'flyIn .4s ease both'}}>
                 <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+                {sb?.selfie
+                  ? <img src={sb.selfie} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
+                  : <div style={{width:28,height:28,borderRadius:'50%',background:'#2a1a0e',border:`1px solid ${gold}33`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>👤</div>}
                 <span style={{flex:1,fontSize:13,fontWeight:idx===0?800:500,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
                   color:idx===0?'#f2ece6':'#c8b8a8'}}>{p.name}</span>
@@ -2965,8 +3022,8 @@ function DisplayScreen({room, code, t, lang}) {
                   {scores[p.id]||0}
                   <span style={{fontSize:10,marginLeft:2,fontWeight:400}}>P</span>
                 </span>
-              </div>
-            ))}
+              </div>;}
+            )}
           </div>
         </>}
 
@@ -3500,6 +3557,7 @@ function App(){
   // Auto-reconnect once myId is ready
   const autoJoinedRef = React.useRef(false);
   const prevRoomRef = useRef(null);
+  const showSteckbriefShownRef = useRef(false);
   useEffect(()=>{
     if(!myId || autoJoinedRef.current) return;
     const urlRoom = new URLSearchParams(location.search).get('room');
@@ -3529,6 +3587,11 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
+      // Show steckbrief when entering lobby if enabled and not yet filled
+      if(r.phase==="lobby"&&r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[auth?.currentUser?.uid]){
+        showSteckbriefShownRef.current=true;
+        setShowSteckbrief(true);
+      }
       // Show countdown only on very first question (categories→question transition)
       if(r.phase==="question"&&prevRoomRef.current?.phase==="categories") setShowCountdown(true);
       if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
@@ -3787,6 +3850,7 @@ function App(){
   function handleRestart(){
     if(unsubRef.current)unsubRef.current();
     setRoom(null);setCode(null);setScreen("home");
+    showSteckbriefShownRef.current=false;
     usedIdsRef.current=[];selectedCatsRef.current=[];enabledJokersRef.current=[];
   }
 
