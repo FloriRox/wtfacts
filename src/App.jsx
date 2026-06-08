@@ -3193,6 +3193,9 @@ function App(){
 
   const i=UI[lang]||UI.de;
   return <ErrorBoundary>
+    {showLoginPrompt&&<LoginPrompt t={t} lang={lang}
+      onClose={()=>setShowLoginPrompt(false)}
+      onSuccess={()=>setIsAnonymous(false)}/>}
 
     {/* Floating Gastgeber button – visible for host during entire game */}
     {code&&room&&room.hostId===myId&&screen!=='home'&&screen!=='final'&&
