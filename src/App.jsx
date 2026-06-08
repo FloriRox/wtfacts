@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
-import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult } from "firebase/auth";
+import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -2744,9 +2744,19 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
             🔐 Mit Google anmelden
           </button>
         </>
-        : <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:0}}>
-            ✅ Angemeldet{userName?' als '+userName:''}
-          </p>
+        : <div>
+            <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
+              ✅ Angemeldet{userName?' als '+userName:''}
+            </p>
+            <button onClick={async()=>{
+              await signOut(auth);
+              await signInAnonymously(auth);
+            }} style={{background:'none',border:'none',color:t.muted,
+              fontSize:11,cursor:'pointer',textDecoration:'underline',padding:0,
+              fontFamily:t.fontBody}}>
+              Abmelden
+            </button>
+          </div>
       }
     </div>}
     <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
