@@ -1315,12 +1315,30 @@ function QRScanner({t, i, onScan}) {
       : <div style={{position:'relative',borderRadius:t.radius,overflow:'hidden',
           border:`2px solid ${t.accent}`,background:'#000'}}>
           <video ref={videoRef} autoPlay playsInline muted
-            style={{width:'100%',height:200,objectFit:'cover',display:'block'}}/>
+            style={{width:'100%',height:200,objectFit:'cover',display:'block'}}
+            onClick={e=>{
+              const track=streamRef.current?.getVideoTracks()[0];
+              if(!track) return;
+              const caps=track.getCapabilities?.();
+              if(caps?.focusMode?.includes('manual')){
+                const rect=e.currentTarget.getBoundingClientRect();
+                const x=(e.clientX-rect.left)/rect.width;
+                const y=(e.clientY-rect.top)/rect.height;
+                track.applyConstraints({advanced:[{focusMode:'manual',pointOfInterest:{x,y}}]})
+                  .then(()=>track.applyConstraints({advanced:[{focusMode:'continuous'}]}))
+                  .catch(()=>{});
+              }
+            }}
+          />
           <div style={{position:'absolute',inset:0,display:'flex',
             alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
             <div style={{width:160,height:160,border:`3px solid ${t.accent}`,
               borderRadius:10,boxShadow:'0 0 0 1000px rgba(0,0,0,0.45)'}}/>
           </div>
+          <p style={{position:'absolute',bottom:36,left:0,right:0,textAlign:'center',
+            color:'rgba(255,255,255,0.6)',fontSize:11,margin:0,pointerEvents:'none'}}>
+            Zum Fokussieren tippen
+          </p>
           <button onClick={stopScan}
             style={{position:'absolute',top:8,right:8,
               background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',
