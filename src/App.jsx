@@ -141,6 +141,7 @@ const UI = {
     pts:"Punkte",
     onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
     onboarding:[{emoji:"🎯",title:"Willkommen bei EstiMates!",text:"Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde."},{emoji:"💡",title:"So funktioniert's",text:"Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?"},{emoji:"🃏",title:"Joker & Wetten",text:"Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln."},{emoji:"🏆",title:"Raum erstellen & spielen",text:"Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?"}],
+    feedbackTitle:"Hat dir EstiMates Spaß gemacht?",feedbackYes:"⭐ App bewerten",feedbackNo:"💬 Feedback geben",feedbackBug:"🐛 Fehler melden",feedbackBugSubject:"Fehler in EstiMates",feedbackBugBody:"Frage: \nRichtige Antwort laut App: \nWas stimmt nicht: \n\nVielen Dank! Du erhältst einen Belohnungs-Code per E-Mail.",feedbackThanks:"Danke für dein Feedback!",feedbackReward:"Als Dankeschön senden wir dir einen 2h-Vollzugang-Code per E-Mail 🎁",
     disclaimer:"Alle Fragen dienen der Unterhaltung. Wir übernehmen keine Gewähr für Richtigkeit oder Aktualität der Inhalte.",
     demoLabel:"Demo",demoNext:"Nächste Frage →",demoGuess:"Deine Schätzung...",demoSubmit:"Schätzung abgeben ✓",demoAnswerLabel:"ANTWORT",demoTip:"Dein Tipp",demoDeviation:"Abweichung",
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
@@ -204,6 +205,7 @@ const UI = {
     pts:"pts",
     onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
     onboarding:[{emoji:"🎯",title:"Welcome to EstiMates!",text:"The guessing game for your group. Estimate numbers as accurately as possible – whoever is closest wins the round."},{emoji:"💡",title:"How it works",text:"A question appears – everyone types their guess at the same time. Then it's revealed: who was closest?"},{emoji:"🃏",title:"Jokers & Betting",text:"Good guesses earn you jokers. Use them to sabotage others, reveal hints or double your points. Before each round you can bet on the best or worst guesser."},{emoji:"🏆",title:"Create a room & play",text:"Create a room and share the code with your friends. Everyone joins on their phone – no download needed. Want to try a quick demo round?"}],
+    feedbackTitle:"Did you enjoy EstiMates?",feedbackYes:"⭐ Rate the app",feedbackNo:"💬 Give feedback",feedbackBug:"🐛 Report an error",feedbackBugSubject:"Error in EstiMates",feedbackBugBody:"Question: \nAnswer shown in app: \nWhat is wrong: \n\nThank you! You will receive a reward code by email.",feedbackThanks:"Thanks for your feedback!",feedbackReward:"As a thank you we will send you a 2h full-access code by email 🎁",
     disclaimer:"All questions are for entertainment purposes only. We do not guarantee the accuracy or currentness of any content.",
     demoLabel:"Demo",demoNext:"Next question →",demoGuess:"Your guess...",demoSubmit:"Submit guess ✓",demoAnswerLabel:"ANSWER",demoTip:"Your guess",demoDeviation:"Deviation",
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
@@ -267,6 +269,7 @@ const UI = {
     pts:"puntos",
     onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
     onboarding:[{emoji:"🎯",title:"¡Bienvenido a EstiMates!",text:"El juego de estimación para tu grupo. Estima números con la mayor precisión posible – quien esté más cerca gana la ronda."},{emoji:"💡",title:"¿Cómo funciona?",text:"Aparece una pregunta – todos escriben su estimación al mismo tiempo. Luego se revela: ¿quién estaba más cerca?"},{emoji:"🃏",title:"Comodines y apuestas",text:"Las buenas estimaciones te dan comodines. Úsalos para sabotear a otros, revelar pistas o duplicar tus puntos."},{emoji:"🏆",title:"Crear sala y jugar",text:"Crea una sala y comparte el código con tus amigos. Todos se unen con su móvil – sin descarga. ¿Quieres probar una ronda de demostración?"}],
+    feedbackTitle:"¿Te gustó EstiMates?",feedbackYes:"⭐ Valorar la app",feedbackNo:"💬 Dar feedback",feedbackBug:"🐛 Reportar un error",feedbackBugSubject:"Error en EstiMates",feedbackBugBody:"Pregunta: \nRespuesta en la app: \nQué está mal: \n\n¡Gracias! Recibirás un código de recompensa por email.",feedbackThanks:"¡Gracias por tu feedback!",feedbackReward:"Como agradecimiento te enviaremos un código de acceso completo de 2h por email 🎁",
     disclaimer:"Todas las preguntas son solo para entretenimiento. No garantizamos la exactitud ni actualidad de los contenidos.",
     demoLabel:"Demo",demoNext:"Siguiente pregunta →",demoGuess:"Tu estimación...",demoSubmit:"Enviar estimación ✓",demoAnswerLabel:"RESPUESTA",demoTip:"Tu estimación",demoDeviation:"Desviación",
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
@@ -2812,6 +2815,94 @@ function DisplayScreen({room, code, t, lang}) {
   </div>;
 }
 
+
+
+/* ─── FEEDBACK WIDGET ───────────────────────────── */
+function FeedbackWidget({t, lang, currentQuestion=null}) {
+  const i = UI[lang]||UI.de;
+  const [state, setState] = React.useState('idle'); // idle | thanks
+
+  const SUPPORT_EMAIL = 'support@playestimates.app';
+  const STORE_URL_IOS = 'https://apps.apple.com/app/estimatesapp';
+  const STORE_URL_ANDROID = 'https://play.google.com/store/apps/details?id=app.playestimates';
+
+  function rateApp() {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    window.open(isIOS ? STORE_URL_IOS : STORE_URL_ANDROID, '_blank');
+    setState('thanks');
+  }
+
+  function openFeedback() {
+    const subject = encodeURIComponent(i.feedbackBugSubject||'Feedback EstiMates');
+    const body = encodeURIComponent((i.feedbackBugBody||'').replace('Frage: ', 'Frage: '+(currentQuestion||'')));
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    setState('thanks');
+  }
+
+  function reportBug() {
+    const subject = encodeURIComponent(i.feedbackBugSubject||'Fehler EstiMates');
+    const body = encodeURIComponent((i.feedbackBugBody||'').replace('Frage: ', 'Frage: '+(currentQuestion||'')));
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    setState('thanks');
+  }
+
+  if(state==='thanks') return (
+    <div style={{padding:'14px 16px',borderRadius:t.radius,
+      background:t.gold+'11',border:`1px solid ${t.gold}44`,textAlign:'center'}}>
+      <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 4px'}}>
+        ✅ {i.feedbackThanks}
+      </p>
+      {i.feedbackReward&&<p style={{fontSize:12,color:t.muted,margin:0}}>
+        {i.feedbackReward}
+      </p>}
+    </div>
+  );
+
+  return (
+    <div style={{padding:'14px 16px',borderRadius:t.radius,
+      background:t.surface,border:`1px solid ${t.border}`,textAlign:'center'}}>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,margin:'0 0 12px'}}>
+        {i.feedbackTitle}
+      </p>
+      <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'}}>
+        <button onClick={rateApp}
+          style={{padding:'8px 14px',borderRadius:t.radius,border:`1px solid ${t.gold}`,
+            background:t.gold+'22',color:t.gold,fontSize:13,fontWeight:600,
+            cursor:'pointer',fontFamily:t.fontBody}}>
+          {i.feedbackYes}
+        </button>
+        <button onClick={openFeedback}
+          style={{padding:'8px 14px',borderRadius:t.radius,border:`1px solid ${t.border}`,
+            background:t.surface,color:t.muted,fontSize:13,
+            cursor:'pointer',fontFamily:t.fontBody}}>
+          {i.feedbackNo}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── BUG REPORT BUTTON ─────────────────────────── */
+function BugReportButton({t, lang, question}) {
+  const i = UI[lang]||UI.de;
+  const SUPPORT_EMAIL = 'support@playestimates.app';
+
+  function report() {
+    const subject = encodeURIComponent(i.feedbackBugSubject||'Fehler');
+    const qText = question ? `Frage: "${question.q}"\nAntwort laut App: ${question.a} ${question.unit}\nWas stimmt nicht: ` : '';
+    const body = encodeURIComponent(qText + '\n\n' + (i.feedbackReward||''));
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  }
+
+  return (
+    <button onClick={report}
+      style={{background:'none',border:'none',color:t.muted,fontSize:11,
+        cursor:'pointer',fontFamily:t.fontBody,textDecoration:'underline',
+        opacity:.6,padding:'4px 0'}}>
+      {i.feedbackBug||'🐛 Fehler melden'}
+    </button>
+  );
+}
 
 /* ─── FINAL ───────────────────────────────────────── */
 function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null,userName=null}){
