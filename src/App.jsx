@@ -3559,14 +3559,18 @@ function App(){
   }
 
   async function handleJoin(c,name,m,roomLang){
-    // Wait for auth if not ready yet (max 5s)
-    if(!myId){
+    // Use auth.currentUser.uid directly - don't wait for React state
+    let uid = auth?.currentUser?.uid;
+    if(!uid){
+      // Wait up to 5s for anonymous auth
       let waited = 0;
-      while(!auth?.currentUser && waited < 5000){
-        await new Promise(r=>setTimeout(r,100));
-        waited += 100;
+      while(!auth?.currentUser?.uid && waited < 5000){
+        await new Promise(r=>setTimeout(r,200));
+        waited += 200;
       }
-      if(!auth?.currentUser){ console.error("Auth timeout"); return; }
+      uid = auth?.currentUser?.uid;
+      if(!uid){ console.error("Auth timeout in handleJoin"); return; }
+      setMyId(uid);
     }
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
@@ -3574,7 +3578,8 @@ function App(){
     setLoadTxt("Betrete Raum...");
     setLoading(true);
     const r=await dbGet(c);
-    await dbPatch(c,{players:{...r.players,[myId]:{id:myId,name}},order:[...(r.order||[]),myId]});
+    const effectiveId = uid || myId;
+    await dbPatch(c,{players:{...r.players,[effectiveId]:{id:effectiveId,name}},order:[...(r.order||[]),effectiveId]});
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
