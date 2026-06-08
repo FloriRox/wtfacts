@@ -1454,8 +1454,13 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
 
   async function save() {
     setBusy(true);
-    const steckbrief = {...vals, name: playerName, selfie: selfie||null};
+    // Save text fields to Firebase (no selfie - too large for Realtime DB)
+    const steckbrief = {...vals, name: playerName, hasSelfie: !!selfie};
     await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
+    // Store selfie locally
+    if(selfie) {
+      try { localStorage.setItem(`em_selfie_${myId}`, selfie); } catch(e){}
+    }
     onDone();
   }
 
@@ -3011,8 +3016,8 @@ function DisplayScreen({room, code, t, lang}) {
                 borderRadius:9,padding:'8px 12px',transition:'all .5s',
                 animation:'flyIn .4s ease both'}}>
                 <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-                {sb?.selfie
-                  ? <img src={sb.selfie} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
+                {(sb?.selfie||localStorage.getItem(`em_selfie_${p.id}`))
+                  ? <img src={sb?.selfie||localStorage.getItem(`em_selfie_${p.id}`)} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
                   : <div style={{width:28,height:28,borderRadius:'50%',background:'#2a1a0e',border:`1px solid ${gold}33`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>👤</div>}
                 <span style={{flex:1,fontSize:13,fontWeight:idx===0?800:500,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
@@ -3587,14 +3592,22 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       if(map[r.phase])setScreen(map[r.phase]);
-      // Show steckbrief when entering lobby if enabled and not yet filled
-      if(r.phase==="lobby"&&r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[auth?.currentUser?.uid]){
-        showSteckbriefShownRef.current=true;
-        setShowSteckbrief(true);
+      // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
+      const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
+      const uid = auth?.currentUser?.uid;
+      if(r.phase==="lobby"&&r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]){
+        // Show if: just enabled by host (false→true), or player just joined (new player)
+        const justEnabled = !prevSteckbrief && r.steckbriefEnabled;
+        const justJoined = !prevRoomRef.current?.players?.[uid] && r.players?.[uid];
+        if(justEnabled || justJoined){
+          showSteckbriefShownRef.current=true;
+          setShowSteckbrief(true);
+        }
       }
       // Show countdown only on very first question (categories→question transition)
       if(r.phase==="question"&&prevRoomRef.current?.phase==="categories") setShowCountdown(true);
       if(r.phase==="question"){advanceGuessPhaseRef.current=false;advanceBetPhaseRef.current=false;}
+      prevRoomRef.current = r;
       // Safety: if advancing got stuck, reset it after 5s
       if(r.advancing && r.phase==="question"){
         setTimeout(async()=>{
