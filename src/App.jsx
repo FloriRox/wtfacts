@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
+import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, OAuthProvider, linkWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,6 +15,9 @@ const firebaseConfig = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
+const auth = getAuth(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+const appleProvider = new OAuthProvider('apple.com');
 const dbRef    = (c)    => ref(db, `rooms/${c}`);
 const dbSet    = (c, v) => set(dbRef(c), v);
 const dbPatch  = (c, v) => update(dbRef(c), v);
@@ -2574,7 +2578,7 @@ function DisplayScreen({room, code, t, lang}) {
 
 
 /* ─── FINAL ───────────────────────────────────────── */
-function FinalScreen({room,myId,t,onRestart,lang}){
+function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null}){
   const i=UI[lang]||UI.de;
   const[globalRank,setGlobalRank]=useState(null);
   const[showCamera,setShowCamera]=useState(false);
@@ -2776,11 +2780,76 @@ export function DisplayApp() {
   return <ErrorBoundary><DisplayScreen room={room} code={roomCode} t={t} lang={lang}/></ErrorBoundary>;
 }
 
+/* ─── LOGIN PROMPT ──────────────────────────────── */
+function LoginPrompt({t, lang, onClose, onSuccess}) {
+  const i = UI[lang]||UI.de;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function loginWith(provider) {
+    setBusy(true); setError(null);
+    try {
+      const currentUser = auth.currentUser;
+      if(currentUser && currentUser.isAnonymous) {
+        await linkWithPopup(currentUser, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
+      onSuccess?.();
+      onClose();
+    } catch(e) {
+      if(e.code !== 'auth/popup-closed-by-user') {
+        setError('Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
+      }
+    } finally { setBusy(false); }
+  }
+
+  return <div style={{position:'fixed',inset:0,zIndex:999,
+    background:'rgba(0,0,0,0.7)',display:'flex',alignItems:'center',justifyContent:'center'}}
+    onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:t.card,borderRadius:20,padding:'28px 24px',
+      maxWidth:340,width:'90%',border:`1.5px solid ${t.border}`}}>
+      <p style={{fontSize:18,fontWeight:800,margin:'0 0 6px',color:t.text}}>
+        🏆 Statistiken speichern
+      </p>
+      <p style={{fontSize:13,color:t.muted,margin:'0 0 20px',lineHeight:1.5}}>
+        Melde dich an um deinen Streak, Rangliste und Statistiken geräteübergreifend zu speichern.
+      </p>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <button onClick={()=>loginWith(googleProvider)} disabled={busy}
+          style={{padding:'12px 16px',borderRadius:t.radius,border:`1.5px solid ${t.border}`,
+            background:t.surface,color:t.text,fontWeight:700,fontSize:14,
+            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+            fontFamily:t.fontBody}}>
+          <span style={{fontSize:18}}>G</span> Mit Google anmelden
+        </button>
+        <button onClick={()=>loginWith(appleProvider)} disabled={busy}
+          style={{padding:'12px 16px',borderRadius:t.radius,border:`1.5px solid ${t.border}`,
+            background:t.surface,color:t.text,fontWeight:700,fontSize:14,
+            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+            fontFamily:t.fontBody}}>
+          <span style={{fontSize:18}}></span> Mit Apple anmelden
+        </button>
+      </div>
+      {error&&<p style={{color:t.danger,fontSize:12,marginTop:10,textAlign:'center'}}>{error}</p>}
+      <button onClick={onClose}
+        style={{width:'100%',marginTop:12,padding:'10px',borderRadius:t.radius,
+          border:'none',background:'transparent',color:t.muted,fontSize:13,
+          cursor:'pointer',fontFamily:t.fontBody}}>
+        Später – anonym weiter spielen
+      </button>
+    </div>
+  </div>;
+}
+
 function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
   const[code,setCode]=useState(null);
-  const[myId]=useState(()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  const[myId,setMyId]=useState(null);
+  const[authReady,setAuthReady]=useState(false);
+  const[showLoginPrompt,setShowLoginPrompt]=useState(false);
+  const[isAnonymous,setIsAnonymous]=useState(true);
 
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
@@ -2794,18 +2863,32 @@ function App(){
     QUESTIONS=QUESTIONS_MAP[l]||QUESTIONS_MAP.de;
     QUESTIONS_RAW=QUESTIONS_RAW_MAP[l]||QUESTIONS_RAW_MAP.de;
   }
-  // Apply lang on mount
+  // Firebase Auth + App init
   useEffect(()=>{
     QUESTIONS=QUESTIONS_MAP[lang]||QUESTIONS_MAP.de;
     QUESTIONS_RAW=QUESTIONS_RAW_MAP[lang]||QUESTIONS_RAW_MAP.de;
-    // Auto-reconnect if room code in URL and a name was stored
+
+    // Sign in anonymously on first load
+    const unsubAuth = auth.onAuthStateChanged(user=>{
+      if(user){
+        setMyId(user.uid);
+        setIsAnonymous(user.isAnonymous);
+        setAuthReady(true);
+      } else {
+        signInAnonymously(auth).catch(err=>console.error('Auth error:',err));
+      }
+    });
+
+    // Auto-reconnect if room code in URL
     const urlRoom = new URLSearchParams(location.search).get('room');
     const storedName = localStorage.getItem('em_lastname');
-    if(urlRoom && storedName && !room) {
+    if(urlRoom && storedName) {
       setCode(urlRoom);
       listenRoom(urlRoom);
       setScreen('lobby');
     }
+
+    return ()=>unsubAuth();
   },[]);
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
@@ -3101,7 +3184,7 @@ function App(){
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
-    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang}/>}
+    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)}/>}
 
   </ErrorBoundary>;
 }
