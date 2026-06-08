@@ -1454,18 +1454,26 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
 
   async function save() {
     setBusy(true);
-    // Save text fields to Firebase (no selfie - too large for Realtime DB)
-    const steckbrief = {...vals, name: playerName, hasSelfie: !!selfie};
-    await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
-    // Store selfie locally
+    // Compress selfie to small size before Firebase
+    let selfieSmall = null;
     if(selfie) {
-      try { localStorage.setItem(`em_selfie_${myId}`, selfie); } catch(e){}
+      try {
+        const img = new Image();
+        img.src = selfie;
+        await new Promise(r=>{ img.onload=r; });
+        const c = document.createElement('canvas');
+        c.width = 80; c.height = 80;
+        c.getContext('2d').drawImage(img,0,0,80,80);
+        selfieSmall = c.toDataURL('image/jpeg', 0.5);
+        localStorage.setItem(`em_selfie_${myId}`, selfie); // keep full size locally
+      } catch(e){}
     }
+    const steckbrief = {...vals, name: playerName, selfie: selfieSmall};
+    await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
     onDone();
   }
 
-  return <div style={{minHeight:'100vh',background:t.bg,display:'flex',
-    flexDirection:'column',maxWidth:520,margin:'0 auto',padding:'20px 16px 40px'}}>
+  return <div style={{position:'fixed',inset:0,zIndex:200,background:t.bg,overflowY:'auto',display:'flex',flexDirection:'column',maxWidth:520,margin:'0 auto',padding:'20px 16px 40px'}}>
     <h2 style={{fontSize:20,fontWeight:900,color:t.accent,margin:'0 0 4px',
       fontFamily:t.fontTitle}}>{i.steckbriefTitle}</h2>
     <p style={{fontSize:13,color:t.muted,margin:'0 0 20px'}}>
@@ -3016,8 +3024,8 @@ function DisplayScreen({room, code, t, lang}) {
                 borderRadius:9,padding:'8px 12px',transition:'all .5s',
                 animation:'flyIn .4s ease both'}}>
                 <span style={{fontSize:16,width:24,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
-                {(sb?.selfie||localStorage.getItem(`em_selfie_${p.id}`))
-                  ? <img src={sb?.selfie||localStorage.getItem(`em_selfie_${p.id}`)} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
+                {sb?.selfie
+                  ? <img src={sb.selfie} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover',flexShrink:0,border:`1.5px solid ${gold}66`}}/>
                   : <div style={{width:28,height:28,borderRadius:'50%',background:'#2a1a0e',border:`1px solid ${gold}33`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>👤</div>}
                 <span style={{flex:1,fontSize:13,fontWeight:idx===0?800:500,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
@@ -3595,7 +3603,7 @@ function App(){
       // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
       const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
       const uid = auth?.currentUser?.uid;
-      if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]&&(r.phase==="lobby"||r.phase==="jokerSetup"||r.phase==="categories")){
+      if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]&&(r.phase==="lobby"||r.phase==="jokerSetup")){
         showSteckbriefShownRef.current=true;
         setShowSteckbrief(true);
       }
@@ -3899,7 +3907,6 @@ function App(){
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
-    {showCountdown&&<CountdownOverlay t={t} lang={lang} onDone={()=>setShowCountdown(false)}/>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
