@@ -3559,7 +3559,15 @@ function App(){
   }
 
   async function handleJoin(c,name,m,roomLang){
-    if(!myId){console.error("handleJoin called before myId ready");return;}
+    // Wait for auth if not ready yet (max 5s)
+    if(!myId){
+      let waited = 0;
+      while(!auth?.currentUser && waited < 5000){
+        await new Promise(r=>setTimeout(r,100));
+        waited += 100;
+      }
+      if(!auth?.currentUser){ console.error("Auth timeout"); return; }
+    }
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
