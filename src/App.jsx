@@ -15,7 +15,8 @@ const firebaseConfig = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
-const auth = getAuth(firebaseApp);
+let auth;
+try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
 const googleProvider = new GoogleAuthProvider();
 const appleProvider = new OAuthProvider('apple.com');
 const dbRef    = (c)    => ref(db, `rooms/${c}`);
