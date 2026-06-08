@@ -1275,16 +1275,20 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <div style={{marginTop:24,textAlign:'center'}}>
           {isAnonymous
             ? <button onClick={onShowLogin}
-                style={{background:'none',border:'none',color:ADULT.muted+'88',
-                  fontSize:12,cursor:'pointer',fontFamily:ADULT.fontBody,
-                  textDecoration:'underline'}}>
+                style={{background:'none',
+                  border:`1px solid ${ADULT.muted}55`,
+                  borderRadius:100,
+                  padding:'7px 20px',
+                  color:ADULT.muted,
+                  fontSize:13,cursor:'pointer',
+                  fontFamily:ADULT.fontBody}}>
                 🔐 Anmelden
               </button>
             : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
-                <span style={{fontSize:12,color:ADULT.muted}}>✅ {userName||'Angemeldet'}</span>
+                <span style={{fontSize:13,color:ADULT.muted}}>✅ {userName||'Angemeldet'}</span>
                 <button onClick={onSignOut}
                   style={{background:'none',border:'none',color:ADULT.muted,
-                    fontSize:11,cursor:'pointer',textDecoration:'underline',
+                    fontSize:12,cursor:'pointer',textDecoration:'underline',
                     fontFamily:ADULT.fontBody}}>
                   Abmelden
                 </button>
