@@ -3494,17 +3494,22 @@ function App(){
       }
     });
 
-    // Auto-reconnect if room code in URL
+    return ()=>unsubAuth();
+  },[]);
+
+  // Auto-reconnect once myId is ready
+  const autoJoinedRef = React.useRef(false);
+  useEffect(()=>{
+    if(!myId || autoJoinedRef.current) return;
     const urlRoom = new URLSearchParams(location.search).get('room');
     const storedName = localStorage.getItem('em_lastname');
     if(urlRoom && storedName) {
+      autoJoinedRef.current = true;
       setCode(urlRoom);
       listenRoom(urlRoom);
       setScreen('lobby');
     }
-
-    return ()=>unsubAuth();
-  },[]);
+  },[myId]);
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const enabledJokersRef=useRef([]);
@@ -3554,6 +3559,7 @@ function App(){
   }
 
   async function handleJoin(c,name,m,roomLang){
+    if(!myId){console.error("handleJoin called before myId ready");return;}
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
