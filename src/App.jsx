@@ -132,7 +132,8 @@ const UI = {
     sabotageCount:(n)=>n+" Sabotagen",
     hintLabel:"💡 HINWEIS",
     pts:"Punkte",
-    bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",bestWorstOn:"Bester & Schlechtester",bestWorstOff:"Nur Nächster",
+    scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
+    bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
     dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",
     camUnavailable:"Kamera nicht verfügbar",
@@ -190,7 +191,8 @@ const UI = {
     sabotageCount:(n)=>n+" sabotages",
     hintLabel:"💡 HINT",
     pts:"pts",
-    bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",bestWorstOn:"Best & Worst Bettor",bestWorstOff:"Closest only",
+    scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
+    bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
     dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",
     camUnavailable:"Camera not available",
@@ -248,7 +250,8 @@ const UI = {
     sabotageCount:(n)=>n+" sabotajes",
     hintLabel:"💡 PISTA",
     pts:"puntos",
-    bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",bestWorstOn:"Mejor y peor apostador",bestWorstOff:"Solo el más cercano",
+    scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
+    bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
     dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",
     camUnavailable:"Cámara no disponible",
@@ -1201,6 +1204,112 @@ function DailyChallengeScreen({t, lang, onBack}) {
 }
 
 /* ─── HOME ────────────────────────────────────────── */
+
+/* ─── QR SCANNER ────────────────────────────────── */
+function QRScanner({t, lang, onScan, i}) {
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const animRef = useRef(null);
+
+  async function startScan() {
+    setError(null);
+    setScanning(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        requestAnimFrame();
+      }
+    } catch(e) {
+      setError('Kamera nicht verfügbar');
+      setScanning(false);
+    }
+  }
+
+  function requestAnimFrame() {
+    animRef.current = requestAnimationFrame(scanFrame);
+  }
+
+  function scanFrame() {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) { requestAnimFrame(); return; }
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    try {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // Use BarcodeDetector if available
+      if ('BarcodeDetector' in window) {
+        new window.BarcodeDetector({formats:['qr_code']})
+          .detect(canvas)
+          .then(barcodes => {
+            if (barcodes.length > 0) {
+              const url = barcodes[0].rawValue;
+              // Extract room code from URL or use raw value
+              const match = url.match(/[?&]room=([A-Z0-9]+)/i) || url.match(/([A-Z0-9]{4,6})$/i);
+              const code = match ? match[1].toUpperCase() : url.toUpperCase().slice(-6);
+              stopScan();
+              onScan(code);
+            } else {
+              requestAnimFrame();
+            }
+          }).catch(() => requestAnimFrame());
+      } else {
+        // Fallback: stop and show message
+        stopScan();
+        setError('QR-Scan nicht unterstützt – bitte Code eingeben');
+      }
+    } catch(e) { requestAnimFrame(); }
+  }
+
+  function stopScan() {
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    setScanning(false);
+  }
+
+  useEffect(() => () => stopScan(), []);
+
+  if (!scanning) return (
+    <button onClick={startScan}
+      style={{width:'100%',padding:'11px',borderRadius:t.radius,
+        background:t.surface,border:`1.5px solid ${t.border}`,
+        color:t.muted,fontWeight:600,fontSize:14,cursor:'pointer',
+        fontFamily:t.fontBody,display:'flex',alignItems:'center',
+        justifyContent:'center',gap:8}}>
+      📷 {i.scanCode}
+    </button>
+  );
+
+  return (
+    <div style={{position:'relative',borderRadius:t.radius,overflow:'hidden',
+      border:`2px solid ${t.accent}`,background:'#000'}}>
+      <video ref={videoRef} autoPlay playsInline muted
+        style={{width:'100%',height:180,objectFit:'cover',display:'block'}}/>
+      {/* Scan frame overlay */}
+      <div style={{position:'absolute',inset:0,display:'flex',
+        alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+        <div style={{width:140,height:140,border:`2px solid ${t.accent}`,
+          borderRadius:8,boxShadow:`0 0 0 999px rgba(0,0,0,0.5)`}}/>
+      </div>
+      <button onClick={stopScan}
+        style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,0.6)',
+          border:'none',color:'#fff',borderRadius:20,padding:'4px 10px',
+          fontSize:12,cursor:'pointer'}}>✕</button>
+      {error && <p style={{position:'absolute',bottom:8,left:0,right:0,
+        textAlign:'center',color:t.danger,fontSize:12,margin:0}}>{error}</p>}
+    </div>
+  );
+}
+
 function HomeScreen({onHost,onJoin,lang,onSetLang}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
@@ -1285,7 +1394,15 @@ function HomeScreen({onHost,onJoin,lang,onSetLang}){
     <Card t={t}>
       <div style={col}>
         <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        {tab==="join"&&<>
+          <QRScanner t={t} lang={lang} onScan={c=>{setCode(c.toUpperCase());}} i={i}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,margin:"2px 0"}}>
+            <div style={{flex:1,height:1,background:t.border}}/>
+            <span style={{fontSize:11,color:t.muted}}>{i.scanOrType}</span>
+            <div style={{flex:1,height:1,background:t.border}}/>
+          </div>
+          <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>
+        </>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
@@ -1302,7 +1419,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[timerSecs,setTimerSecs]=useState(30);
   const[debugModeLocal,setDebugModeLocal]=useState(true);
   const[withBets,setWithBets]=useState(true);
-  const[withBestWorst,setWithBestWorst]=useState(true);
+  const[betModes,setBetModes]=useState(["best","worst"]);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
   return <div style={{
@@ -1431,21 +1548,30 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
           </button>
         ))}
       </div>
-      {withBets&&<div style={{display:"flex",gap:8}}>
-        {[{v:true,label:i.bestWorstOn},{v:false,label:i.bestWorstOff}].map(o=>(
-          <button key={String(o.v)} onClick={()=>setWithBestWorst(o.v)}
-            style={{flex:1,padding:"8px 6px",borderRadius:t.radius,
-              background:withBestWorst===o.v?t.accent+"18":t.surface,
-              border:`1.5px solid ${withBestWorst===o.v?t.accent:t.border}`,
-              color:withBestWorst===o.v?t.accent:t.muted,
-              fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
-            {o.label}
-          </button>
-        ))}
+      {withBets&&<div style={{display:"flex",flexDirection:"column",gap:5,marginTop:4}}>
+        {[{id:"best",label:i.betBest},{id:"worst",label:i.betWorst}].map(({id,label})=>{
+          const on=betModes.includes(id);
+          function toggleBet(){setBetModes(prev=>on?prev.filter(x=>x!==id):[...prev,id]);}
+          return <div key={id} onClick={toggleBet}
+            style={{display:"flex",alignItems:"center",gap:10,
+              padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
+              background:on?t.gold+"18":t.surface,
+              border:`1.5px solid ${on?t.gold:t.border}`,
+              transition:"all .15s"}}>
+            <div style={{flex:1,fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{label}</div>
+            <div style={{width:18,height:18,borderRadius:4,
+              background:on?t.gold:t.surface,
+              border:`1.5px solid ${on?t.gold:t.border}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              color:"#fff",fontSize:11,flexShrink:0}}>
+              {on?"✓":""}
+            </div>
+          </div>;
+        })}
       </div>}
     </div>
 
-    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,withBestWorst)}>
+    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes)}>
       {i.continueBtn}
     </Btn>
   </div>;
@@ -2607,7 +2733,7 @@ function FinalScreen({room,myId,t,onRestart,lang}){
   const statCards=[
     betKing&&{icon:"🎲",label:i.betKing,name:betKing.name,sub:`${i.betSub(betWins[betKingId],betTotal[betKingId])} (${betKingRate}%)`,color:t.gold},
     bestPlayer&&sorted.length>1&&{icon:"🎯",label:i.bestGuesser,name:bestPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(bestAvg)}`,color:t.green},
-    worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:i.worstGuesser,name:worstPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(worstAvg)}`,color:t.danger},
+    room.betWorst!==false&&worstPlayer&&sorted.length>1&&bestId!==worstId&&{icon:"🙈",label:i.worstGuesser,name:worstPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(worstAvg)}`,color:t.danger},
     exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:i.exactHits,name:exactKing.name,sub:i.exactCount(exactHits[exactKingId]),color:t.accent},
     jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:i.jokerKing,name:jokerKing.name,sub:i.jokerPlayed(jokerTotals[jokerKingId]),color:t.gold},
     sabotageKing&&{icon:"💣",label:i.sabotageKing,name:sabotageKing.name,sub:i.sabotageCount(sabotageStats[sabotageKingId]),color:t.danger},
@@ -2810,9 +2936,9 @@ function App(){
     await dbPatch(code,{phase:"jokerSetup"});
   }
 
-  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs, withBets=true, withBestWorst=true){
+  async function handleJokerSetupDone(enabledJokers, speedMode, timerSecs, withBets=true, betModes=["best","worst"]){
     enabledJokersRef.current=enabledJokers;
-    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,withBets:!!withBets,withBestWorst:!!withBestWorst,phase:"categories"});
+    await dbPatch(code,{enabledJokers,speedMode:!!speedMode,timerSecs:speedMode?timerSecs:null,withBets:!!withBets,withBestWorst:betModes.length>0,betBest:betModes.includes("best"),betWorst:betModes.includes("worst"),phase:"categories"});
   }
 
   async function handleGoCategories(){
