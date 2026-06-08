@@ -2085,11 +2085,20 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
         if(used){
           const colors={sabotage:'#ff3355',skip:'#ff8855',hint:'#aaaaaa',
                         double:'#55ffaa',change:'#aaaaaa',extra:'#aaaaaa'};
-          const labels={sabotage:'sabotiert!',skip:'überspringt',hint:'deckt Hint auf',
-                        double:'verdoppelt Punkte',change:'ändert Tipp',extra:'50/50-Joker'};
+          const verbs=i?.jokerVerbs||{};
+          let text;
+          if(used==='sabotage'){
+            const sabEntries=Object.entries(room?.sabotaged||{});
+            const targetId=sabEntries[sabEntries.length-1]?.[0];
+            const targetName=pl.find(x=>x.id===targetId)?.name;
+            text=targetName
+              ? p.name+' '+(verbs.sabotage||'sabotiert')+' '+targetName+'!'
+              : p.name+' sabotiert!';
+          } else {
+            text=p.name+' '+(verbs[used]||used)+'!';
+          }
           newEvents.push({id:now+Math.random(),type:'joker_used',
-            emoji:jokerIcon(used),
-            text:p.name+' '+(labels[used]||'Joker'),
+            emoji:jokerIcon(used),text,
             color:colors[used]||'#ff8855',ts:now});
         }
       }
@@ -2101,7 +2110,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
       if(newJk[p.id]&&!prevJk[p.id])
         newEvents.push({id:now+Math.random(),type:'joker_earned',
           emoji:'🎁',
-          text:p.name+' '+i.dispEarned+' '+jokerIcon(newJk[p.id]),
+          text:p.name+' '+i.dispEarned+': '+(i.jokerNames?.[newJk[p.id]]||newJk[p.id]),
           color:'#ff8c2a',ts:now});
     });
 
