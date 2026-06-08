@@ -15,6 +15,8 @@ const firebaseConfig = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
+const ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2'];
+const isAdmin = (uid) => ADMIN_UIDS.includes(uid);
 let auth;
 try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
 const googleProvider = new GoogleAuthProvider();
@@ -2946,6 +2948,7 @@ function App(){
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
   const[isAnonymous,setIsAnonymous]=useState(true);
   const[userName,setUserName]=useState(null);
+  const[isPro,setIsPro]=useState(false);
 
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
@@ -2981,6 +2984,7 @@ function App(){
         setMyId(user.uid);
         setIsAnonymous(user.isAnonymous);
         setUserName(user.displayName||user.email||null);
+        setIsPro(isAdmin(user.uid));
         setAuthReady(true);
       } else {
         signInAnonymously(auth).catch(err=>console.error('Auth error:',err));
