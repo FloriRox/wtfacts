@@ -5,13 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EstiMates – Prove your mates wrong.</title>
     <meta name="description" content="Das Pocket-Party-Game zum Schätzen und Wetten mit deinen Freunden. Kostenlos, kein Download nötig." />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#e8360a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EstiMates" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- OG -->
     <meta property="og:title" content="EstiMates" />
     <meta property="og:description" content="The pocket party game to prove your mates wrong." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://playestimates.app" />
+    <meta property="og:image" content="https://playestimates.app/icons/icon-512.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="EstiMates" />
+    <meta name="twitter:description" content="The pocket party game to prove your mates wrong." />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW error:', err));
+        });
+      }
+    </script>
   </body>
 </html>
