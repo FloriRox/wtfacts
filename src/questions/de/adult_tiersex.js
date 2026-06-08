@@ -16,7 +16,7 @@ export default [
   {q:"Wie viele Hoden hat ein Wal?",a:2,unit:"Hoden",hint:"Innen liegend – zum Schutz vor Kälte.",emoji:"🐋"},
   {q:"Wie viele Spermien kann ein Gorilla-Ejakulat enthalten?",a:200000000,hint:"Deutlich weniger als Schimpansen.",unit:"Spermien",emoji:"🦍"},
   {q:"Wie lange trägt eine Hai-Art ihr Junges in Monaten?",a:24,unit:"Monate",hint:"Hammerhaie tragen 2 Jahre.",emoji:"🦈"},
-  {q:"Wie viele Meter lang ist der Penis eines Barnacle (Seepocke) relativ zur Körpergröße?",a:8,unit:"x Körperlänge",hint:"Relativ zur Körpergröße das längste Geschlechtsorgan.",emoji:"🦀"},
+  {q:"Wie viele Male seiner Körpergröße ist der Penis einer Seepocke lang?",a:8,unit:"x Körperlänge",hint:"Relativ zur Körpergröße das längste Geschlechtsorgan.",emoji:"🦀"},
   {q:"Wie viele cm ist die Klitoris einer Hyäne lang?",a:18,unit:"cm",hint:"Weibliche Hyänen haben eine pseudopenis-ähnliche Klitoris.",emoji:"🦁"},
   {q:"Wie lang dauert die Paarung bei Nashörnern in Minuten?",a:30,unit:"Minuten",hint:"Eine der längsten unter Landsäugern.",emoji:"🦏"},
   {q:"Wie viele Penisse haben Schlangen?",a:2,unit:"Hemipenis",hint:"Schlangen haben zwei Hemipenes.",emoji:"🐍"},
