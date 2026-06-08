@@ -2802,7 +2802,9 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
   const [error, setError] = useState(null);
 
   async function loginWith(provider) {
+    console.log("loginWith called, auth:", !!auth, "currentUser:", auth?.currentUser?.uid);
     setBusy(true); setError(null);
+    if(!auth){ setError("Auth nicht verfügbar"); setBusy(false); return; }
     try {
       const currentUser = auth.currentUser;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
