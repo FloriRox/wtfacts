@@ -1275,13 +1275,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <div style={{marginTop:24,textAlign:'center'}}>
           {isAnonymous
             ? <button onClick={onShowLogin}
-                style={{background:'none',
-                  border:`1px solid ${ADULT.muted}55`,
+                style={{background:ADULT.surface,
+                  border:`1.5px solid ${ADULT.muted}`,
                   borderRadius:100,
-                  padding:'7px 20px',
-                  color:ADULT.muted,
-                  fontSize:13,cursor:'pointer',
-                  fontFamily:ADULT.fontBody}}>
+                  padding:'8px 24px',
+                  color:'#f2ece6',
+                  fontSize:14,cursor:'pointer',
+                  fontFamily:ADULT.fontBody,
+                  fontWeight:600}}>
                 🔐 Anmelden
               </button>
             : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
