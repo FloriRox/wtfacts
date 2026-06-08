@@ -1206,108 +1206,117 @@ function DailyChallengeScreen({t, lang, onBack}) {
 /* ─── HOME ────────────────────────────────────────── */
 
 /* ─── QR SCANNER ────────────────────────────────── */
-function QRScanner({t, lang, onScan, i}) {
+function QRScanner({t, i, onScan}) {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const animRef = useRef(null);
+  const rafRef = useRef(null);
+  const activeRef = useRef(false);
+
+  // Load jsQR library
+  useEffect(()=>{
+    if(window.jsQR){ setLoaded(true); return; }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    script.onload = () => setLoaded(true);
+    script.onerror = () => setError('QR-Bibliothek nicht geladen');
+    document.head.appendChild(script);
+  },[]);
 
   async function startScan() {
+    if(!loaded){ setError('Bitte warten...'); return; }
     setError(null);
     setScanning(true);
+    activeRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video:{ facingMode:'environment', width:{ideal:640}, height:{ideal:480} }
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        requestAnimFrame();
-      }
+      const video = videoRef.current;
+      if(!video){ stopScan(); return; }
+      video.srcObject = stream;
+      await video.play();
+      tick();
     } catch(e) {
       setError('Kamera nicht verfügbar');
       setScanning(false);
+      activeRef.current = false;
     }
   }
 
-  function requestAnimFrame() {
-    animRef.current = requestAnimationFrame(scanFrame);
-  }
-
-  function scanFrame() {
+  function tick() {
+    if(!activeRef.current) return;
     const video = videoRef.current;
-    if (!video || video.readyState < 2) { requestAnimFrame(); return; }
-    const canvas = document.createElement('canvas');
+    const canvas = canvasRef.current;
+    if(!video || !canvas){ rafRef.current=requestAnimationFrame(tick); return; }
+    if(video.readyState !== video.HAVE_ENOUGH_DATA){
+      rafRef.current=requestAnimationFrame(tick); return;
+    }
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    try {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // Use BarcodeDetector if available
-      if ('BarcodeDetector' in window) {
-        new window.BarcodeDetector({formats:['qr_code']})
-          .detect(canvas)
-          .then(barcodes => {
-            if (barcodes.length > 0) {
-              const url = barcodes[0].rawValue;
-              // Extract room code from URL or use raw value
-              const match = url.match(/[?&]room=([A-Z0-9]+)/i) || url.match(/([A-Z0-9]{4,6})$/i);
-              const code = match ? match[1].toUpperCase() : url.toUpperCase().slice(-6);
-              stopScan();
-              onScan(code);
-            } else {
-              requestAnimFrame();
-            }
-          }).catch(() => requestAnimFrame());
-      } else {
-        // Fallback: stop and show message
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = window.jsQR && window.jsQR(imageData.data, imageData.width, imageData.height, {inversionAttempts:'dontInvert'});
+    if(code && code.data){
+      const raw = code.data;
+      // Extract room code: last 6 alphanumeric chars or ?room= param
+      const match = raw.match(/[?&]room=([A-Z0-9]{4,6})/i) || raw.match(/([A-Z0-9]{4,6})$/i);
+      const roomCode = (match ? match[1] : raw).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(-6);
+      if(roomCode.length >= 4){
         stopScan();
-        setError('QR-Scan nicht unterstützt – bitte Code eingeben');
+        onScan(roomCode);
+        return;
       }
-    } catch(e) { requestAnimFrame(); }
+    }
+    rafRef.current = requestAnimationFrame(tick);
   }
 
   function stopScan() {
-    if (animRef.current) cancelAnimationFrame(animRef.current);
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    activeRef.current = false;
+    if(rafRef.current) cancelAnimationFrame(rafRef.current);
+    if(streamRef.current) streamRef.current.getTracks().forEach(t=>t.stop());
+    streamRef.current = null;
     setScanning(false);
   }
 
-  useEffect(() => () => stopScan(), []);
+  useEffect(()=>()=>stopScan(),[]);
 
-  if (!scanning) return (
-    <button onClick={startScan}
-      style={{width:'100%',padding:'11px',borderRadius:t.radius,
-        background:t.surface,border:`1.5px solid ${t.border}`,
-        color:t.muted,fontWeight:600,fontSize:14,cursor:'pointer',
-        fontFamily:t.fontBody,display:'flex',alignItems:'center',
-        justifyContent:'center',gap:8}}>
-      📷 {i.scanCode}
-    </button>
-  );
-
-  return (
-    <div style={{position:'relative',borderRadius:t.radius,overflow:'hidden',
-      border:`2px solid ${t.accent}`,background:'#000'}}>
-      <video ref={videoRef} autoPlay playsInline muted
-        style={{width:'100%',height:180,objectFit:'cover',display:'block'}}/>
-      {/* Scan frame overlay */}
-      <div style={{position:'absolute',inset:0,display:'flex',
-        alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-        <div style={{width:140,height:140,border:`2px solid ${t.accent}`,
-          borderRadius:8,boxShadow:`0 0 0 999px rgba(0,0,0,0.5)`}}/>
-      </div>
-      <button onClick={stopScan}
-        style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,0.6)',
-          border:'none',color:'#fff',borderRadius:20,padding:'4px 10px',
-          fontSize:12,cursor:'pointer'}}>✕</button>
-      {error && <p style={{position:'absolute',bottom:8,left:0,right:0,
-        textAlign:'center',color:t.danger,fontSize:12,margin:0}}>{error}</p>}
-    </div>
-  );
+  return <>
+    <canvas ref={canvasRef} style={{display:'none'}}/>
+    {!scanning
+      ? <button onClick={startScan}
+          style={{width:'100%',padding:'11px',borderRadius:t.radius,
+            background:t.surface,border:`1.5px solid ${t.border}`,
+            color:t.muted,fontWeight:600,fontSize:14,cursor:'pointer',
+            fontFamily:t.fontBody,display:'flex',alignItems:'center',
+            justifyContent:'center',gap:8}}>
+          📷 {i.scanCode}
+        </button>
+      : <div style={{position:'relative',borderRadius:t.radius,overflow:'hidden',
+          border:`2px solid ${t.accent}`,background:'#000'}}>
+          <video ref={videoRef} autoPlay playsInline muted
+            style={{width:'100%',height:200,objectFit:'cover',display:'block'}}/>
+          <div style={{position:'absolute',inset:0,display:'flex',
+            alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+            <div style={{width:160,height:160,border:`3px solid ${t.accent}`,
+              borderRadius:10,boxShadow:'0 0 0 1000px rgba(0,0,0,0.45)'}}/>
+          </div>
+          <button onClick={stopScan}
+            style={{position:'absolute',top:8,right:8,
+              background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',
+              borderRadius:20,padding:'4px 12px',fontSize:12,cursor:'pointer'}}>
+            ✕
+          </button>
+          {error&&<p style={{position:'absolute',bottom:8,left:0,right:0,
+            textAlign:'center',color:t.danger,fontSize:12,margin:0,
+            background:'rgba(0,0,0,0.5)',padding:'4px'}}>{error}</p>}
+        </div>}
+  </>;
 }
 
 function HomeScreen({onHost,onJoin,lang,onSetLang}){
