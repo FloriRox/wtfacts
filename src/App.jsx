@@ -1889,33 +1889,27 @@ function CategoryScreen({mode,onStart,t,lang}){
       </button>
     </div>
 
-    {/* Category grid – chips */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,flex:1}}>
+    {/* Category list – compact rows */}
+    <div style={{display:"flex",flexDirection:"column",gap:4,flex:1}}>
       {catMeta.map(({name,count,locked})=>{
         const sel=selected.includes(name);
         return <div key={name} onClick={()=>toggle(name,locked)}
-          style={{display:"flex",alignItems:"center",gap:8,
-            padding:"10px 12px",borderRadius:t.radius,
+          style={{display:"flex",alignItems:"center",gap:10,
+            padding:"8px 12px",borderRadius:t.radius,
             cursor:locked?"not-allowed":"pointer",
             background:sel&&!locked?t.accent+"18":t.surface,
-            border:`1.5px solid ${locked?t.border:sel?t.accent:t.border}`,
+            border:`1.5px solid ${sel&&!locked?t.accent:t.border}`,
             opacity:locked?.4:1,transition:"all .15s"}}>
-          <span style={{fontSize:20,flexShrink:0}}>{locked?"🔒":name.match(/\p{Emoji}/u)?.[0]||"🎯"}</span>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:700,fontSize:12,
-              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-              color:sel&&!locked?t.accent:locked?t.muted:t.text}}>
-              {name.replace(/^\p{Emoji}\s*/u,"")}
-            </div>
-            <div style={{fontSize:10,color:t.muted}}>{locked?"Bald verfügbar":count+" Fragen"}</div>
-          </div>
-          {!locked&&<div style={{width:16,height:16,borderRadius:4,flexShrink:0,
-            background:sel?t.accent:"transparent",
-            border:`2px solid ${sel?t.accent:t.muted+"44"}`,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            color:"#fff",fontSize:10,fontWeight:700}}>
-            {sel?"✓":""}
-          </div>}
+          <span style={{fontSize:17,width:22,textAlign:"center",flexShrink:0}}>
+            {locked?"🔒":sel?"✅":"⬜"}
+          </span>
+          <span style={{flex:1,fontSize:13,fontWeight:600,
+            color:sel&&!locked?t.accent:locked?t.muted:t.text}}>
+            {name}
+          </span>
+          <span style={{fontSize:11,color:t.muted,flexShrink:0}}>
+            {locked?"bald":count}
+          </span>
         </div>;
       })}
     </div>
