@@ -1436,11 +1436,7 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
   const i = UI[lang]||UI.de;
   const fields = [
     {key:'kampfname', label:i.steckbriefKampfname, emoji:'🏷️', placeholder:'z.B. Der Schätzkönig'},
-    {key:'beruf',     label:i.steckbriefBeruf,     emoji:'💼', placeholder:'z.B. Profi-Schätzer'},
-    {key:'staerke',   label:i.steckbriefStaerke,   emoji:'🎯', placeholder:'z.B. Bauchgefühl'},
-    {key:'hobby',     label:i.steckbriefHobby,     emoji:'🎨', placeholder:'z.B. Zahlen raten'},
     {key:'fact',      label:i.steckbriefFact,       emoji:'🔥', placeholder:'z.B. Ich schlafe stehend'},
-    {key:'feind',     label:i.steckbriefFeind,      emoji:'😈', placeholder:'z.B. Niemand... noch'},
   ];
   const [vals, setVals] = React.useState({});
   const [busy, setBusy] = React.useState(false);
@@ -1593,6 +1589,8 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
+  const[spitzname,setSpitzname]=useState("");
+  const[funfact,setFunfact]=useState("");
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
@@ -1613,7 +1611,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       if(!room){setError(i.roomNotFound);return;}
       // Allow joining mid-game - player will catch up from current state
       if((room.order||[]).length>=50){setError(i.roomFull);return;}
-      onJoin(c,name.trim(),room.mode,room.lang||"de");
+      onJoin(c,name.trim(),room.mode,room.lang||"de",{kampfname:spitzname.trim(),fact:funfact.trim()});
     }
   }
 
@@ -1713,6 +1711,22 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       <div style={col}>
         <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
         {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        {/* Optional profile fields - shown collapsed */}
+        {(tab==="join"||tab==="host")&&<details style={{width:'100%'}}>
+          <summary style={{fontSize:12,color:t.muted,cursor:'pointer',listStyle:'none',
+            padding:'6px 2px',userSelect:'none',display:'flex',alignItems:'center',gap:6}}>
+            <span>👤</span>
+            <span>{lang==="en"?"Add nickname & fun fact (optional)":lang==="es"?"Añadir apodo (opcional)":"Spitzname & Fun Fact (optional)"}</span>
+          </summary>
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
+            <Inp value={spitzname} onChange={setSpitzname}
+              placeholder={lang==="en"?"🏷️ Nickname (e.g. The King)":lang==="es"?"🏷️ Apodo":"🏷️ Spitzname (z.B. Der Schätzkönig)"}
+              t={t}/>
+            <Inp value={funfact} onChange={setFunfact}
+              placeholder={lang==="en"?"🔥 Fun fact about you":lang==="es"?"🔥 Dato curioso":"🔥 Fun Fact (z.B. Ich schlafe stehend)"}
+              t={t}/>
+          </div>
+        </details>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
@@ -1753,191 +1767,94 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[withSteckbrief,setWithSteckbrief]=useState(false);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
+  // Reusable toggle row component
+  function ToggleRow({label, desc, checked, onChange, color, children}){
+    const c=color||t.accent;
+    return <div onClick={onChange} style={{display:'flex',alignItems:'center',gap:12,
+      padding:'10px 14px',borderRadius:t.radius,cursor:'pointer',
+      background:checked?c+'18':t.surface,
+      border:`1.5px solid ${checked?c:t.border}`,
+      transition:'all .15s',marginBottom:6}}>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:700,fontSize:13,color:checked?c:t.text}}>{label}</div>
+        {desc&&<div style={{fontSize:11,color:t.muted,marginTop:1}}>{desc}</div>}
+      </div>
+      {children}
+      <div style={{width:20,height:20,borderRadius:5,flexShrink:0,
+        background:checked?c:'transparent',
+        border:`2px solid ${checked?c:t.muted}44`,
+        display:'flex',alignItems:'center',justifyContent:'center',
+        color:'#fff',fontSize:12,fontWeight:700}}>
+        {checked?'✓':''}
+      </div>
+    </div>;
+  }
+
   return <div style={{
-    minHeight:"100vh",display:"flex",flexDirection:"column",
-    maxWidth:520,margin:"0 auto",padding:"12px 16px 24px",
-    background:t.bg,
+    minHeight:'100vh',display:'flex',flexDirection:'column',
+    maxWidth:520,margin:'0 auto',padding:'16px 16px 32px',
+    background:t.bg,gap:6,
   }}>
     <Logo t={t} size="sm"/>
 
     {/* ── Speed ── */}
-    <div style={{marginTop:14,marginBottom:10}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>
-        ⚡ SPEED-MODUS
-      </p>
-      <div style={{display:"flex",gap:8,marginBottom:speedMode?8:0}}>
-        {[{v:false,label:i.noTimer},{v:true,label:i.speed}].map(o=>(
-          <button key={String(o.v)} onClick={()=>setSpeedMode(o.v)}
-            style={{flex:1,padding:"10px 6px",borderRadius:t.radius,
-              background:speedMode===o.v?t.accent+"22":t.surface,
-              border:`2px solid ${speedMode===o.v?t.accent:t.border}`,
-              color:speedMode===o.v?t.accent:t.muted,
-              fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody}}>
-            {o.label}
-          </button>
-        ))}
-      </div>
-      {speedMode&&<div style={{display:"flex",gap:8}}>
-        {[15,30,60].map(s=>(
-          <button key={s} onClick={()=>setTimerSecs(s)}
-            style={{flex:1,padding:"9px 6px",borderRadius:t.radius,
-              background:timerSecs===s?t.accent:t.surface,
-              border:`2px solid ${timerSecs===s?t.accent:t.border}`,
-              color:timerSecs===s?"#fff":t.muted,
-              fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:t.fontMono}}>
-            {s}s
-          </button>
-        ))}
-      </div>}
-    </div>
-
-    {/* ── Divider ── */}
-    <div style={{height:1,background:t.border,margin:"4px 0 10px"}}/>
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'14px 0 4px'}}>⚡ SPEED-MODUS</p>
+    <ToggleRow label={speedMode?i.speed:i.noTimer} desc={speedMode?`Timer: ${timerSecs}s`:'Kein Zeitlimit'}
+      checked={speedMode} onChange={()=>setSpeedMode(p=>!p)} color={t.accent}/>
+    {speedMode&&<div style={{display:'flex',gap:6,marginTop:-2,marginBottom:4}}>
+      {[15,30,60].map(s=>(
+        <button key={s} onClick={()=>setTimerSecs(s)}
+          style={{flex:1,padding:'8px',borderRadius:t.radius,
+            background:timerSecs===s?t.accent:t.surface,
+            border:`1.5px solid ${timerSecs===s?t.accent:t.border}`,
+            color:timerSecs===s?'#fff':t.muted,
+            fontWeight:700,fontSize:14,cursor:'pointer',fontFamily:t.fontMono}}>
+          {s}s
+        </button>
+      ))}
+    </div>}
 
     {/* ── Joker ── */}
-    <div style={{marginBottom:8}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8}}>
-          🃏 JOKER
-        </p>
-        <div style={{display:"flex",gap:8}}>
-          {[{v:false,label:"Aus"},{v:true,label:"An"}].map(o=>(
-            <button key={String(o.v)} onClick={()=>setWithJokers(o.v)}
-              style={{padding:"5px 14px",borderRadius:t.radius,
-                background:withJokers===o.v?t.gold+"22":t.surface,
-                border:`1.5px solid ${withJokers===o.v?t.gold:t.border}`,
-                color:withJokers===o.v?t.gold:t.muted,
-                fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:t.fontBody}}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>🃏 JOKER</p>
+    <ToggleRow label='🃏 Joker aktivieren' desc={withJokers?`${enabled.length} Joker ausgewählt`:'Keine Joker im Spiel'}
+      checked={withJokers} onChange={()=>setWithJokers(p=>!p)} color={t.gold}/>
+    {withJokers&&<div style={{display:'flex',flexDirection:'column',gap:4,paddingLeft:8,borderLeft:`2px solid ${t.gold}44`,marginLeft:6}}>
+      {Object.keys(JOKER_DEFS).map(id=>{
+        const jk=getJokerDef(id,lang);
+        const on=enabled.includes(jk.id);
+        const atMax=enabled.length>=3&&!on;
+        return <ToggleRow key={jk.id} label={`${jk.icon} ${jk.name}`} desc={jk.desc}
+          checked={on} onChange={()=>!atMax&&toggle(jk.id)} color={t.gold}/>;
+      })}
+      <div style={{padding:'6px 10px',borderRadius:t.radius,background:t.gold+'10',fontSize:10,color:t.muted,lineHeight:1.6}}>{i.jokerHowText}</div>
+    </div>}
 
-      {withJokers&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
-        {Object.keys(JOKER_DEFS).map(id=>{ const jk=getJokerDef(id,lang);
-          const on=enabled.includes(jk.id);
-          const atMax=enabled.length>=3&&!on;
-          return <div key={jk.id} onClick={()=>!atMax&&toggle(jk.id)}
-            style={{display:"flex",alignItems:"center",gap:10,
-              padding:"8px 12px",borderRadius:t.radius,cursor:atMax?"not-allowed":"pointer",
-              background:on?t.gold+"18":t.surface,
-              border:`1.5px solid ${on?t.gold:t.border}`,
-              opacity:atMax?.4:1,transition:"all .15s"}}>
-            <span style={{fontSize:16}}>{jk.icon}</span>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{getJokerDef(jk.id,lang).name}</div>
-              <div style={{fontSize:10,color:t.muted}}>{getJokerDef(jk.id,lang).desc}</div>
-            </div>
-            <div style={{width:18,height:18,borderRadius:4,
-              background:on?t.gold:t.surface,
-              border:`1.5px solid ${on?t.gold:t.border}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              color:"#fff",fontSize:11,flexShrink:0}}>
-              {on?"✓":""}
-            </div>
-          </div>;
-        })}
-        <div style={{padding:"8px 10px",borderRadius:t.radius,
-          background:t.gold+"10",border:`1px solid ${t.gold}22`,
-          fontSize:10,color:t.muted,lineHeight:1.6}}>
-          {i.jokerHowText}
-        </div>
-      </div>}
+    {/* ── Wetten ── */}
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>🏆 WETTEN</p>
+    <ToggleRow label={i.bettingSection} desc={withBets?`${betModes.length} Wett-Modus aktiv`:'Keine Wetten'}
+      checked={withBets} onChange={()=>setWithBets(p=>!p)} color={t.gold}/>
+    {withBets&&<div style={{display:'flex',flexDirection:'column',gap:4,paddingLeft:8,borderLeft:`2px solid ${t.gold}44`,marginLeft:6}}>
+      {[{id:'best',label:i.betBest},{id:'worst',label:i.betWorst}].map(({id,label})=>{
+        const on=betModes.includes(id);
+        return <ToggleRow key={id} label={label} checked={on}
+          onChange={()=>setBetModes(prev=>on?prev.filter(x=>x!==id):[...prev,id])} color={t.gold}/>;
+      })}
+    </div>}
+
+    {/* ── Extras ── */}
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>⚙️ EXTRAS</p>
+    <ToggleRow label='👤 Spieler-Steckbrief' desc='Spitzname & Fun Fact im Ranking anzeigen'
+      checked={withSteckbrief} onChange={()=>setWithSteckbrief(p=>!p)} color={t.gold}/>
+    <ToggleRow label={i.debugMode} checked={debugModeLocal}
+      onChange={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} color={t.accent}/>
+
+    <div style={{marginTop:8}}>
+      <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief)}>
+        {i.continueBtn}
+      </Btn>
     </div>
-
-    {/* ── Divider ── */}
-    <div style={{height:1,background:t.border,margin:"4px 0 10px"}}/>
-
-    {/* ── Debug ── */}
-    <div onClick={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}}
-      style={{display:"flex",alignItems:"center",gap:10,
-        padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
-        background:debugModeLocal?t.accent+"18":t.surface,
-        border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
-        marginBottom:14,transition:"all .15s"}}>
-      <div style={{flex:1}}>
-        <div style={{fontWeight:700,fontSize:12,color:debugModeLocal?t.accent:t.text}}>{i.debugMode}</div>
-      </div>
-      <div style={{width:18,height:18,borderRadius:4,flexShrink:0,
-        background:debugModeLocal?t.accent:t.surface,
-        border:`1.5px solid ${debugModeLocal?t.accent:t.border}`,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        color:"#fff",fontSize:11}}>
-        {debugModeLocal?"✓":""}
-      </div>
-    </div>
-
-    {/* ── Steckbrief ── */}
-    <div style={{marginBottom:14}}>
-      <div onClick={()=>setWithSteckbrief(p=>!p)}
-        style={{display:"flex",alignItems:"center",gap:10,
-          padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
-          background:withSteckbrief?t.gold+"18":t.surface,
-          border:`1.5px solid ${withSteckbrief?t.gold:t.border}`,
-          transition:"all .15s"}}>
-        <div style={{flex:1}}>
-          <div style={{fontWeight:700,fontSize:12,color:withSteckbrief?t.gold:t.text}}>
-            👤 Spieler-Steckbrief (Gastgeber-Modus)
-          </div>
-          <div style={{fontSize:10,color:t.muted}}>Spieler stellen sich vor dem Spiel vor</div>
-        </div>
-        <div style={{width:18,height:18,borderRadius:4,flexShrink:0,
-          background:withSteckbrief?t.gold:t.surface,
-          border:`1.5px solid ${withSteckbrief?t.gold:t.border}`,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          color:"#fff",fontSize:11}}>
-          {withSteckbrief?"✓":""}
-        </div>
-      </div>
-    </div>
-
-    {/* ── Betting ── */}
-    <div style={{marginTop:14,marginBottom:10}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>
-        {i.bettingSection}
-      </p>
-      <div style={{display:"flex",gap:8,marginBottom:withBets?8:0}}>
-        {[{v:true,label:i.bettingOn},{v:false,label:i.bettingOff}].map(o=>(
-          <button key={String(o.v)} onClick={()=>setWithBets(o.v)}
-            style={{flex:1,padding:"10px 6px",borderRadius:t.radius,
-              background:withBets===o.v?t.gold+"22":t.surface,
-              border:`1.5px solid ${withBets===o.v?t.gold:t.border}`,
-              color:withBets===o.v?t.gold:t.muted,
-              fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:t.fontBody}}>
-            {o.label}
-          </button>
-        ))}
-      </div>
-      {withBets&&<div style={{display:"flex",flexDirection:"column",gap:5,marginTop:4}}>
-        {[{id:"best",label:i.betBest},{id:"worst",label:i.betWorst}].map(({id,label})=>{
-          const on=betModes.includes(id);
-          function toggleBet(){setBetModes(prev=>on?prev.filter(x=>x!==id):[...prev,id]);}
-          return <div key={id} onClick={toggleBet}
-            style={{display:"flex",alignItems:"center",gap:10,
-              padding:"8px 12px",borderRadius:t.radius,cursor:"pointer",
-              background:on?t.gold+"18":t.surface,
-              border:`1.5px solid ${on?t.gold:t.border}`,
-              transition:"all .15s"}}>
-            <div style={{flex:1,fontWeight:700,fontSize:12,color:on?t.gold:t.text}}>{label}</div>
-            <div style={{width:18,height:18,borderRadius:4,
-              background:on?t.gold:t.surface,
-              border:`1.5px solid ${on?t.gold:t.border}`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              color:"#fff",fontSize:11,flexShrink:0}}>
-              {on?"✓":""}
-            </div>
-          </div>;
-        })}
-      </div>}
-    </div>
-
-    <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief)}>
-      {i.continueBtn}
-    </Btn>
   </div>;
 }
-
 /* ─── CATEGORY SELECTION ─────────────────────────── */
 function CategoryScreen({mode,onStart,t,lang}){
   const i=UI[lang]||UI.de;
@@ -3827,12 +3744,18 @@ function App(){
     setLoading(true);
     await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
     listenRoom(c);
+    // Save inline steckbrief data if provided (from join form)
+    if(steckbriefData&&(steckbriefData.kampfname||steckbriefData.fact)){
+      const uid2=auth?.currentUser?.uid||uid;
+      update(ref(db,`rooms/${c}/steckbriefe/${uid2}`),{
+        name, ...steckbriefData
+      }).catch(()=>{});
+    }
     setLoading(false);
     setScreen("lobby");
-    // Show steckbrief if enabled
   }
 
-  async function handleJoin(c,name,m,roomLang){
+  async function handleJoin(c,name,m,roomLang,steckbriefData=null){
     // Use auth.currentUser.uid directly - don't wait for React state
     let uid = auth?.currentUser?.uid;
     if(!uid){
@@ -3855,9 +3778,15 @@ function App(){
     const effectiveId = uid || myId;
     await dbPatch(c,{players:{...r.players,[effectiveId]:{id:effectiveId,name}},order:[...(r.order||[]),effectiveId]});
     listenRoom(c);
+    // Save inline steckbrief data if provided (from join form)
+    if(steckbriefData&&(steckbriefData.kampfname||steckbriefData.fact)){
+      const uid2=auth?.currentUser?.uid||uid;
+      update(ref(db,`rooms/${c}/steckbriefe/${uid2}`),{
+        name, ...steckbriefData
+      }).catch(()=>{});
+    }
     setLoading(false);
     setScreen("lobby");
-    // Show steckbrief if enabled
   }
 
   async function handleGoJokerSetup(){
