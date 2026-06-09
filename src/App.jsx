@@ -2624,17 +2624,20 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
           color:'#ff8c2a',ts:now});
     });
 
-    // Exact hit – GRÜN (perfekt)
+    // Exact hit – GRÜN (perfekt) – nur bei Auflösung zeigen, nicht während Frage
     const curG=room.guesses||{}, prevG=prev.guesses||{};
     const answer=room.q?.a;
-    pl.forEach(p=>{
-      if(curG[p.id]!=null&&prevG[p.id]==null&&answer!=null)
-        if(Math.abs(curG[p.id]-answer)===0)
-          newEvents.push({id:now+Math.random(),type:'exact',
-            emoji:'🎯',
-            text:p.name+' '+i.dispExact,
-            color:'#39d98a',ts:now});
-    });
+    const isReveal = room.phase==='results'||room.phase==='reveal';
+    if(isReveal){
+      pl.forEach(p=>{
+        if(curG[p.id]!=null&&answer!=null)
+          if(Math.abs(curG[p.id]-answer)===0)
+            newEvents.push({id:now+Math.random(),type:'exact',
+              emoji:'🎯',
+              text:p.name+' '+i.dispExact,
+              color:'#39d98a',ts:now});
+      });
+    }
 
     // Tipp eingegangen – GRAU (neutral/info)
     pl.forEach(p=>{
