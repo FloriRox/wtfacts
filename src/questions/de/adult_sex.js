@@ -167,6 +167,6 @@ export default [
   {q:"Wie viele cm ist der maximale Umfang eines erigierten Penis im Rekord?",a:25,unit:"cm",hint:"Extremfälle sind dokumentiert (Stand ~2024).",emoji:"📏"},
   {q:"Wie viele Millionen Menschen leiden weltweit an sexuellen Angststörungen?",a:30,unit:"Millionen",hint:"Sexangst – nicht selten.",emoji:"🔬"},
   {q:"Wie viele Stunden im Leben verbringt ein Mensch mit Masturbation (Frauen)?",a:2000,unit:"Stunden",hint:"Weniger als Männer – aber erheblich.",emoji:"📊"},
-  {q:"Wie viele mg Östradiol enthält eine normale Verhütungspille täglich?",a:0.03,unit:"mg",hint:"30 Mikrogramm – sehr niedrige Dosis.",emoji:"💊"},
+  {q:"Wie viele Mikrogramm Östradiol enthält eine normale Verhütungspille täglich?",a:30,unit:"Mikrogramm",hint:"30µg – sehr niedrige Dosis, frühere Pillen hatten 50–150µg.",emoji:"💊"},
   {q:"Wie viele Millionen Menschen sind Teil der Polyamorie-Bewegung?",a:21,unit:"Millionen",hint:"Schätzung in den USA allein.",emoji:"💕"}
 ];
