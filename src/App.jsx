@@ -3744,13 +3744,6 @@ function App(){
     setLoading(true);
     await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
     listenRoom(c);
-    // Save inline steckbrief data if provided (from join form)
-    if(steckbriefData&&(steckbriefData.kampfname||steckbriefData.fact)){
-      const uid2=auth?.currentUser?.uid||uid;
-      update(ref(db,`rooms/${c}/steckbriefe/${uid2}`),{
-        name, ...steckbriefData
-      }).catch(()=>{});
-    }
     setLoading(false);
     setScreen("lobby");
   }
