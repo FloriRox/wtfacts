@@ -61,7 +61,7 @@ export default [
   {q:"In welchem Jahr wurde das erste Kondom aus Kunststoff (Polyurethan) eingeführt?",a:1994,unit:"Jahr",hint:"Alternative für Latex-Allergiker.",emoji:"💊"},
   {q:"Wie viele ml Vaginalflüssigkeit produziert eine Frau beim Sex?",a:4,unit:"ml",hint:"Natürliche Befeuchtungsreaktion.",emoji:"💧"},
   {q:"Wie viele Millionen Dollar verdiente die Pornodarstellerin Lisa Ann auf ihrem Höhepunkt?",a:1.5,unit:"Mio. Dollar/Jahr",hint:"Einem der bekanntesten Stars der Branche.",emoji:"💰"},
-  {q:"Wie viele cm kann sich die Vagina bei der Erregung dehnen?",a:15,unit:"cm",hint:"Von ~7cm in Ruhe auf bis zu 15cm – bei Erregung und Geburt.",emoji:"📏"},
+  {q:"Wie viele cm tief ist die Vagina bei sexueller Erregung durchschnittlich?",a:11,unit:"cm",hint:"In Ruhe 7–8cm, bei Erregung 11–12cm – Masters & Johnson (1966).",emoji:"📏"},
   {q:"In welchem Jahr wurde die erste Penisvergrößerungsoperation dokumentiert?",a:1971,unit:"Jahr",hint:"Chirurgische Eingriffe seit den 1970ern.",emoji:"🏥"},
   {q:"Wie viele Millionen Dollar wert ist der globale Markt für Erotik-Videospiele?",a:100,unit:"Mio. Dollar",hint:"Nische aber wachsend.",emoji:"🎮"},
   {q:"Wie viele Milligramm Fruchtzucker enthält Sperma?",a:2.5,unit:"mg",hint:"Frukose gibt Spermien Energie.",emoji:"⚗️"},
