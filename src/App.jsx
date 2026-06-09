@@ -2359,6 +2359,12 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
         isNewGame:history.length<=1,
         mode:room.mode,
       }, room.lang||"de");
+      // Save this guess to global question stats for histogram
+      if(room.q?.id){
+        const qref=ref(db,`globalStats/questions/${room.q.id}/guesses`);
+        const ts=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+        update(qref,{[ts]:myGuess}).catch(()=>{});
+      }
     }
   },[]);
   const q=room.q;
@@ -2665,64 +2671,112 @@ function TippHistogram({room, t, lang, gold}) {
   const guesses = room.guesses||{};
   const players = room.players||{};
   const answer = q?.a;
+  const [globalVals, setGlobalVals] = React.useState([]);
+
+  // Load global historical answers for this question
+  React.useEffect(()=>{
+    if(!q?.id) return;
+    get(ref(db, `globalStats/questions/${q.id}`)).then(snap=>{
+      const data = snap.val();
+      if(data?.guesses) setGlobalVals(Object.values(data.guesses).map(Number).filter(v=>!isNaN(v)));
+    }).catch(()=>{});
+  },[q?.id]);
 
   if(!q || !answer) return null;
 
-  const vals = Object.entries(guesses)
+  const roundVals = Object.entries(guesses)
     .filter(([,v])=>v!=null&&v!==-999999)
     .map(([id,v])=>({id, val:parseFloat(v), name:(players[id]?.name||'?')}));
 
-  if(vals.length < 2) return null;
+  if(roundVals.length < 1) return null;
 
-  // Build bins
-  const allVals = [...vals.map(v=>v.val), answer];
-  const min = Math.min(...allVals) * 0.7;
-  const max = Math.max(...allVals) * 1.3;
-  const BINS = 8;
+  // Determine range from all values
+  const allNums = [...roundVals.map(v=>v.val), ...globalVals, answer];
+  const rawMin = Math.min(...allNums);
+  const rawMax = Math.max(...allNums);
+  const pad = (rawMax - rawMin) * 0.3 || rawMax * 0.5 || 1;
+  const min = Math.max(0, rawMin - pad);
+  const max = rawMax + pad;
+  const BINS = 10;
   const binW = (max - min) / BINS;
-  const bins = Array(BINS).fill(0).map((_,i)=>({
-    from: min + i*binW,
-    to: min + (i+1)*binW,
-    players: [],
-  }));
 
-  vals.forEach(p=>{
-    const idx = Math.min(Math.floor((p.val - min) / binW), BINS-1);
-    if(idx>=0) bins[idx].players.push(p);
-  });
+  function getBin(v){ return Math.min(Math.floor((v - min) / binW), BINS-1); }
 
-  const maxCount = Math.max(...bins.map(b=>b.players.length), 1);
-  const answerPct = ((answer - min) / (max - min)) * 100;
+  // Global bins (background)
+  const globalBins = Array(BINS).fill(0);
+  globalVals.forEach(v=>{ const b=getBin(v); if(b>=0) globalBins[b]++; });
 
-  return <div style={{padding:'12px 14px',background:t.surface,
-    borderRadius:t.radius,border:`1px solid ${t.border}`,marginBottom:8}}>
+  // Round bins
+  const roundBins = Array(BINS).fill(null).map(()=>[]);
+  roundVals.forEach(p=>{ const b=getBin(p.val); if(b>=0) roundBins[b].push(p); });
+
+  const maxGlobal = Math.max(...globalBins, 1);
+  const maxRound = Math.max(...roundBins.map(b=>b.length), 1);
+  const answerPct = Math.min(100, Math.max(0, ((answer - min) / (max - min)) * 100));
+
+  return <div style={{padding:'12px 14px',background:'#0f0a06',
+    borderRadius:12,border:`1px solid #2a1a0e`,marginBottom:8}}>
     <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,
-      margin:'0 0 10px',textTransform:'uppercase'}}>📊 Tipp-Verteilung</p>
-    <div style={{display:'flex',alignItems:'flex-end',gap:3,height:80,position:'relative'}}>
-      {bins.map((bin,i)=>{
-        const h = (bin.players.length/maxCount)*100;
-        const isAnswer = answer>=bin.from && answer<bin.to;
-        return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',
-          alignItems:'center',justifyContent:'flex-end',height:'100%',gap:2}}>
-          {bin.players.length>0&&<span style={{fontSize:9,color:gold,fontWeight:700}}>
-            {bin.players.map(p=>p.name[0]).join('')}
-          </span>}
-          <div style={{width:'100%',height:`${Math.max(h,4)}%`,
-            background:isAnswer?'#39d98a':gold+'88',
+      margin:'0 0 10px',textTransform:'uppercase'}}>
+      📊 Tipp-Verteilung
+      {globalVals.length>0&&<span style={{fontWeight:400,marginLeft:6,color:'#3a2a1e'}}>
+        ({globalVals.length} globale Tipps)
+      </span>}
+    </p>
+    <div style={{display:'flex',alignItems:'flex-end',gap:2,height:90,position:'relative'}}>
+      {Array(BINS).fill(0).map((_,i)=>{
+        const gH = (globalBins[i]/maxGlobal)*100;
+        const rH = (roundBins[i].length/maxRound)*100;
+        const isAnswerBin = answer>=min+i*binW && answer<min+(i+1)*binW;
+        return <div key={i} style={{flex:1,position:'relative',height:'100%',
+          display:'flex',alignItems:'flex-end'}}>
+          {/* Global historical bar (background, subtle) */}
+          {globalBins[i]>0&&<div style={{
+            position:'absolute',bottom:0,left:0,right:0,
+            height:`${Math.max(gH,3)}%`,
+            background:'#2a1a0e',borderRadius:'3px 3px 0 0',
+          }}/>}
+          {/* Round bar (foreground, colored) */}
+          {roundBins[i].length>0&&<div style={{
+            position:'absolute',bottom:0,left:'10%',right:'10%',
+            height:`${Math.max(rH,6)}%`,
+            background:isAnswerBin?'#39d98a':gold+'cc',
             borderRadius:'3px 3px 0 0',
-            border:isAnswer?`2px solid #39d98a`:'none',
-            transition:'height .5s ease',minHeight:4}}/>
+            transition:'height .6s ease',
+          }}>
+            <div style={{position:'absolute',top:-16,left:'50%',transform:'translateX(-50%)',
+              fontSize:9,color:isAnswerBin?'#39d98a':gold,fontWeight:700,whiteSpace:'nowrap'}}>
+              {roundBins[i].map(p=>p.name[0]).join('')}
+            </div>
+          </div>}
         </div>;
       })}
       {/* Answer line */}
-      <div style={{position:'absolute',bottom:0,
-        left:`${answerPct}%`,transform:'translateX(-50%)',
-        width:2,height:'100%',background:'#39d98a',zIndex:2}}/>
+      <div style={{position:'absolute',bottom:0,left:`${answerPct}%`,
+        transform:'translateX(-50%)',width:2,height:'100%',
+        background:'#39d98a',zIndex:3,
+        boxShadow:'0 0 6px #39d98a'}}>
+        <div style={{position:'absolute',top:-18,left:'50%',transform:'translateX(-50%)',
+          fontSize:9,color:'#39d98a',fontWeight:700,whiteSpace:'nowrap'}}>
+          ✓
+        </div>
+      </div>
     </div>
-    <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
-      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(min)}</span>
-      <span style={{fontSize:10,color:'#39d98a',fontWeight:700}}>✓ {fmtNum(answer)}</span>
-      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(max)}</span>
+    {/* Legend */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
+      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(Math.round(min))}</span>
+      <div style={{display:'flex',gap:10,alignItems:'center'}}>
+        {globalVals.length>0&&<span style={{fontSize:9,color:'#3a2a1e',display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:10,height:8,background:'#2a1a0e',borderRadius:2}}/> Historisch
+        </span>}
+        <span style={{fontSize:9,color:gold,display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:10,height:8,background:gold+'cc',borderRadius:2}}/> Diese Runde
+        </span>
+        <span style={{fontSize:9,color:'#39d98a',display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:2,height:10,background:'#39d98a'}}/> Antwort
+        </span>
+      </div>
+      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(Math.round(max))}</span>
     </div>
   </div>;
 }
