@@ -153,7 +153,7 @@ export default [
   {q:"Wie viele Milliarden Keime sind in einem ungepflegten Küchenschwamm?",a:54,unit:"Milliarden",hint:"54 Milliarden – der schmutzigste Küchengegenstand.",emoji:"🫧"},
   {q:"Wie viele Gramm Eiter kann ein Furunkel enthalten?",a:5,unit:"Gramm",hint:"Eiterpustel kann erstaunlich viel fassen.",emoji:"😨"},
   {q:"Wie viele Liter Flüssigkeit verliert man beim Marathon?",a:4,unit:"Liter",hint:"Durch Schwitzen und Atmen.",emoji:"🏃"},
-  {q:"Wie viele Milliarden Parasiten-Infektionen gibt es weltweit?",a:4,unit:"Milliarden",hint:"Etwa die Hälfte der Weltbevölkerung hat mindestens eine Parasiteninfektion.,hint:"Parasiten infizieren Milliarden Menschen.",emoji:"🪱"},
+  {q:"Wie viele Milliarden Parasiten-Infektionen gibt es weltweit?",a:4,unit:"Milliarden",hint:"Etwa die Hälfte der Weltbevölkerung hat mindestens eine Parasiteninfektion.",emoji:"🪱"},
   {q:"Wie viele Gramm Zahnfleisch-Bakterien produziert der Mund täglich?",a:1,unit:"Gramm",hint:"Dentalplaque-Bakterien.",emoji:"🦷"},
   {q:"Wie viele Liter Urin enthält eine Blase kurz vor dem Platzen?",a:1,unit:"Liter",hint:"Schmerzhaft – Platzen ist nur theoretisch.",emoji:"💛"},
   {q:"Wie viele Millionen Spulwürmer-Eier können in einem Gemüsegarten sein?",a:10,unit:"Millionen",hint:"Hauptursache für Parasiteninfektionen.",emoji:"🥦"},

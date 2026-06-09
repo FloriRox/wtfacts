@@ -93,7 +93,7 @@ export default [
   {q:"In welchem Jahr erfand Benz das erste benzinbetriebene Auto?",a:1885,unit:"Jahr",hint:"Benz Patent-Motorwagen – 3 Räder, 0,75 PS.",emoji:"🚗"},
   {q:"Wie viele Gramm wiegt ein Mol Wasser?",a:18,unit:"Gramm",hint:"H₂O: 2×1 + 16 = 18 g/mol.",emoji:"💧"},
   {q:"In welchem Jahr wurde CRISPR-Cas9 entdeckt?",a:2012,unit:"Jahr",hint:"Charpentier und Doudna – Nobelpreis 2020.",emoji:"🧬"},
-  {q:"Wie viele Milliarden Bit hat 1 Gigabyte?",a:8.6,unit:"Milliarden Bit",hint:"1 GB = 8×1024×1024×1024 Bit = ~8,6 Milliarden Bit.,hint:"8 Milliarden Bit.",emoji:"💻"},
+  {q:"Wie viele Milliarden Bit hat 1 Gigabyte?",a:8.6,unit:"Milliarden Bit",hint:"1 GB = 8×1024×1024×1024 Bit = ~8,6 Milliarden Bit.",emoji:"💻"},
   {q:"In welchem Jahr erfand Fleming den Transistor (Diode)?",a:1904,unit:"Jahr",hint:"John Ambrose Fleming erfand die Diode.",emoji:"⚡"},
   {q:"Wie viele Grad Celsius friert Meerwasser?",a:-1.8,unit:"°C",hint:"Salzwasser friert bei niedrigeren Temperaturen.",emoji:"🌊"},
   {q:"In welchem Jahr entdeckte Jenner den Impfstoff gegen Pocken?",a:1796,unit:"Jahr",hint:"Der erste Impfstoff in der Geschichte.",emoji:"💉"},
@@ -248,5 +248,5 @@ export default [
   {q:"In welchem Jahr entdeckte Heisenberg das Unschärfeprinzip?",a:1927,unit:"Jahr",hint:"Ort und Impuls nicht gleichzeitig messbar.",emoji:"⚛️"},
   {q:"Wie viele Elektronen fasst die vierte Schale?",a:32,unit:"Elektronen",hint:"N-Schale – maximal 32 Elektronen.",emoji:"⚛️"},
   {q:"In welchem Jahr entdeckte Compton den Compton-Effekt?",a:1923,unit:"Jahr",hint:"Licht verhält sich wie Teilchen.",emoji:"⚛️"},
-  {q:"Wie viele Meter pro Stunde bewegen sich Elektronen in einem Kabel?",a:0.3,unit:"m/h",hint:"Nur 0,3m/h – aber die elektromagn. Welle pflanzt sich mit Lichtgeschwindigkeit fort.,hint:"Sehr langsam – aber die Welle geht mit Lichtgeschwindigkeit.",emoji:"⚡"}
+  {q:"Wie viele Meter pro Stunde bewegen sich Elektronen in einem Kabel?",a:0.3,unit:"m/h",hint:"Nur 0,3m/h – aber die elektromagn. Welle pflanzt sich mit Lichtgeschwindigkeit fort.",emoji:"⚡"}
 ];
