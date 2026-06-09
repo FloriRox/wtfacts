@@ -2222,6 +2222,20 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             {i.discuss}
           </p>
         </Card>
+        :<Card t={t} style={{textAlign:"center"}}>
+          <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
+            fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
+          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>{i.tipSubmitted}</p>
+          <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
+            <div style={{height:"100%",
+              width:`${activePl.length?doneCount/activePl.length*100:0}%`,
+              background:`linear-gradient(90deg,${t.accent},${t.gold})`,
+              borderRadius:3,transition:"width .4s ease"}}/>
+          </div>
+          <p style={{fontSize:11,color:t.muted,marginTop:5}}>
+            {doneCount}/{activePl.length} haben getippt
+          </p>
+        </Card>
         {/* Host kick panel */}
         {isHost&&<details style={{marginTop:8}}>
           <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
@@ -2314,20 +2328,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
 
           </Card>
         </details>}
-        :<Card t={t} style={{textAlign:"center"}}>
-          <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
-            fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
-          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>{i.tipSubmitted}</p>
-          <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
-            <div style={{height:"100%",
-              width:`${activePl.length?doneCount/activePl.length*100:0}%`,
-              background:`linear-gradient(90deg,${t.accent},${t.gold})`,
-              borderRadius:3,transition:"width .4s ease"}}/>
-          </div>
-          <p style={{fontSize:11,color:t.muted,marginTop:5}}>
-            {doneCount}/{activePl.length} haben getippt
-          </p>
-        </Card>}
+}
 
       {/* ── JOKER BAR (collapsed until tapped) ── */}
       {room.enabledJokers?.length>0&&
