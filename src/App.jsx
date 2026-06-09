@@ -1889,27 +1889,33 @@ function CategoryScreen({mode,onStart,t,lang}){
       </button>
     </div>
 
-    {/* Category list – compact */}
-    <div style={{display:"flex",flexDirection:"column",gap:5,flex:1}}>
+    {/* Category grid – chips */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,flex:1}}>
       {catMeta.map(({name,count,locked})=>{
         const sel=selected.includes(name);
-        const isFree=name==="🎯 Gratis-Test";
         return <div key={name} onClick={()=>toggle(name,locked)}
-          style={{display:"flex",alignItems:"center",gap:10,
-            padding:"9px 12px",borderRadius:t.radius,
+          style={{display:"flex",alignItems:"center",gap:8,
+            padding:"10px 12px",borderRadius:t.radius,
             cursor:locked?"not-allowed":"pointer",
-            background:locked?t.surface:sel?t.accent+"18":t.surface,
+            background:sel&&!locked?t.accent+"18":t.surface,
             border:`1.5px solid ${locked?t.border:sel?t.accent:t.border}`,
-            opacity:locked?.5:1,transition:"all .15s"}}>
-          <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>
-            {locked?"🔒":sel?"✅":"⬜"}
-          </span>
-          <div style={{flex:1}}>
-            <div style={{fontWeight:600,fontSize:13}}>{name}</div>
-            {isFree&&<div style={{fontSize:10,color:t.green,fontWeight:700}}>Kostenlos</div>}
-            {locked&&<div style={{fontSize:10,color:t.muted}}>Kommt bald</div>}
+            opacity:locked?.4:1,transition:"all .15s"}}>
+          <span style={{fontSize:20,flexShrink:0}}>{locked?"🔒":name.match(/\p{Emoji}/u)?.[0]||"🎯"}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:12,
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+              color:sel&&!locked?t.accent:locked?t.muted:t.text}}>
+              {name.replace(/^\p{Emoji}\s*/u,"")}
+            </div>
+            <div style={{fontSize:10,color:t.muted}}>{locked?"Bald verfügbar":count+" Fragen"}</div>
           </div>
-          <span style={{fontSize:11,color:t.muted,fontFamily:t.fontMono}}>{count}</span>
+          {!locked&&<div style={{width:16,height:16,borderRadius:4,flexShrink:0,
+            background:sel?t.accent:"transparent",
+            border:`2px solid ${sel?t.accent:t.muted+"44"}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            color:"#fff",fontSize:10,fontWeight:700}}>
+            {sel?"✓":""}
+          </div>}
         </div>;
       })}
     </div>
