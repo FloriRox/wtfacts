@@ -1757,12 +1757,12 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
 function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang}){
   const i=UI[lang]||UI.de;
-  const[withJokers,setWithJokers]=useState(true);
+  const[withJokers,setWithJokers]=useState(false);
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
   const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:true);
-  const[withBets,setWithBets]=useState(true);
+  const[withBets,setWithBets]=useState(false);
   const[betModes,setBetModes]=useState(["best","worst"]);
   const[withSteckbrief,setWithSteckbrief]=useState(false);
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
@@ -1843,8 +1843,6 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 
     {/* ── Extras ── */}
     <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>⚙️ EXTRAS</p>
-    <ToggleRow label='👤 Spieler-Steckbrief' desc='Spitzname & Fun Fact im Ranking anzeigen'
-      checked={withSteckbrief} onChange={()=>setWithSteckbrief(p=>!p)} color={t.gold}/>
     <ToggleRow label={i.debugMode} checked={debugModeLocal}
       onChange={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} color={t.accent}/>
 
