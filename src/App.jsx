@@ -2235,101 +2235,68 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           <p style={{fontSize:11,color:t.muted,marginTop:5}}>
             {doneCount}/{activePl.length} haben getippt
           </p>
-        </Card>
-        {/* Host kick panel */}
+        </Card>}
+        {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
           <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
-            listStyle:'none',padding:'4px 0'}}>
+            listStyle:'none',padding:'4px 2px',userSelect:'none'}}>
             ⚙️ Spiel verwalten
           </summary>
           <Card t={t} style={{marginTop:6,padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
-
-            {/* ── Invite ── */}
+            {/* Invite */}
             <div>
               <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>➕ SPIELER EINLADEN</p>
               <div style={{display:'flex',gap:6}}>
                 <code style={{flex:1,fontSize:13,fontWeight:800,color:t.accent,
-                  background:t.surface,padding:'4px 8px',borderRadius:t.radius,letterSpacing:2}}>
-                  {code}
-                </code>
-                <button onClick={()=>{
-                  const link=`${window.location.origin}?room=${code}`;
-                  if(navigator.share){navigator.share({title:'EstiMates',url:link});}
-                  else{navigator.clipboard?.writeText(link);alert('Link kopiert!');}
-                }} style={{background:t.accent,border:'none',borderRadius:t.radius,
-                  color:'#fff',fontSize:11,cursor:'pointer',padding:'4px 10px',fontWeight:600}}>
+                  background:t.surface,padding:'4px 8px',borderRadius:t.radius,letterSpacing:2}}>{code}</code>
+                <button onClick={()=>{const link=`${window.location.origin}?room=${code}`;if(navigator.share){navigator.share({title:'EstiMates',url:link});}else{navigator.clipboard?.writeText(link);alert('Link kopiert!');}}}
+                  style={{background:t.accent,border:'none',borderRadius:t.radius,color:'#fff',fontSize:11,cursor:'pointer',padding:'4px 10px',fontWeight:600}}>
                   📤 Teilen
                 </button>
               </div>
             </div>
-
-            {/* ── Game controls ── */}
+            {/* Controls */}
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               <button onClick={()=>onSkip&&onSkip()}
-                style={{padding:'6px 12px',borderRadius:t.radius,
-                  background:t.surface,border:`1px solid ${t.border}`,
-                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                ⏭️ Frage skippen
+                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                ⏭️ Skippen
               </button>
               <button onClick={()=>onPause&&onPause()}
-                style={{padding:'6px 12px',borderRadius:t.radius,
-                  background:t.surface,border:`1px solid ${t.border}`,
-                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
                 ⏸️ Pause
               </button>
-              <button onClick={()=>{onToggleDebug&&onToggleDebug(d=>!d);}}
-                style={{padding:'6px 12px',borderRadius:t.radius,
-                  background:debugMode?t.accent+'22':t.surface,
-                  border:`1px solid ${debugMode?t.accent:t.border}`,
-                  color:debugMode?t.accent:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                🐛 Debug {debugMode?'AN':'AUS'}
-              </button>
               <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
-                style={{padding:'6px 12px',borderRadius:t.radius,
-                  background:t.surface,border:`1px solid ${t.border}`,
-                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
                 {isSoundOn()?'🔊':'🔇'} Sound
               </button>
-              <button onClick={()=>window.confirm('Spiel wirklich beenden?')&&onEnd&&onEnd()}
-                style={{padding:'6px 12px',borderRadius:t.radius,
-                  background:'none',border:`1px solid ${t.danger}44`,
-                  color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+              <button onClick={()=>{if(onToggleDebug){onToggleDebug(d=>!d);}}}
+                style={{padding:'6px 10px',borderRadius:t.radius,background:debugMode?t.accent+'22':t.surface,border:`1px solid ${debugMode?t.accent:t.border}`,color:debugMode?t.accent:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                🐛 Debug
+              </button>
+              <button onClick={()=>window.confirm('Spiel beenden?')&&onEnd&&onEnd()}
+                style={{padding:'6px 10px',borderRadius:t.radius,background:'none',border:`1px solid ${t.danger}44`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
                 🛑 Beenden
               </button>
             </div>
-
-            {/* ── Player list ── */}
+            {/* Players */}
             <div>
               <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>👥 SPIELER</p>
               {(room.order||[]).filter(id=>id!==myId).map(id=>{
-                const p=room.players?.[id];
-                if(!p) return null;
+                const p=room.players?.[id]; if(!p) return null;
                 const isAfk=!!(room.afkPlayers||{})[id];
                 return <div key={id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
-                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>
-                    {isAfk?'⏸️ ':''}{p.name}
-                  </span>
-                  <button onClick={async()=>{
-                    await update(ref(db,`rooms/${code}/afkPlayers`),{[id]:isAfk?null:true});
-                  }} style={{background:'none',border:`1px solid ${t.border}`,
-                    borderRadius:t.radius,color:t.muted,fontSize:10,
-                    cursor:'pointer',padding:'1px 6px'}}>
+                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>{isAfk?'⏸️ ':''}{p.name}</span>
+                  <button onClick={async()=>await update(ref(db,`rooms/${code}/afkPlayers`),{[id]:isAfk?null:true})}
+                    style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,color:t.muted,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>
                     {isAfk?'↩️':'⏸️'}
                   </button>
                   {onKick&&<button onClick={()=>onKick(id)}
-                    style={{background:'none',border:`1px solid ${t.danger}33`,
-                      borderRadius:t.radius,color:t.danger,fontSize:10,
-                      cursor:'pointer',padding:'1px 6px'}}>
-                    ✕
-                  </button>}
+                    style={{background:'none',border:`1px solid ${t.danger}33`,borderRadius:t.radius,color:t.danger,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>✕</button>}
                 </div>;
               })}
             </div>
-
           </Card>
         </details>}
-}
-
       {/* ── JOKER BAR (collapsed until tapped) ── */}
       {room.enabledJokers?.length>0&&
         <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
