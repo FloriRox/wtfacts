@@ -112,7 +112,7 @@ export default [
   {q:"Wie viele Jahre kann ein Krokodil ohne Nahrung überleben?",a:3,unit:"Jahre",hint:"Krokodile haben einen extrem niedrigen Stoffwechsel.",emoji:"🐊"},
   {q:"Wie schwer ist der Penis eines Blauwals in kg?",a:450,unit:"kg",hint:"Das größte Geschlechtsorgan im Tierreich.",emoji:"🐋"},
   {q:"Wie lange ist ein Blauwal-Penis in Metern?",a:2.7,unit:"Meter",hint:"Proportional zum Körper aber das absolut größte.",emoji:"🐋"},
-  {q:"Wie viele Eizellen produziert eine Ozean-Sonnenblume pro Saison?",a:300000000,unit:"Eier",hint:"300 Millionen Eier – die meisten aller Wirbeltiere.",emoji:"🐟"},
+  {q:"Wie viele Millionen Eizellen produziert eine Ozean-Sonnenblume pro Saison?",a:300,unit:"Millionen Eier",hint:"300 Millionen Eier – die meisten aller Wirbeltiere.",emoji:"🐟"},
   {q:"Wie viele Liter Blut pumpt ein Elefantenherz pro Minute?",a:300,unit:"Liter",hint:"Das Elefantenherz wiegt 25 kg.",emoji:"🐘"},
   {q:"Wie viele Stunden kann eine Nacktmull-Ratte ohne Sauerstoff überleben?",a:18,unit:"Stunden",hint:"Nacktmull-Ratten sind gegen Sauerstoffmangel resistent.",emoji:"🐀"},
   {q:"Wie schwer ist das Gehirn eines Octopus in Gramm?",a:40,unit:"Gramm",hint:"Sehr klein aber extrem effizient.",emoji:"🐙"},

@@ -8,7 +8,7 @@ export default [
   {q:"Wie viele Mal paart sich ein Schimpanse mit verschiedenen Weibchen?",a:100,unit:"Mal",hint:"Männliche Schimpansen paaren sich mit vielen Weibchen.",emoji:"🐒"},
   {q:"Wie viele Eier legt eine Königin-Biene in ihrem Leben?",a:2000000,unit:"Eier",hint:"2 Millionen über ihr Leben von 5 Jahren.",emoji:"🐝"},
   {q:"Wie lang ist die Vagina einer Kuh in cm?",a:30,unit:"cm",hint:"Ähnlich lang wie der Arm eines Kindes.",emoji:"🐄"},
-  {q:"Wie viele Spermien enthält ein Stier-Ejakulat?",a:7000000000,unit:"Spermien",hint:"7 Milliarden – viel mehr als beim Menschen.",emoji:"🐂"},
+  {q:"Wie viele Milliarden Spermien enthält ein Stier-Ejakulat?",a:7,unit:"Milliarden Spermien",hint:"7 Milliarden – viel mehr als beim Menschen.",emoji:"🐂"},
   {q:"Wie lange dauert der Sex bei Giraffen in Sekunden?",a:2,unit:"Sekunden",hint:"Sehr schnell – aber häufig.",emoji:"🦒"},
   {q:"Wie viele Mal am Tag paart sich ein Löwe?",a:20,unit:"Mal",hint:"In der Ranzzeit bis zu viele Male täglich.",emoji:"🦁"},
   {q:"Wie viele cm lang ist der Penis eines Gorillas?",a:4,unit:"cm",hint:"Trotz ihrer Größe sehr kleines Geschlechtsorgan.",emoji:"🦍"},
