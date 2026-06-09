@@ -1611,7 +1611,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       const room=await dbGet(c);
       setBusy(false);
       if(!room){setError(i.roomNotFound);return;}
-      if(room.phase!=="lobby"){setError(i.gameRunning);return;}
+      // Allow joining mid-game - player will catch up from current state
       if((room.order||[]).length>=50){setError(i.roomFull);return;}
       onJoin(c,name.trim(),room.mode,room.lang||"de");
     }
@@ -2062,7 +2062,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
 }
 
 /* ─── QUESTION ────────────────────────────────────── */
-function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
+function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=false,onKick=null,onPause=null,onToggleDebug=null,onToggleSound=null,onEnd=null}){
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[allIn,setAllIn]=useState(false);
@@ -2222,6 +2222,98 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
             {i.discuss}
           </p>
         </Card>
+        {/* Host kick panel */}
+        {isHost&&<details style={{marginTop:8}}>
+          <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
+            listStyle:'none',padding:'4px 0'}}>
+            ⚙️ Spiel verwalten
+          </summary>
+          <Card t={t} style={{marginTop:6,padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
+
+            {/* ── Invite ── */}
+            <div>
+              <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>➕ SPIELER EINLADEN</p>
+              <div style={{display:'flex',gap:6}}>
+                <code style={{flex:1,fontSize:13,fontWeight:800,color:t.accent,
+                  background:t.surface,padding:'4px 8px',borderRadius:t.radius,letterSpacing:2}}>
+                  {code}
+                </code>
+                <button onClick={()=>{
+                  const link=`${window.location.origin}?room=${code}`;
+                  if(navigator.share){navigator.share({title:'EstiMates',url:link});}
+                  else{navigator.clipboard?.writeText(link);alert('Link kopiert!');}
+                }} style={{background:t.accent,border:'none',borderRadius:t.radius,
+                  color:'#fff',fontSize:11,cursor:'pointer',padding:'4px 10px',fontWeight:600}}>
+                  📤 Teilen
+                </button>
+              </div>
+            </div>
+
+            {/* ── Game controls ── */}
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <button onClick={()=>onSkip&&onSkip()}
+                style={{padding:'6px 12px',borderRadius:t.radius,
+                  background:t.surface,border:`1px solid ${t.border}`,
+                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                ⏭️ Frage skippen
+              </button>
+              <button onClick={()=>onPause&&onPause()}
+                style={{padding:'6px 12px',borderRadius:t.radius,
+                  background:t.surface,border:`1px solid ${t.border}`,
+                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                ⏸️ Pause
+              </button>
+              <button onClick={()=>{onToggleDebug&&onToggleDebug(d=>!d);}}
+                style={{padding:'6px 12px',borderRadius:t.radius,
+                  background:debugMode?t.accent+'22':t.surface,
+                  border:`1px solid ${debugMode?t.accent:t.border}`,
+                  color:debugMode?t.accent:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                🐛 Debug {debugMode?'AN':'AUS'}
+              </button>
+              <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
+                style={{padding:'6px 12px',borderRadius:t.radius,
+                  background:t.surface,border:`1px solid ${t.border}`,
+                  color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                {isSoundOn()?'🔊':'🔇'} Sound
+              </button>
+              <button onClick={()=>window.confirm('Spiel wirklich beenden?')&&onEnd&&onEnd()}
+                style={{padding:'6px 12px',borderRadius:t.radius,
+                  background:'none',border:`1px solid ${t.danger}44`,
+                  color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+                🛑 Beenden
+              </button>
+            </div>
+
+            {/* ── Player list ── */}
+            <div>
+              <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>👥 SPIELER</p>
+              {(room.order||[]).filter(id=>id!==myId).map(id=>{
+                const p=room.players?.[id];
+                if(!p) return null;
+                const isAfk=!!(room.afkPlayers||{})[id];
+                return <div key={id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
+                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>
+                    {isAfk?'⏸️ ':''}{p.name}
+                  </span>
+                  <button onClick={async()=>{
+                    await update(ref(db,`rooms/${code}/afkPlayers`),{[id]:isAfk?null:true});
+                  }} style={{background:'none',border:`1px solid ${t.border}`,
+                    borderRadius:t.radius,color:t.muted,fontSize:10,
+                    cursor:'pointer',padding:'1px 6px'}}>
+                    {isAfk?'↩️':'⏸️'}
+                  </button>
+                  {onKick&&<button onClick={()=>onKick(id)}
+                    style={{background:'none',border:`1px solid ${t.danger}33`,
+                      borderRadius:t.radius,color:t.danger,fontSize:10,
+                      cursor:'pointer',padding:'1px 6px'}}>
+                    ✕
+                  </button>}
+                </div>;
+              })}
+            </div>
+
+          </Card>
+        </details>}
         :<Card t={t} style={{textAlign:"center"}}>
           <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
             fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
@@ -2364,7 +2456,7 @@ function BettingScreen({room,myId,t,onBet,code,lang}){
 }
 
 /* ─── RESULTS ─────────────────────────────────────── */
-function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
+function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
   const i=UI[lang]||UI.de;
   const myNewJoker=(room.newJokersThisRound||{})[myId];
   useEffect(()=>{
@@ -2851,7 +2943,7 @@ function TippHistogram({room, t, lang, gold}) {
   </div>;
 }
 
-function DisplayScreen({room, code, t, lang}) {
+function DisplayScreen({room, code, t, lang, onKick=null}) {
   const i = UI[lang]||UI.de;
   const q = room?.q;
   const pl = (room?.order||[]).map(id=>room?.players?.[id]).filter(Boolean);
@@ -3069,6 +3161,16 @@ function DisplayScreen({room, code, t, lang}) {
                   flexShrink:0,minWidth:32,textAlign:'right'}}>
                   {pts}P
                 </div>
+                {/* Kick button - host only */}
+                {onKick&&<button onClick={()=>onKick(p.id)}
+                  title="Spieler kicken"
+                  style={{background:'none',border:'none',color:'#ff3355',
+                    fontSize:12,cursor:'pointer',padding:'2px 4px',
+                    opacity:.5,flexShrink:0}}
+                  onMouseEnter={e=>e.target.style.opacity=1}
+                  onMouseLeave={e=>e.target.style.opacity=.5}>
+                  ✕
+                </button>}
               </div>;
             })}
           </div>
@@ -3422,6 +3524,13 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
         <Avatar name={p.name} t={t}/>
         <span style={{flex:1,fontWeight:p.id===myId?800:400,fontSize:15,textAlign:"left"}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:11}}> (Du)</span>}</span>
         <span style={{fontFamily:t.fontTitle,fontSize:36,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span>
+        {onKick&&p.id!==myId&&<button onClick={()=>onKick(p.id)}
+          title="Spieler kicken"
+          style={{background:'none',border:'none',color:t.danger,
+            fontSize:13,cursor:'pointer',padding:'4px 6px',opacity:.4,
+            marginLeft:4}}
+          onMouseEnter={e=>e.target.style.opacity=1}
+          onMouseLeave={e=>e.target.style.opacity=.4}>✕</button>}
       </div>)}
     </Card>
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
@@ -3535,7 +3644,7 @@ export function DisplayApp() {
     <p style={{fontSize:18,color:'#6e5e54'}}>Verbinde mit Raum #{roomCode}...</p>
   </div>;
 
-  return <ErrorBoundary><DisplayScreen room={room} code={roomCode} t={t} lang={lang}/></ErrorBoundary>;
+  return <ErrorBoundary><DisplayScreen room={room} code={roomCode} t={t} lang={lang} onKick={async(pid)=>{ if(!window.confirm((room?.players?.[pid]?.name||"?")+" kicken?")) return; const newOrder=(room.order||[]).filter(id=>id!==pid); await update(ref(db),{[`rooms/${roomCode}/order`]:newOrder,[`rooms/${roomCode}/kicked/${pid}`]:true,[`rooms/${roomCode}/players/${pid}`]:null}); }}/></ErrorBoundary>;
 }
 
 /* ─── LOGIN PROMPT ──────────────────────────────── */
@@ -3624,6 +3733,8 @@ function App(){
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[showSteckbrief,setShowSteckbrief]=useState(false);
+  const[gamePaused,setGamePaused]=useState(false);
+  const[soundOn,setSoundOn]=useState(isSoundOn());
   const[showCountdown,setShowCountdown]=useState(false);
   const[isAnonymous,setIsAnonymous]=useState(true);
   const[userName,setUserName]=useState(null);
@@ -3732,12 +3843,21 @@ function App(){
   }
 
   async function handleHost(name,m){
+    // Ensure auth is ready before creating room
+    let uid = auth?.currentUser?.uid;
+    if(!uid){
+      let waited=0;
+      while(!auth?.currentUser?.uid && waited<5000){ await new Promise(r=>setTimeout(r,200)); waited+=200; }
+      uid = auth?.currentUser?.uid;
+      if(!uid){ console.error("Auth timeout in handleHost"); return; }
+      setMyId(uid);
+    }
     setMode(m);
     const c=genCode();
     setCode(c);
     setLoadTxt("Raum wird erstellt...");
     setLoading(true);
-    await dbSet(c,{code:c,mode:m,lang,hostId:myId,players:{[myId]:{id:myId,name}},order:[myId],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
+    await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
@@ -4023,9 +4143,9 @@ function App(){
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={room.hostId===myId} onKick={room.hostId===myId?handleKick:null} onPause={room.hostId===myId?()=>setGamePaused(true):null} onToggleDebug={room.hostId===myId?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={room.hostId===myId?handleEnd:null}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
-    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang}/>}
+    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={room.hostId===myId?handleKick:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName}/>}
 
   </ErrorBoundary>;
