@@ -3021,10 +3021,8 @@ function DisplayScreen({room, code, t, lang}) {
               {i.tipIn}: {q.unit}
             </span>}
           </div>
-          {/* Live ranking grid - sorted by score, shows tip + points */}
-          <div style={{flex:1,display:'grid',
-            gridTemplateColumns:`repeat(${Math.min(Math.ceil(pl.length/2),4)},1fr)`,
-            gap:8,alignContent:'start'}}>
+          {/* Live ranking - one row per player */}
+          <div style={{flex:1,display:'flex',flexDirection:'column',gap:5,overflowY:'auto'}}>
             {sorted.map((p,rank)=>{
               const g=guesses[p.id]; const tipped=g!=null; const timedOut=g===-999999;
               const pts=scores[p.id]||0;
@@ -3032,37 +3030,39 @@ function DisplayScreen({room, code, t, lang}) {
               const sb=(room.steckbriefe||{})[p.id];
               const displayName=sb?.kampfname?`${p.name} aka ${sb.kampfname}`:p.name;
               return <div key={p.id} style={{
+                display:'flex',alignItems:'center',gap:8,
                 background:tipped?gold+'1a':'#1a120a',
                 border:`1.5px solid ${rank===0?gold:tipped?gold+'66':'#2a1a0e'}`,
-                borderRadius:12,padding:'8px 6px',textAlign:'center',
+                borderRadius:10,padding:'7px 10px',
                 transition:'all .6s',
-                animation:tipped?'glow .8s ease':'none',
-                position:'relative'}}>
-                {/* Rank badge */}
-                <div style={{position:'absolute',top:4,left:5,fontSize:10,opacity:.7}}>
+                animation:tipped?'glow .8s ease':'none'}}>
+                {/* Rank */}
+                <span style={{fontSize:14,width:22,flexShrink:0,textAlign:'center'}}>
                   {medals[rank]||`${rank+1}.`}
-                </div>
-                {/* Selfie avatar */}
-                <div style={{width:36,height:36,borderRadius:'50%',overflow:'hidden',
-                  margin:'4px auto 4px',border:`2px solid ${tipped?gold:'#2a1a0e'}`}}>
+                </span>
+                {/* Selfie */}
+                <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',
+                  flexShrink:0,border:`2px solid ${tipped?gold:'#2a1a0e'}`}}>
                   {sb?.selfie
                     ? <img src={sb.selfie} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                     : <div style={{width:'100%',height:'100%',background:'#2a1a0e',
                         display:'flex',alignItems:'center',justifyContent:'center',
-                        fontSize:16,color:tipped?gold:'#6e5e54'}}>
+                        fontSize:14,color:tipped?gold:'#6e5e54'}}>
                         {timedOut?'⏱️':tipped?'✅':'⏳'}
                       </div>}
                 </div>
-                {/* Spitzname */}
-                <div style={{fontSize:11,fontWeight:700,marginBottom:2,
+                {/* Name */}
+                <div style={{flex:1,fontSize:13,fontWeight:700,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
                   color:rank===0?gold:'#f2ece6'}}>{displayName}</div>
                 {/* Tip value */}
-                <div style={{fontSize:14,fontWeight:800,color:gold,marginBottom:1}}>
+                <div style={{fontSize:14,fontWeight:800,color:tipped?gold:'#3a2a1e',
+                  flexShrink:0,minWidth:40,textAlign:'right'}}>
                   {tipped&&!timedOut?fmtNum(g):'—'}
                 </div>
                 {/* Points */}
-                <div style={{fontSize:11,color:'#6e5e54',fontWeight:600}}>
+                <div style={{fontSize:12,color:rank===0?gold:'#6e5e54',fontWeight:700,
+                  flexShrink:0,minWidth:32,textAlign:'right'}}>
                   {pts}P
                 </div>
               </div>;
