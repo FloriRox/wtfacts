@@ -815,7 +815,7 @@ function getQuestion(mode, selectedCats, usedIds){
 
 function calcRound(room){
   const q=room.q, order=room.order||[], guesses=room.guesses||{}, bets=room.bets||{};
-  const doubleActive=!!(room.usedJokerThisRound==="double");
+  const doubleJokers=room.doubleJokers||{};
   const ranked=order
     .filter(id=>guesses[id]!=null&&guesses[id]!==-999999&&!(room.afkPlayers||{})[id])
     .map(id=>({id,diff:Math.abs(guesses[id]-q.a)}))
@@ -854,7 +854,7 @@ function calcRound(room){
       if(diff===0||(!anyExact&&closestIds.includes(id))) pts=pts*2;
       else pts=-1;
     }
-    roundScores[id]=doubleActive?pts*2:pts;
+    roundScores[id]=doubleJokers[id]?pts*2:pts;
   });
   const newScores={...room.scores};
   order.forEach(id=>{newScores[id]=(newScores[id]||0)+(roundScores[id]||0);});
@@ -1027,7 +1027,8 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
     }
 
     if(type === "double"){
-      // calcRound already checks usedJokerThisRound==="double"
+      // Save which player used double joker
+      await dbPatch(code, {doubleJokers: {[myId]: true}});
     }
 
     if(type === "change"){
@@ -2126,7 +2127,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang}){
     <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 ${i.question} ${(room.qIdx||0)+1}`:i.question+" "+((room.qIdx||0)+1)}</Pill>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {room.usedJokerThisRound==="double"&&<Pill t={t} color={t.gold}>{lang==="es"?"2× PUNTOS":lang==="en"?"2× POINTS":"2× PUNKTE"}</Pill>}
+        {(room.doubleJokers||{})[myId]&&<Pill t={t} color={t.gold}>{lang==="es"?"2× PUNTOS":lang==="en"?"2× POINTS":"2× PUNKTE"}</Pill>}
         {/* Player chips inline */}
         {pl.map(p=>{
           const done=guesses[p.id]!=null;
@@ -3795,7 +3796,7 @@ function App(){
       platform,
       categories:selectedCats.slice(0,5),
     }).catch(()=>{});
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
   async function handleGuess(val, isAllIn=false){
@@ -3935,7 +3936,7 @@ function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{},doubleJokers:{}});
   }
 
   async function handleKick(playerId){
