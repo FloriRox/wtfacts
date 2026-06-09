@@ -41,19 +41,41 @@ const PLAYER_HASH=(()=>{
 
 async function saveGlobalStats(roundData,lang){
   try {
-    const {playerId,diff,exact,mode,category}=roundData;
+    const {diff,exact,mode,category,groupSize,allIn,jokerUsed,timeToGuess}=roundData;
     const phash=PLAYER_HASH;
+    const platform=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)?'mobile':'desktop';
+    const browserLang=navigator.language?.slice(0,2)||'de';
     const statRef=ref(db,`globalStats/players/${phash}`);
     const snap=await get(statRef);
-    const prev=snap.val()||{gamesPlayed:0,totalDiff:0,exactHits:0,rounds:0,lang};
+    const prev=snap.val()||{gamesPlayed:0,totalDiff:0,exactHits:0,rounds:0};
     await update(statRef,{
-      gamesPlayed: prev.gamesPlayed+(roundData.isNewGame?1:0),
-      totalDiff:   (prev.totalDiff||0)+diff,
-      exactHits:   (prev.exactHits||0)+(exact?1:0),
-      rounds:      (prev.rounds||0)+1,
-      lang,
-      lastSeen:    Date.now(),
+      gamesPlayed:  prev.gamesPlayed+(roundData.isNewGame?1:0),
+      totalDiff:    (prev.totalDiff||0)+diff,
+      exactHits:    (prev.exactHits||0)+(exact?1:0),
+      rounds:       (prev.rounds||0)+1,
+      allIns:       (prev.allIns||0)+(allIn?1:0),
+      allInHits:    (prev.allInHits||0)+(allIn&&exact?1:0),
+      lang,browserLang,platform,
+      lastSeen:     Date.now(),
     });
+    // Per-category stats
+    if(category){
+      const catRef=ref(db,`globalStats/categories/${category}`);
+      const catSnap=await get(catRef);
+      const cat=catSnap.val()||{plays:0,totalDiff:0,exactHits:0};
+      await update(catRef,{
+        plays:     cat.plays+1,
+        totalDiff: (cat.totalDiff||0)+diff,
+        exactHits: (cat.exactHits||0)+(exact?1:0),
+      });
+    }
+    // Demographics
+    if(groupSize){
+      const grpRef=ref(db,`globalStats/demographics/groupSize/${Math.min(groupSize,10)}`);
+      const grpSnap=await get(grpRef);
+      const grp=grpSnap.val()||{count:0,totalDiff:0};
+      await update(grpRef,{count:grp.count+1, totalDiff:(grp.totalDiff||0)+diff});
+    }
   } catch(e){ console.warn("Stats save failed",e); }
 }
 
@@ -2354,16 +2376,37 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
       const diff=Math.abs(myGuess-room.q.a);
       const exact=diff===0;
       const history=room.history||[];
+      const groupSize=(room.order||[]).length;
+      const isAllInPlayer=!!(room.allIn||{})[myId];
       saveGlobalStats({
         diff,exact,
         isNewGame:history.length<=1,
         mode:room.mode,
+        category:room.q?.category,
+        groupSize,
+        allIn:isAllInPlayer,
       }, room.lang||"de");
-      // Save this guess to global question stats for histogram
+      // Save guess + question stats for histogram & Wisdom of Crowds
       if(room.q?.id){
-        const qref=ref(db,`globalStats/questions/${room.q.id}/guesses`);
+        const qId=room.q.id;
+        const qref=ref(db,`globalStats/questions/${qId}`);
+        const qsnap=await get(qref);
+        const qprev=qsnap.val()||{count:0,sum:0,sumSq:0};
+        const newCount=(qprev.count||0)+1;
+        const newSum=(qprev.sum||0)+myGuess;
+        const newSumSq=(qprev.sumSq||0)+(myGuess*myGuess);
+        const avg=newSum/newCount;
+        // stdDev = sqrt(E[x²] - E[x]²)
+        const variance=Math.max(0,(newSumSq/newCount)-(avg*avg));
+        const stdDev=Math.sqrt(variance);
         const ts=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-        update(qref,{[ts]:myGuess}).catch(()=>{});
+        await update(qref,{
+          count:newCount, sum:newSum, sumSq:newSumSq,
+          avg:Math.round(avg*100)/100,
+          stdDev:Math.round(stdDev*100)/100,
+          answer:room.q.a,
+          [`guesses/${ts}`]:myGuess,
+        });
       }
     }
   },[]);
@@ -2673,12 +2716,19 @@ function TippHistogram({room, t, lang, gold}) {
   const answer = q?.a;
   const [globalVals, setGlobalVals] = React.useState([]);
 
-  // Load global historical answers for this question
+  const [crowdsAvg, setCrowdsAvg] = React.useState(null);
+  const [crowdsCount, setCrowdsCount] = React.useState(0);
+
+  // Load global historical answers + Wisdom of Crowds avg
   React.useEffect(()=>{
     if(!q?.id) return;
     get(ref(db, `globalStats/questions/${q.id}`)).then(snap=>{
       const data = snap.val();
       if(data?.guesses) setGlobalVals(Object.values(data.guesses).map(Number).filter(v=>!isNaN(v)));
+      if(data?.avg && data?.count > 4) {
+        setCrowdsAvg(data.avg);
+        setCrowdsCount(data.count);
+      }
     }).catch(()=>{});
   },[q?.id]);
 
@@ -2761,6 +2811,18 @@ function TippHistogram({room, t, lang, gold}) {
           ✓
         </div>
       </div>
+      {/* Wisdom of Crowds line */}
+      {crowdsAvg!=null&&(()=>{
+        const crowdPct=Math.min(100,Math.max(0,((crowdsAvg-min)/(max-min))*100));
+        return <div style={{position:'absolute',bottom:0,left:`${crowdPct}%`,
+          transform:'translateX(-50%)',width:1.5,height:'100%',
+          background:'#a78bfa',zIndex:2,opacity:.8}}>
+          <div style={{position:'absolute',top:-18,left:'50%',transform:'translateX(-50%)',
+            fontSize:9,color:'#a78bfa',fontWeight:700,whiteSpace:'nowrap'}}>
+            👥
+          </div>
+        </div>;
+      })()}
     </div>
     {/* Legend */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
@@ -2775,6 +2837,9 @@ function TippHistogram({room, t, lang, gold}) {
         <span style={{fontSize:9,color:'#39d98a',display:'flex',alignItems:'center',gap:3}}>
           <div style={{width:2,height:10,background:'#39d98a'}}/> Antwort
         </span>
+        {crowdsAvg!=null&&<span style={{fontSize:9,color:'#a78bfa',display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:2,height:10,background:'#a78bfa'}}/> Schwarmintelligenz ({crowdsCount})
+        </span>}
       </div>
       <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(Math.round(max))}</span>
     </div>
@@ -3720,6 +3785,15 @@ function App(){
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
     setShowCountdown(true);
+    // Track session start
+    const platform=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)?'mobile':'desktop';
+    const sessionRef=ref(db,`globalStats/sessions/${Date.now().toString(36)}`);
+    update(sessionRef,{
+      ts:Date.now(), lang, mode,
+      groupSize:(room?.order||[]).length,
+      platform,
+      categories:selectedCats.slice(0,5),
+    }).catch(()=>{});
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1});
   }
 
