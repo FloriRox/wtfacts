@@ -1867,14 +1867,14 @@ function CategoryScreen({mode,onStart,t,lang}){
 
   return <div style={{
     minHeight:"100vh",display:"flex",flexDirection:"column",
-    maxWidth:520,margin:"0 auto",padding:"12px 16px 90px",
+    maxWidth:520,margin:"0 auto",padding:"8px 16px 80px",
     background:t.bg,
   }}>
-    <Logo t={t} size="sm"/>
+    <Logo t={t} size="xs"/>
 
     {/* Header row */}
     <div style={{display:"flex",alignItems:"center",
-      justifyContent:"space-between",margin:"12px 0 10px"}}>
+      justifyContent:"space-between",margin:"6px 0 6px"}}>
       <div>
         <p style={{fontSize:15,fontWeight:800}}>Kategorien</p>
         <p style={{fontSize:12,color:t.muted}}>{selected.length} von {allCats.length} gewählt</p>
@@ -1890,20 +1890,20 @@ function CategoryScreen({mode,onStart,t,lang}){
     </div>
 
     {/* Category list – compact rows */}
-    <div style={{display:"flex",flexDirection:"column",gap:4,flex:1}}>
+    <div style={{display:"flex",flexDirection:"column",gap:3,flex:1}}>
       {catMeta.map(({name,count,locked})=>{
         const sel=selected.includes(name);
         return <div key={name} onClick={()=>toggle(name,locked)}
           style={{display:"flex",alignItems:"center",gap:10,
-            padding:"8px 12px",borderRadius:t.radius,
+            padding:"5px 10px",borderRadius:t.radius,
             cursor:locked?"not-allowed":"pointer",
             background:sel&&!locked?t.accent+"18":t.surface,
             border:`1.5px solid ${sel&&!locked?t.accent:t.border}`,
             opacity:locked?.4:1,transition:"all .15s"}}>
-          <span style={{fontSize:17,width:22,textAlign:"center",flexShrink:0}}>
+          <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>
             {locked?"🔒":sel?"✅":"⬜"}
           </span>
-          <span style={{flex:1,fontSize:13,fontWeight:600,
+          <span style={{flex:1,fontSize:12,fontWeight:600,
             color:sel&&!locked?t.accent:locked?t.muted:t.text}}>
             {name}
           </span>
