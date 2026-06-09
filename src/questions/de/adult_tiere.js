@@ -227,7 +227,7 @@ export default [
   {q:"Wie viele Stunden kann ein Hamster täglich im Rad laufen?",a:8,unit:"Stunden",hint:"Hamster legen im Rad bis zu 20 km pro Nacht zurück.",emoji:"🐹"},
   {q:"Wie viele Zentimeter weit kann ein Kugelfisch aufblähen in cm Durchmesser?",a:90,unit:"cm",hint:"Kugelfische saugen Wasser an um sich aufzublähen.",emoji:"🐡"},
   {q:"Wie viele Liter Milch trinkt ein Elefantenbaby täglich?",a:10,unit:"Liter",hint:"Elefantenbabys werden 2-3 Jahre gestillt.",emoji:"🐘"},
-  {q:"Wie viele Milligramm wiegt ein kleines Spinnennetz?",a:1,unit:"Milligramm",hint:"0,5-2mg – leichter als eine Ameise aber stärker als Stahl.,hint:"Unglaublich leicht aber stärker als Stahl.",emoji:"🕸️"},
+  {q:"Wie viele Milligramm wiegt ein kleines Spinnennetz?",a:1,unit:"Milligramm",hint:"0,5-2mg – leichter als eine Ameise aber stärker als Stahl.",emoji:"🕸️"},
   {q:"Wie lang ist die Trächtigkeit eines Dachses in Wochen?",a:7,unit:"Wochen",hint:"Dachse legen die Trächtigkeit auf günstige Jahreszeiten aus.",emoji:"🦡"},
   {q:"Wie viele Stunden schläft ein Gorilla täglich?",a:12,unit:"Stunden",hint:"Gorillas bauen täglich neue Schlafnester.",emoji:"🦍"},
   {q:"Wie viele Zentimeter weit kann ein Weißer Hai seine Kiefer vorschnellen?",a:30,unit:"cm",hint:"Der Kiefer schnellt beim Beißen weit vor.",emoji:"🦈"},

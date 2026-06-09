@@ -151,7 +151,7 @@ export default [
   {q:"Wie viele Tonnen Opium produziert der sogenannte Goldene Halbmond?",a:3000,unit:"Tonnen",hint:"Iran, Afghanistan, Pakistan.",emoji:"🌸"},
   {q:"In welchem Jahr wurde Cannabis in Marokko entkriminalisiert?",a:2021,unit:"Jahr",hint:"Medizianlisch erlaubt.",emoji:"🌿"},
   {q:"Wie viele Milliarden Dollar investiert die Pharmaindustrie in Drogenbehandlung?",a:3,unit:"Milliarden Dollar",hint:"Viel weniger als in neue Drogen.",emoji:"💊"},
-  {q:"Wie viele Kilogramm Cannabis müsste man auf einmal rauchen um zu sterben?",a:680,unit:"kg",hint:"Theoretisch ~680kg auf einmal – praktisch unmöglich.,hint:"Praktisch unmöglich zu überdosieren.",emoji:"🌿"},
+  {q:"Wie viele Kilogramm Cannabis müsste man auf einmal rauchen um zu sterben?",a:680,unit:"kg",hint:"Theoretisch ~680kg auf einmal – praktisch unmöglich zu überdosieren.",emoji:"🌿"},
   {q:"In welchem Jahr wurde Crack-Kokain populär in US-Innenstädten?",a:1985,unit:"Jahr",hint:"Crack-Epidemic in den 80ern.",emoji:"🇺🇸"},
   {q:"Wie viele Stunden dauert der Kater nach starkem Alkoholkonsum?",a:24,unit:"Stunden",hint:"Hangover bis zu 24 Stunden.",emoji:"🤢"},
   {q:"Wie viele Milliarden Dollar Jahresumsatz macht Altria (Marlboro-Hersteller)?",a:25,unit:"Milliarden Dollar",hint:"Philip Morris International.",emoji:"🚬"},
