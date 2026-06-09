@@ -2388,25 +2388,26 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang}){
       }, room.lang||"de");
       // Save guess + question stats for histogram & Wisdom of Crowds
       if(room.q?.id){
-        const qId=room.q.id;
-        const qref=ref(db,`globalStats/questions/${qId}`);
-        const qsnap=await get(qref);
-        const qprev=qsnap.val()||{count:0,sum:0,sumSq:0};
-        const newCount=(qprev.count||0)+1;
-        const newSum=(qprev.sum||0)+myGuess;
-        const newSumSq=(qprev.sumSq||0)+(myGuess*myGuess);
-        const avg=newSum/newCount;
-        // stdDev = sqrt(E[x²] - E[x]²)
-        const variance=Math.max(0,(newSumSq/newCount)-(avg*avg));
-        const stdDev=Math.sqrt(variance);
-        const ts=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-        await update(qref,{
-          count:newCount, sum:newSum, sumSq:newSumSq,
-          avg:Math.round(avg*100)/100,
-          stdDev:Math.round(stdDev*100)/100,
-          answer:room.q.a,
-          [`guesses/${ts}`]:myGuess,
-        });
+        (async()=>{
+          const qId=room.q.id;
+          const qref=ref(db,`globalStats/questions/${qId}`);
+          const qsnap=await get(qref);
+          const qprev=qsnap.val()||{count:0,sum:0,sumSq:0};
+          const newCount=(qprev.count||0)+1;
+          const newSum=(qprev.sum||0)+myGuess;
+          const newSumSq=(qprev.sumSq||0)+(myGuess*myGuess);
+          const avg=newSum/newCount;
+          const variance=Math.max(0,(newSumSq/newCount)-(avg*avg));
+          const stdDev=Math.sqrt(variance);
+          const ts=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+          await update(qref,{
+            count:newCount, sum:newSum, sumSq:newSumSq,
+            avg:Math.round(avg*100)/100,
+            stdDev:Math.round(stdDev*100)/100,
+            answer:room.q.a,
+            [`guesses/${ts}`]:myGuess,
+          });
+        })().catch(()=>{});
       }
     }
   },[]);
