@@ -2310,7 +2310,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
               })}
             </div>
           </Card>
-        </details>}      </div>}
+        </details>}
     </div>
 
     {/* ── FIXED BOTTOM BAR: AFK ── */}
