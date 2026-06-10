@@ -2081,11 +2081,20 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           const done=guesses[p.id]!=null;
           const isAfk=afkPlayers[p.id];
           return <div key={p.id} style={{
-            padding:"3px 9px",borderRadius:100,fontSize:11,fontWeight:700,
+            display:'flex',alignItems:'center',gap:3,
+            padding:"3px 7px",borderRadius:100,fontSize:11,fontWeight:700,
             border:`1px solid ${isAfk?t.gold:done?t.green:t.border}`,
             color:isAfk?t.gold:done?t.green:t.muted,
             background:isAfk?t.gold+"18":done?t.green+"18":t.surface,
-          }}>{p.name[0]} {isAfk?"⏸":done?"✓":"…"}</div>;
+          }}>
+            <span>{p.name[0]} {isAfk?"⏸":done?"✓":"…"}</span>
+            {isHost&&p.id!==myId&&onKick&&<button
+              onClick={e=>{e.stopPropagation();onKick(p.id);}}
+              style={{background:'none',border:'none',color:t.danger,
+                fontSize:10,cursor:'pointer',padding:'0 0 0 2px',lineHeight:1,
+                opacity:.6}}
+              title={`${p.name} kicken`}>✕</button>}
+          </div>;
         })}
       </div>
     </div>
@@ -3072,8 +3081,10 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
                 transition:'all .6s',
                 animation:tipped?'glow .8s ease':'none'}}>
                 {/* Rank */}
-                <span style={{fontSize:14,width:22,flexShrink:0,textAlign:'center'}}>
-                  {medals[rank]||`${rank+1}.`}
+                <span style={{fontSize:13,width:22,flexShrink:0,textAlign:'center',
+                  fontWeight:800,fontFamily:'monospace',
+                  color:rank===0?gold:rank===1?'#c0c0c0':rank===2?'#cd7f32':'#6e5e54'}}>
+                  {rank+1}.
                 </span>
                 {/* Selfie */}
                 <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',
@@ -3083,7 +3094,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
                     : <div style={{width:'100%',height:'100%',background:'#2a1a0e',
                         display:'flex',alignItems:'center',justifyContent:'center',
                         fontSize:14,color:tipped?gold:'#6e5e54'}}>
-                        {timedOut?'⏱':tipped?'✅':'⏳'}
+                        {timedOut?'–':tipped?'✓':'?'}
                       </div>}
                 </div>
                 {/* Name */}
@@ -3149,7 +3160,11 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
                 border:`1px solid ${p.diff===0?'#39d98a':isClosest?gold+'66':'#2a1a0e'}`,
                 borderRadius:10,padding:'10px 14px',
                 animation:`slideUp .4s ease ${idx*0.08}s both`}}>
-                <span style={{fontSize:18,width:26,flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+                <span style={{fontSize:14,width:26,flexShrink:0,fontWeight:800,
+                  fontFamily:'monospace',
+                  color:idx===0?gold:idx===1?'#c0c0c0':idx===2?'#cd7f32':'#6e5e54'}}>
+                  {idx+1}.
+                </span>
                 <span style={{flex:1,fontWeight:isClosest?700:400,fontSize:14}}>{p.name}</span>
                 <span style={{fontFamily:t.fontMono,fontSize:13,color:'#6e5e54',minWidth:50,textAlign:'right'}}>
                   {fmtNum(p.guess)}
@@ -4133,15 +4148,15 @@ function App(){
         <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
       </div>}
     {screen==='lobby'&&room&&(room.kicked||{})[myId]&&null}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick} onLeave={room.hostId!==myId?handleLeave:null}/>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={room.hostId===myId} onKick={room.hostId===myId?handleKick:null} onPause={room.hostId===myId?()=>setGamePaused(true):null} onToggleDebug={room.hostId===myId?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={room.hostId===myId?handleEnd:null} onLeave={room.hostId!==myId?handleLeave:null}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?()=>setGamePaused(true):null} onToggleDebug={isHostRef.current?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={isHostRef.current?handleEnd:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
-    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={room.hostId===myId?handleKick:null} onLeave={room.hostId!==myId?handleLeave:null}/>}
+    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
 
   </ErrorBoundary>;
