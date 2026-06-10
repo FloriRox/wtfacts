@@ -1941,21 +1941,54 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
   const link=inviteUrl(code);
   function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); }
   function addPlayer(){ if(navigator.share){navigator.share({title:'EstiMates',text:'Komm mitspielen!',url:link});}else{copy();} }
-  return <div style={{...page,animation:"fu .3s ease both"}}>
+  return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh'}}>
     <Logo t={t} size="sm"/>
-    <div style={{marginTop:18,marginBottom:6}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?34:40,marginBottom:6}}>{i.lobbyWaiting}</h2>
-    <div style={{...row,marginBottom:16}}>
-      <span style={{fontFamily:t.fontMono,fontSize:28,letterSpacing:5,color:t.accent,fontWeight:800}}>{code}</span>
-      <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
+    <div style={{marginTop:12,marginBottom:4}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:8}}>{i.lobbyWaiting}</h2>
+
+    {/* ── Code + Invite ── kompakt oben */}
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+      <span style={{fontFamily:t.fontMono,fontSize:24,letterSpacing:4,color:t.accent,fontWeight:800}}>{code}</span>
+      <button onClick={copy} style={{padding:'5px 10px',borderRadius:t.radius,background:t.surface,
+        border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
+        {copied?"✓ Kopiert!":"📋 Link"}
+      </button>
+      <button onClick={addPlayer} style={{padding:'5px 10px',borderRadius:t.radius,background:t.accent,
+        border:'none',color:'#fff',fontSize:12,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+        ➕ Einladen
+      </button>
     </div>
-    <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.7,marginBottom:12}}>{i.players} ({pl.length})</p>
-      <div style={col}>
+    <QRCode url={link} t={t} lang={lang}/>
+
+    {/* ── Buttons Host ── */}
+    {isHost&&<div style={{display:'flex',gap:8,marginBottom:8,marginTop:4}}>
+      <button onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
+        style={{flex:1,padding:'8px',borderRadius:t.radius,background:t.surface,
+          border:`1.5px solid ${t.gold}88`,color:t.gold,fontSize:13,cursor:'pointer',
+          fontFamily:t.fontBody,fontWeight:600}}>
+        📺 {i.displayMode}
+      </button>
+      <button onClick={onGoJokerSetup}
+        style={{flex:1,padding:'8px',borderRadius:t.radius,background:t.accent,
+          border:'none',color:'#fff',fontSize:13,cursor:'pointer',
+          fontFamily:t.fontBody,fontWeight:700}}>
+        {i.continueBtn} →
+      </button>
+    </div>}
+    {!isHost&&<p style={{textAlign:"center",color:t.muted,fontSize:13,marginBottom:8,
+      animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
+
+    {/* ── Spielerliste scrollbar unten ── */}
+    <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column',minHeight:0}}>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.7,margin:'4px 0 8px'}}>
+        {i.players} ({pl.length})
+      </p>
+      <div style={{overflowY:'auto',flex:1,display:'flex',flexDirection:'column',gap:6}}>
         {pl.map(p=>(
-          <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
+          <div key={p.id} style={{...row,padding:"8px 12px",background:t.surface,borderRadius:t.radius,
+            border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`,flexShrink:0}}>
             <Avatar name={p.name} t={t}/>
-            <span style={{flex:1,fontWeight:600}}>{p.name}</span>
+            <span style={{flex:1,fontWeight:600,fontSize:14}}>{p.name}</span>
             {p.id===room.hostId&&<Pill t={t} color={t.gold}>{i.hostLabel}</Pill>}
             {isHost&&p.id!==myId&&onKick&&<button onClick={()=>onKick(p.id)}
               style={{padding:'3px 10px',borderRadius:t.radius,border:`1px solid ${t.danger}44`,
@@ -1966,17 +1999,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
           </div>
         ))}
       </div>
-      <QRCode url={link} t={t} lang={lang}/>
-    </Card>
-    <Btn t={t} full onClick={addPlayer} style={{marginBottom:8}}>➕ Spieler einladen</Btn>
-    {isHost&&<Btn t={t} full variant="secondary"
-      onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
-      style={{marginBottom:8,borderColor:t.gold+'88',color:t.gold}}>
-      📺 {i.displayMode}
-    </Btn>}
-    {isHost
-      ?<Btn t={t} onClick={onGoJokerSetup} full>{i.continueBtn}</Btn>
-      :<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
+    </div>
   </div>;
 }
 
