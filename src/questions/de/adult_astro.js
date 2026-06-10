@@ -121,7 +121,7 @@ export default [
   {q:"Wie viele Meter/Sekunde² beträgt die Schwerkraft auf Jupiter?",a:24.8,unit:"m/s²",hint:"2,5x stärker als auf der Erde.",emoji:"🪐"},
   {q:"Wie viele km tief ist der Marianengraben?",a:11034,unit:"Meter",hint:"Der tiefste Punkt der Weltmeere.",emoji:"🌊"},
   {q:"Wie viele Billionen Sonnenmassen wiegt unsere Milchstraße?",a:2,unit:"Billionen Sonnenmassen",hint:"Eine Billion Sonnenmassen.",emoji:"🌌"},
-  {q:"Wie viele Femtometer groß ist ein Proton?",a:0.85,unit:"Femtometer",hint:"0,85 Femtometer – ein Femtometer ist ein Millionstel Nanometer.,hint:"Unvorstellbar klein – Quantenphysik.",emoji:"⚛️"},
+  {q:"Wie viele Femtometer groß ist ein Proton?",a:0.85,unit:"Femtometer",hint:"0,85 Femtometer – ein Femtometer ist ein Millionstel Nanometer.",emoji:"⚛️"},
   {q:"Wie viele Grad Celsius ist es an den Polen des Mars?",a:-125,unit:"°C",hint:"CO₂-Eis bildet sich an den Polkappen.",emoji:"🔴"},
   {q:"Wie viele km/h schnell ist der schnellste Jet-Flugzeug (SR-71)?",a:3530,unit:"km/h",hint:"Mach 3,3 – noch nie abgeschossen (Stand ~2024).",emoji:"✈️"},
   {q:"Wie viel Mal dichter ist der Sonnenkern als Wasser?",a:150,unit:"Mal",hint:"G/cm³ – das ist um ein Vielfaches dichter als Wasser.",emoji:"☀️"},
