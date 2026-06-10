@@ -3323,7 +3323,7 @@ function BugReportButton({t, lang, question}) {
 }
 
 /* ─── FINAL ───────────────────────────────────────── */
-function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null,userName=null}){
+function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=null,userName=null,onKick=null}){
   const i=UI[lang]||UI.de;
   const[globalRank,setGlobalRank]=useState(null);
   const[showCamera,setShowCamera]=useState(false);
@@ -3744,7 +3744,7 @@ function App(){
       setRoom({...r});
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
-      const uid = auth?.currentUser?.uid || myId;
+      const currentUid = auth?.currentUser?.uid || myId;
       // Non-host players wait in lobby during setup phases
       if(map[r.phase]){
         if(!isHostRef.current && (r.phase==="jokerSetup"||r.phase==="categories")){
@@ -3755,7 +3755,7 @@ function App(){
       }
       // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
       const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
-      if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]&&(r.phase==="lobby"||r.phase==="jokerSetup"||r.phase==="categories"||r.phase==="question")){
+      if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[currentUid]&&(r.phase==="lobby"||r.phase==="jokerSetup"||r.phase==="categories"||r.phase==="question")){
         showSteckbriefShownRef.current=true;
         setShowSteckbrief(true);
       }
@@ -4090,7 +4090,7 @@ function App(){
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={room.hostId===myId} onKick={room.hostId===myId?handleKick:null} onPause={room.hostId===myId?()=>setGamePaused(true):null} onToggleDebug={room.hostId===myId?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={room.hostId===myId?handleEnd:null}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={room.hostId===myId?handleKick:null}/>}
-    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName}/>}
+    {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
 
   </ErrorBoundary>;
 }
