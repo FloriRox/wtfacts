@@ -2973,10 +2973,15 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
     {/* Header */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-      padding:'12px 28px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
-      <div style={{display:'flex',alignItems:'baseline',gap:3}}>
-        <span style={{fontSize:22,fontWeight:900,color:accent}}>Esti</span>
-        <span style={{fontSize:22,fontWeight:900,color:gold}}>Mates</span>
+      padding:'14px 28px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
+      <div style={{display:'flex',flexDirection:'column',gap:2}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:4}}>
+          <span style={{fontSize:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
+          <span style={{fontSize:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
+        </div>
+        <span style={{fontSize:11,color:'#6e5e54',letterSpacing:.5,fontStyle:'italic'}}>
+          the pocket party game to prove your mates wrong!
+        </span>
       </div>
       {phase==='question'&&<div style={{display:'flex',alignItems:'center',gap:10}}>
         <div style={{width:140,height:5,background:'#2a1a0e',borderRadius:3,overflow:'hidden'}}>
