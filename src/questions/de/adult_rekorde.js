@@ -192,7 +192,7 @@ export default [
   {q:"Wie viele Stunden hielt ein Team ein Wasserball-Spiel ohne Unterbrechung?",a:24,unit:"Stunden",hint:"24h Wasserball am Stück.",emoji:"🤽"},
   {q:"Wie viele Stunden boxte ein Mann ununterbrochen gegen einen Sandsack?",a:114,unit:"Stunden",hint:"Fast 5 Tage nonstop boxen.",emoji:"🥊"},
   {q:"Wie viele Meter lang war der längste selbst gemalte Bildstreifen?",a:2000,unit:"Meter",hint:"Ein 2 km langes Bild (Stand ~2024).",emoji:"🎨"},
-  {q:"Wie viele kg Brot backte der Rekordhalter in einer Stunde?",a:100,unit:"Brote",hint:"Laib Brot in 60 Minuten (Stand ~2024).",emoji:"🍞"},
+  {q:"Wie viele Brote backte der Rekordhalter in einer Stunde?",a:100,unit:"Brote",hint:"100 Laib Brot in 60 Minuten (Stand ~2024).",emoji:"🍞"},
   {q:"Wie viele Stunden fuhr ein Mensch auf einem Einrad als Rekord?",a:105,unit:"Stunden",hint:"Über 4 Tage auf einem Einrad (Stand ~2024).",emoji:"🎪"},
   {q:"Wie viele Meter weit schoss der Weltrekord-Pfeilbogen?",a:1410,unit:"Meter",hint:"Sultan Selim der Erste schoss 1,41 km weit (Stand ~2024).",emoji:"🏹"},
   {q:"Wie viele Schritte machte der schnellste 100m-Sprint?",a:41,unit:"Schritte",hint:"Usain Bolt brauchte nur 41 Schritte für 100m (Stand ~2024).",emoji:"⚡"},
