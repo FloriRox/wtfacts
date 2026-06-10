@@ -848,11 +848,12 @@ function calcRound(room){
     // Bet counts if the player picked ANY of the tied closest/farthest
     if(closestIds.includes(bet.closest)) pts+=1;
     if(farthestIds.includes(bet.farthest)) pts+=1;
-    // All-In: richtig → 2× (zusätzlich zu double), falsch → -1
+    // All-In: richtig (nächster oder exakt) → 2×, falsch → -1
     const isAllIn = !!(room.allIn||{})[id];
     if(isAllIn){
-      if(diff===0||(!anyExact&&closestIds.includes(id))) pts=pts*2;
-      else pts=-1;
+      const isWinner = diff===0 || (!anyExact && closestIds.includes(id));
+      if(isWinner) pts = pts*2;
+      else pts = Math.min(pts-1, -1); // immer mindestens -1
     }
     roundScores[id]=doubleJokers[id]?pts*2:pts;
   });
@@ -2121,7 +2122,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     <div style={{padding:"8px 16px 0",flex:1,display:"flex",flexDirection:"column",gap:8}}>
       <Card t={t} glow>
         <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
-          <span style={{fontSize:28}}>{q.emoji||"❓"}</span>
+          <span style={{fontSize:28,fontFamily:"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>{(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}</span>
           <div style={{flex:1}}>
             <Pill t={t} color={t.muted} style={{marginBottom:6}}>{q.cat}</Pill>
             <p style={{fontSize:t.id==="kids"?18:16,lineHeight:1.55,
@@ -2453,7 +2454,10 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null,onLeave=null})
   // myNewJoker declared above in useEffect
   return <div style={page}>
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
-      <div style={{fontSize:30,marginBottom:6}}>{q.emoji||"❓"}</div>
+      <div style={{fontSize:28,marginBottom:6,lineHeight:1,
+        fontFamily:"'Twemoji Mozilla','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>
+        {(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}
+      </div>
       <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
         <Pill t={t}>{i.reveal}</Pill>
         {room.speedMode&&<Pill t={t} color={t.accent}>⚡ Speed</Pill>}
@@ -2466,10 +2470,12 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null,onLeave=null})
     </div>
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
+              color:i===0?t.gold:i===1?"#c0c0c0":i===2?"#cd7f32":"#6e5e54",
+              flexShrink:0}}>{i+1}.</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
-      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
+      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>–</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
@@ -3914,8 +3920,9 @@ function App(){
   }
 
   async function handleGuess(val, isAllIn=false){
-    await update(ref(db,`rooms/${code}/guesses`),{[myId]:val});
-    if(isAllIn) await update(ref(db,`rooms/${code}/allIn`),{[myId]:true});
+    const updates = {[`rooms/${code}/guesses/${myId}`]: val};
+    if(isAllIn) updates[`rooms/${code}/allIn/${myId}`] = true;
+    await update(ref(db), updates);
   }
 
   // Auto-advance: all guesses in → betting or results
