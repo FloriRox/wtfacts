@@ -1612,6 +1612,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       if(!room){setError(i.roomNotFound);return;}
       // Allow joining mid-game - player will catch up from current state
       if((room.order||[]).length>=50){setError(i.roomFull);return;}
+      localStorage.setItem('em_lastname', name.trim());
       onJoin(c,name.trim(),room.mode,room.lang||"de",{kampfname:spitzname.trim(),fact:funfact.trim()});
     }
   }
@@ -3712,9 +3713,12 @@ function App(){
     const storedName = localStorage.getItem('em_lastname');
     if(urlRoom && storedName) {
       autoJoinedRef.current = true;
-      setCode(urlRoom);
-      listenRoom(urlRoom);
-      setScreen('lobby');
+      // Properly join the room with stored name
+      handleJoin(urlRoom, storedName, 'adult', 'de');
+    } else if(urlRoom && !storedName) {
+      // No name yet – send to HomeScreen with room code pre-filled
+      // HomeScreen already reads the URL param for code, so just ensure we're on home
+      setScreen('home');
     }
   },[myId]);
   const usedIdsRef=useRef([]);
@@ -3803,12 +3807,14 @@ function App(){
       if(!uid){ console.error("Auth timeout in handleJoin"); return; }
       setMyId(uid);
     }
+    localStorage.setItem('em_lastname', name);
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
     setLoadTxt("Betrete Raum...");
     setLoading(true);
     const r=await dbGet(c);
+    if(!r){ setLoading(false); return; } // room gone
     const effectiveId = uid || myId;
     await dbPatch(c,{players:{...r.players,[effectiveId]:{id:effectiveId,name}},order:[...(r.order||[]),effectiveId]});
     listenRoom(c);
