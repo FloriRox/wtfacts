@@ -800,8 +800,8 @@ function getQuestion(mode, selectedCats, usedIds){
   let pool=[];
   available.forEach(cat=>{
     cats[cat].forEach((q,i)=>{
-      const id=`${cat}::${i}`;
-      if(!usedIds.includes(id)) pool.push({...q,id,cat});
+      const id=q.id||`${cat}::${i}`;
+      if(!usedIds.includes(idd)) pool.push({...q,id,cat});
     });
   });
   if(!pool.length){
