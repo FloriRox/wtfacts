@@ -2311,6 +2311,9 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             </div>
           </Card>
         </details>}
+      {/* ── JOKER BAR ── */}
+      {room.enabledJokers?.length>0&&
+        <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
     </div>
 
     {/* ── FIXED BOTTOM BAR: AFK ── */}
