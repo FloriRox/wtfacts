@@ -3707,6 +3707,7 @@ function App(){
   const autoJoinedRef = React.useRef(false);
   const prevRoomRef = useRef(null);
   const showSteckbriefShownRef = useRef(false);
+  const isHostRef = useRef(false);
   useEffect(()=>{
     if(!myId || autoJoinedRef.current) return;
     const urlRoom = new URLSearchParams(location.search).get('room');
@@ -3744,11 +3745,10 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       const uid = auth?.currentUser?.uid || myId;
-      const isHost = uid && r.hostId === uid;
       // Non-host players wait in lobby during setup phases
       if(map[r.phase]){
-        if(!isHost && (r.phase==="jokerSetup"||r.phase==="categories")){
-          setScreen("lobby"); // stay in lobby, show "waiting for host"
+        if(!isHostRef.current && (r.phase==="jokerSetup"||r.phase==="categories")){
+          setScreen("lobby");
         } else {
           setScreen(map[r.phase]);
         }
@@ -3792,6 +3792,7 @@ function App(){
     setCode(c);
     setLoadTxt("Raum wird erstellt...");
     setLoading(true);
+    isHostRef.current = true;
     await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
     listenRoom(c);
     setLoading(false);
@@ -3799,6 +3800,7 @@ function App(){
   }
 
   async function handleJoin(c,name,m,roomLang,steckbriefData=null){
+    isHostRef.current = false;
     // Use auth.currentUser.uid directly - don't wait for React state
     let uid = auth?.currentUser?.uid;
     if(!uid){
