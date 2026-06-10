@@ -1711,22 +1711,20 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       <div style={col}>
         <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
         {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
-        {/* Optional profile fields - shown collapsed */}
-        {(tab==="join"||tab==="host")&&<details style={{width:'100%'}}>
-          <summary style={{fontSize:12,color:t.muted,cursor:'pointer',listStyle:'none',
-            padding:'6px 2px',userSelect:'none',display:'flex',alignItems:'center',gap:6}}>
-            <span>👤</span>
-            <span>{lang==="en"?"Add nickname & fun fact (optional)":lang==="es"?"Añadir apodo (opcional)":"Spitzname & Fun Fact (optional)"}</span>
-          </summary>
-          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
-            <Inp value={spitzname} onChange={setSpitzname}
-              placeholder={lang==="en"?"🏷️ Nickname (e.g. The King)":lang==="es"?"🏷️ Apodo":"🏷️ Spitzname (z.B. Der Schätzkönig)"}
-              t={t}/>
-            <Inp value={funfact} onChange={setFunfact}
-              placeholder={lang==="en"?"🔥 Fun fact about you":lang==="es"?"🔥 Dato curioso":"🔥 Fun Fact (z.B. Ich schlafe stehend)"}
-              t={t}/>
-          </div>
-        </details>}
+        {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
+            <div>
+              <p style={{fontSize:11,color:t.muted,margin:'0 0 4px',paddingLeft:2}}>🏷️ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
+              <Inp value={spitzname} onChange={setSpitzname}
+                placeholder={lang==="en"?"e.g. The Guessing King":lang==="es"?"ej. El Rey Estimador":"z.B. Der Schätzkönig"}
+                t={t}/>
+            </div>
+            <div>
+              <p style={{fontSize:11,color:t.muted,margin:'0 0 4px',paddingLeft:2}}>🔥 {lang==="en"?"Fun fact (optional)":lang==="es"?"Dato curioso (opcional)":"Fun Fact (optional)"}</p>
+              <Inp value={funfact} onChange={setFunfact}
+                placeholder={lang==="en"?"e.g. I sleep standing up":lang==="es"?"ej. Duermo de pie":"z.B. Ich schlafe stehend"}
+                t={t}/>
+            </div>
+          </div>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
