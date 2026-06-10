@@ -167,7 +167,7 @@ export default [
   {id:"sex_164",q:"Wie viele Millionen Menschen leiden weltweit an sexuellen Angststörungen?",a:30,unit:"Millionen",hint:"Sexangst – nicht selten.",emoji:"🔬"},
   {id:"sex_165",q:"Wie viele Minuten pro Woche masturbieren Frauen durchschnittlich laut Studien?",a:30,unit:"Minuten/Woche",hint:"Studien zeigen ca. 30 Min./Woche bei Frauen – Männer etwa doppelt so viel.",emoji:"📊"},
   {id:"sex_166",q:"Wie viele Mikrogramm Östradiol enthält eine normale Verhütungspille täglich?",a:30,unit:"Mikrogramm",hint:"30µg – sehr niedrige Dosis, frühere Pillen hatten 50–150µg.",emoji:"💊"},
-  {id:"sex_167",q:"Wie viele Millionen Menschen sind Teil der Polyamorie-Bewegung?",a:21,unit:"Millionen",hint:"Schätzung in den USA allein.",emoji:"💕"}
+  {id:"sex_167",q:"Wie viele Millionen Menschen sind Teil der Polyamorie-Bewegung?",a:21,unit:"Millionen",hint:"Schätzung in den USA allein.",emoji:"💕"},
   {id:"sex_168",q:"Wie viele Mal pro Woche hat ein durchschnittliches Paar Sex?",a:2,unit:"Mal",hint:"Ca. 2 Mal pro Woche – sinkt mit zunehmendem Alter.",emoji:"❤️"},
   {id:"sex_169",q:"Wie viele Kalorien verbrennt man beim Sex (30 Minuten)?",a:144,unit:"kcal",hint:"Ca. 144 kcal – wie ein 25-minütiger Spaziergang.",emoji:"🔥"},
   {id:"sex_170",q:"Wie viele Prozent der Erwachsenen haben schon einmal einen One-Night-Stand?",a:55,unit:"%",hint:"Ca. 55% – mehr Männer als Frauen laut Studien.",emoji:"🌙"},
