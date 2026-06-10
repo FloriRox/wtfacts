@@ -1767,7 +1767,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
   const[speedMode,setSpeedMode]=useState(false);
   const[timerSecs,setTimerSecs]=useState(30);
-  const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:true);
+  const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:false);
   const[withBets,setWithBets]=useState(false);
   const[betModes,setBetModes]=useState(["best","worst"]);
   const[withSteckbrief,setWithSteckbrief]=useState(false);
@@ -2273,7 +2273,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
         <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
 
       {/* ── DEBUG PANEL ── */}
-      {debugMode&&<div style={{padding:"12px",borderRadius:t.radius,
+      {debugMode&&isHost&&<div style={{padding:"12px",borderRadius:t.radius,
         background:t.surface,border:`2px dashed ${t.accent}`}}>
         <p style={{fontSize:10,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:8}}>
           🔧 DEBUG
@@ -3717,7 +3717,7 @@ function App(){
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
   const[loadTxt,setLoadTxt]=useState("");
-  const[debugMode,setDebugMode]=useState(true);
+  const[debugMode,setDebugMode]=useState(false);
   const[lang,setLangState]=useState(()=>localStorage.getItem("em_lang")||"de");
 
   function setLang(l){
