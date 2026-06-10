@@ -1,7 +1,7 @@
 // 💊 DROGEN & RAUSCH – Erwachsene – 250 Fragen
 export default [
   {id:"drug_001",q:"Wie viele Milliarden Dollar wert ist der globale Drogenmarkt?",a:650,unit:"Milliarden Dollar",hint:"Illegal und legal zusammen.",emoji:"💊"},
-  {id:"drug_002",q:"Wie viele Gramm Cannabis sind in Deutschland seit 2024 legal zu besitzen?",a:25,unit:"Gramm",hint:"Ab 18 Jahren – Teillegalisierung.",emoji:"🌿"},
+  {id:"drug_002",q:"Wie viele Gramm Cannabis darf man in Deutschland seit 2024 in der Öffentlichkeit mitführen?",a:25,unit:"Gramm",hint:"25g in der Öffentlichkeit, 50g zu Hause – Ab 18 Jahren, Teillegalisierung.",emoji:"🌿"},
   {id:"drug_003",q:"Wie viele Milligramm Koffein enthält eine Tasse Kaffee?",a:80,unit:"mg",hint:"Espresso hat etwas mehr – ca. 80-100mg.",emoji:"☕"},
   {id:"drug_004",q:"In welchem Jahr wurde Heroin von Bayer als Hustenmittel verkauft?",a:1898,unit:"Jahr",hint:"Bayer nannte es 'heroisch' wirksam.",emoji:"💊"},
   {id:"drug_005",q:"Wie viele Milliarden Dollar verdiente das Medellín-Kartell auf seinem Höhepunkt pro Jahr?",a:4,unit:"Milliarden Dollar",hint:"Pablo Escobar – zeitweise reichster Verbrecher.",emoji:"🇨🇴"},
