@@ -3165,6 +3165,19 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
       <div style={{flex:'0 0 42%',padding:'16px 20px',display:'flex',flexDirection:'column',
         gap:0,overflow:'hidden',minWidth:0}}>
 
+        {/* ── QR Code – always visible ── */}
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,
+          background:'#1a120a',borderRadius:12,padding:'10px 14px',
+          border:'1px solid #2a1a0e',flexShrink:0}}>
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
+            alt="QR" style={{width:80,height:80,borderRadius:6,flexShrink:0}}/>
+          <div>
+            <p style={{fontSize:10,color:'#6e5e54',fontWeight:700,letterSpacing:1,margin:'0 0 4px'}}>📱 BEITRETEN</p>
+            <p style={{fontSize:22,fontFamily:'monospace',letterSpacing:4,color:'#e8360a',fontWeight:800,margin:0}}>{room.code}</p>
+            <p style={{fontSize:10,color:'#6e5e54',margin:'4px 0 0'}}>{i.dispScanJoin}</p>
+          </div>
+        </div>
+
 
 
         {/* ── Live Statistiken ── */}
@@ -3451,13 +3464,6 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
           onMouseEnter={e=>e.target.style.opacity=1}
           onMouseLeave={e=>e.target.style.opacity=.4}>✕</button>}
       </div>)}
-    </Card>
-    {/* ── QR Code – always visible in right panel ── */}
-    <Card t={t} style={{textAlign:'center',marginBottom:14,padding:'12px'}}>
-      <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>📱 BEITRETEN</p>
-      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a0e07&color=e8360a`}
-        alt="QR" style={{width:90,height:90,borderRadius:6}}/>
-      <p style={{fontSize:16,fontFamily:'monospace',letterSpacing:3,color:'#e8360a',fontWeight:800,margin:'6px 0 0'}}>{room.code}</p>
     </Card>
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:14}}>{i.stats}</p>
