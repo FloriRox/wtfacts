@@ -956,13 +956,14 @@ function Logo({t,size="lg"}){
 function LoadingOverlay({t,text}){
   return <div style={{position:"fixed",inset:0,background:t.bg+"ee",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>{t.id==="kids"?<div style={{fontSize:48,animation:"bop .6s ease infinite"}}>🤔</div>:<Spinner t={t}/>}<p style={{color:t.muted,fontSize:15}}>{text}</p></div>;
 }
-function QRCode({url,t,lang}){
+function QRCode({url,t,lang,size=130}){
   const bg=t.id==="adult"?"211c18":"ffffff";
   const fg=t.id==="adult"?"e8360a":"ff5c5c";
   const label=(UI[lang]||UI.de).scanJoin;
-  return <div style={{textAlign:"center",marginTop:18}}>
-    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:10}}>{(UI[lang]||UI.de).inviteQr}</p>
-    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:130,height:130,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
+  const px=size;
+  return <div style={{textAlign:"center",marginTop:10}}>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>{(UI[lang]||UI.de).inviteQr}</p>
+    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=${px*2}x${px*2}&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:px,height:px,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
     <p style={{fontSize:12,color:t.muted,marginTop:7}}>{label}</p>
   </div>;
 }
@@ -1946,8 +1947,8 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
     <div style={{marginTop:12,marginBottom:4}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:8}}>{i.lobbyWaiting}</h2>
 
-    {/* ── Code + Invite ── kompakt oben */}
-    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+    {/* ── Code + Invite + Gastgeber ── kompakt oben */}
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,flexWrap:'wrap'}}>
       <span style={{fontFamily:t.fontMono,fontSize:24,letterSpacing:4,color:t.accent,fontWeight:800}}>{code}</span>
       <button onClick={copy} style={{padding:'5px 10px',borderRadius:t.radius,background:t.surface,
         border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
@@ -1957,26 +1958,22 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
         border:'none',color:'#fff',fontSize:12,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
         ➕ Einladen
       </button>
-    </div>
-    <QRCode url={link} t={t} lang={lang}/>
-
-    {/* ── Buttons Host ── */}
-    {isHost&&<div style={{display:'flex',gap:8,marginBottom:8,marginTop:4}}>
-      <button onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
-        style={{flex:1,padding:'8px',borderRadius:t.radius,background:t.surface,
-          border:`1.5px solid ${t.gold}88`,color:t.gold,fontSize:13,cursor:'pointer',
+      {isHost&&<button onClick={()=>window.open(`${window.location.origin}?mode=display&room=${code}`,'_blank')}
+        style={{padding:'5px 10px',borderRadius:t.radius,background:t.surface,
+          border:`1px solid ${t.gold}88`,color:t.gold,fontSize:12,cursor:'pointer',
           fontFamily:t.fontBody,fontWeight:600}}>
-        📺 {i.displayMode}
-      </button>
-      <button onClick={onGoJokerSetup}
-        style={{flex:1,padding:'8px',borderRadius:t.radius,background:t.accent,
-          border:'none',color:'#fff',fontSize:13,cursor:'pointer',
-          fontFamily:t.fontBody,fontWeight:700}}>
-        {i.continueBtn} →
-      </button>
-    </div>}
-    {!isHost&&<p style={{textAlign:"center",color:t.muted,fontSize:13,marginBottom:8,
-      animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
+        📺 Beamer
+      </button>}
+    </div>
+
+    {/* ── QR Code größer ── */}
+    <QRCode url={link} t={t} lang={lang} size={220}/>
+
+    {/* ── Weiter Button ── */}
+    {isHost
+      ?<Btn t={t} onClick={onGoJokerSetup} full style={{marginTop:8}}>{i.continueBtn}</Btn>
+      :<p style={{textAlign:"center",color:t.muted,fontSize:13,marginTop:8,marginBottom:0,
+        animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
 
     {/* ── Spielerliste scrollbar unten ── */}
     <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column',minHeight:0}}>
@@ -3003,14 +3000,25 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
         {/* LOBBY */}
         {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&
           <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
-            justifyContent:'center',gap:20}}>
-            <div style={{fontSize:48,animation:'pulse2 2s ease infinite'}}>🎮</div>
-            <p style={{fontSize:26,fontWeight:900,margin:0}}>{i.dispReady}</p>
-            <p style={{fontSize:16,color:'#6e5e54',margin:0}}>{i.dispHostPrep}</p>
-            <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginTop:8}}>
+            justifyContent:'center',gap:16}}>
+            <div style={{fontSize:40,animation:'pulse2 2s ease infinite'}}>🎮</div>
+            <p style={{fontSize:24,fontWeight:900,margin:0}}>{i.dispReady}</p>
+            <p style={{fontSize:14,color:'#6e5e54',margin:0}}>{i.dispHostPrep}</p>
+            {/* QR Code für Beamer */}
+            <div style={{background:'#1a120a',borderRadius:16,padding:16,
+              border:'1.5px solid #2a1a0e',textAlign:'center'}}>
+              <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 10px'}}>
+                📱 BEITRETEN
+              </p>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
+                alt="QR" style={{width:160,height:160,borderRadius:8}}/>
+              <p style={{fontSize:20,fontFamily:'monospace',letterSpacing:4,
+                color:'#e8360a',fontWeight:800,margin:'10px 0 0'}}>{room.code}</p>
+            </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>
               {pl.map((p,idx)=><div key={p.id} style={{background:'#1a120a',
-                border:'1.5px solid #2a1a0e',borderRadius:12,padding:'8px 16px',
-                fontSize:14,fontWeight:600,animation:`flyIn .4s ease ${idx*0.1}s both`}}>
+                border:'1.5px solid #2a1a0e',borderRadius:12,padding:'6px 14px',
+                fontSize:13,fontWeight:600,animation:`flyIn .4s ease ${idx*0.1}s both`}}>
                 👤 {p.name}
               </div>)}
             </div>
