@@ -132,12 +132,12 @@ const UI = {
     endGame:"Beenden",waitNext:"Warte auf den Spielleiter 🙂",
     finalStand:"ENDSTAND",stats:"STATISTIKEN",
     shareBtn:"📤 Ergebnis teilen / speichern",playAgain:"🔄 Nochmal spielen!",
-    afkAway:"⏸️ Kurz weg",afkBack:"▶️ Ich bin wieder da!",
+    afkAway:"⏸ Kurz weg",afkBack:"▶ Ich bin wieder da!",
     jokerWon:"Joker gewonnen!",jokers:"JOKER",jokerUsed:"diese Runde verbraucht",
     speedMode:"⚡ SPEED-MODUS",noTimer:"🐢 Kein Timer",speed:"⚡ Speed!",
     jokerSection:"🃏 JOKER",jokerOn:"An",jokerOff:"Aus",
     jokerHowText:"🎯 Punktlandung → Joker · 🥇 Nächster (25%) · 🎲 Wette (25%) · 💀 3× Letzter → Trost",
-    debugMode:"🛠️ Debug-Modus",soundLabel:"🔊 Sound",
+    debugMode:"🔧 Debug-Modus",soundLabel:"🔊 Sound",
     sabotageWho:"💣 Wen sabotieren?",sabotageBtn:"💣 Sabotieren!",
     cancelBtn:"Abbrechen",betKing:"Wettkönig",bestGuesser:"Bester Schätzer",
     worstGuesser:"Schlechtester Schätzer",exactHits:"Punktlandungen",
@@ -171,7 +171,7 @@ const UI = {
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
-    dailyChallenge:"🗓️ Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
+    dailyChallenge:"📅 Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -198,12 +198,12 @@ const UI = {
     endGame:"End Game",waitNext:"Waiting for the host 🙂",
     finalStand:"FINAL STANDINGS",stats:"STATISTICS",
     shareBtn:"📤 Share / save result",playAgain:"🔄 Play again!",
-    afkAway:"⏸️ Taking a break",afkBack:"▶️ I\'m back!",
+    afkAway:"⏸ Taking a break",afkBack:"▶ I\'m back!",
     jokerWon:"Joker won!",jokers:"JOKERS",jokerUsed:"used this round",
     speedMode:"⚡ SPEED MODE",noTimer:"🐢 No Timer",speed:"⚡ Speed!",
     jokerSection:"🃏 JOKERS",jokerOn:"On",jokerOff:"Off",
     jokerHowText:"🎯 Exact hit → Joker · 🥇 Closest (25%) · 🎲 Correct bet (25%) · 💀 3× Last → Consolation",
-    debugMode:"🛠️ Debug Mode",soundLabel:"🔊 Sound",
+    debugMode:"🔧 Debug Mode",soundLabel:"🔊 Sound",
     sabotageWho:"💣 Who to sabotage?",sabotageBtn:"💣 Sabotage!",
     cancelBtn:"Cancel",betKing:"Bet King",bestGuesser:"Best Guesser",
     worstGuesser:"Worst Guesser",exactHits:"Exact Hits",
@@ -237,7 +237,7 @@ const UI = {
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
-    dailyChallenge:"🗓️ Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
+    dailyChallenge:"📅 Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -264,12 +264,12 @@ const UI = {
     endGame:"Terminar",waitNext:"Esperando al anfitrión 🙂",
     finalStand:"CLASIFICACIÓN FINAL",stats:"ESTADÍSTICAS",
     shareBtn:"📤 Compartir / guardar resultado",playAgain:"🔄 ¡Jugar de nuevo!",
-    afkAway:"⏸️ Un momento",afkBack:"▶️ ¡Ya estoy!",
+    afkAway:"⏸ Un momento",afkBack:"▶ ¡Ya estoy!",
     jokerWon:"¡Comodín ganado!",jokers:"COMODINES",jokerUsed:"usado esta ronda",
     speedMode:"⚡ MODO RÁPIDO",noTimer:"🐢 Sin tiempo",speed:"⚡ ¡Rápido!",
     jokerSection:"🃏 COMODINES",jokerOn:"Sí",jokerOff:"No",
     jokerHowText:"🎯 Acierto exacto → Comodín · 🥇 Más cerca (25%) · 🎲 Apuesta (25%) · 💀 3× Último → Consuelo",
-    debugMode:"🛠️ Modo Debug",soundLabel:"🔊 Sonido",
+    debugMode:"🔧 Modo Debug",soundLabel:"🔊 Sonido",
     sabotageWho:"💣 ¿A quién sabotear?",sabotageBtn:"💣 ¡Sabotear!",
     cancelBtn:"Cancelar",betKing:"Rey de apuestas",bestGuesser:"Mejor estimador",
     worstGuesser:"Peor estimador",exactHits:"Aciertos exactos",
@@ -303,7 +303,7 @@ const UI = {
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
-    dailyChallenge:"🗓️ Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
+    dailyChallenge:"📅 Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -337,7 +337,7 @@ const JOKER_NAMES = {
   },
 };
 function getJokerDef(id, lang) {
-  const icons = {skip:"⏭️",hint:"🔍",double:"🎯",sabotage:"💣",change:"🔄",extra:"📊"};
+  const icons = {skip:"⏭",hint:"🔍",double:"🎯",sabotage:"💣",change:"🔄",extra:"📊"};
   const names = (JOKER_NAMES[lang]||JOKER_NAMES.de)[id]||{name:id,desc:""};
   return {id, icon:icons[id]||"🃏", ...names};
 }
@@ -1357,7 +1357,7 @@ function OnboardingScreen({t, lang, onDone}) {
       {step===totalSlides-1&&i.disclaimer&&<p style={{
         fontSize:11,color:t.muted,textAlign:'center',
         maxWidth:340,lineHeight:1.5,marginTop:16,opacity:.7}}>
-        ⚠️ {i.disclaimer}
+        ⚠ {i.disclaimer}
       </p>}
     </div>;
   }
@@ -1436,7 +1436,7 @@ function OnboardingScreen({t, lang, onDone}) {
 function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
   const i = UI[lang]||UI.de;
   const fields = [
-    {key:'kampfname', label:i.steckbriefKampfname, emoji:'🏷️', placeholder:'z.B. Der Schätzkönig'},
+    {key:'kampfname', label:i.steckbriefKampfname, emoji:'🏷', placeholder:'z.B. Der Schätzkönig'},
     {key:'fact',      label:i.steckbriefFact,       emoji:'🔥', placeholder:'z.B. Ich schlafe stehend'},
   ];
   const [vals, setVals] = React.useState({});
@@ -1721,7 +1721,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
             <div>
-              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🏷️ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🏷 {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
               <Inp value={spitzname} onChange={setSpitzname}
                 placeholder={lang==="en"?"e.g. The Guessing King":lang==="es"?"ej. El Rey Estimador":"z.B. Der Schätzkönig"}
                 t={t}/>
@@ -1848,7 +1848,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     </div>}
 
     {/* ── Extras ── */}
-    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>⚙️ EXTRAS</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>⚙ EXTRAS</p>
     <ToggleRow label={i.debugMode} checked={debugModeLocal}
       onChange={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} color={t.accent}/>
 
@@ -2089,7 +2089,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           <span style={{fontSize:12,fontWeight:700,
             color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}
 >
-          ⏱️ {timeLeft}s</span>
+          ⏱ {timeLeft}s</span>
           <span style={{fontSize:11,color:t.muted}}>{doneCount}/{activePl.length} ✓</span>
         </div>
         <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}>
@@ -2180,7 +2180,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
         {isHost&&<details style={{marginTop:8}}>
           <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
             listStyle:'none',padding:'4px 2px',userSelect:'none'}}>
-            ⚙️ Spiel verwalten
+            ⚙ Spiel verwalten
           </summary>
           <Card t={t} style={{marginTop:6,padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
             {/* Invite */}
@@ -2199,11 +2199,11 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               <button onClick={()=>onSkip&&onSkip()}
                 style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                ⏭️ Skippen
+                ⏭ Skippen
               </button>
               <button onClick={()=>onPause&&onPause()}
                 style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                ⏸️ Pause
+                ⏸ Pause
               </button>
               <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
                 style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
@@ -2225,10 +2225,10 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
                 const p=room.players?.[id]; if(!p) return null;
                 const isAfk=!!(room.afkPlayers||{})[id];
                 return <div key={id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
-                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>{isAfk?'⏸️ ':''}{p.name}</span>
+                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>{isAfk?'⏸ ':''}{p.name}</span>
                   <button onClick={async()=>await update(ref(db,`rooms/${code}/afkPlayers`),{[id]:isAfk?null:true})}
                     style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,color:t.muted,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>
-                    {isAfk?'↩️':'⏸️'}
+                    {isAfk?'↩':'⏸'}
                   </button>
                   {onKick&&<button onClick={()=>onKick(id)}
                     style={{background:'none',border:`1px solid ${t.danger}33`,borderRadius:t.radius,color:t.danger,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>✕</button>}
@@ -2245,7 +2245,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
       {debugMode&&<div style={{padding:"12px",borderRadius:t.radius,
         background:t.surface,border:`2px dashed ${t.accent}`}}>
         <p style={{fontSize:10,fontWeight:700,color:t.accent,letterSpacing:.8,marginBottom:8}}>
-          🛠️ DEBUG
+          🔧 DEBUG
         </p>
         <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>JOKER AUFLADEN</p>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
@@ -2264,7 +2264,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             await update(ref(db,`rooms/${code}/jokers`),{[myId]:[]});
           }} style={{padding:"5px 9px",borderRadius:t.radius,
             background:t.danger+"22",border:`1px solid ${t.danger}`,
-            color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</button>
+            color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑</button>
         </div>
         <p style={{fontSize:10,color:t.muted,fontWeight:700,marginBottom:5}}>PUNKTE</p>
         <div style={{display:"flex",flexDirection:"column",gap:5}}>
@@ -2446,7 +2446,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
       {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
-      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
+      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
@@ -2644,7 +2644,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
       if(curG[p.id]!=null&&curG[p.id]!==-999999&&prevG[p.id]==null&&answer!=null)
         if(Math.abs(curG[p.id]-answer)!==0) // kein Exact (der hat eigenen Event)
           newEvents.push({id:now+Math.random(),type:'guess',
-            emoji:'✏️',
+            emoji:'✏',
             text:p.name+' '+i.dispGuessed,
             color:'#6e5e54',ts:now});
     });
@@ -2933,7 +2933,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
     else setRevealed(false);
   },[phase]);
 
-  const jokerIcon = j=>j==='skip'?'⏭️':j==='hint'?'💡':j==='double'?'✖️2':j==='sabotage'?'💣':j==='change'?'🔄':'🃏';
+  const jokerIcon = j=>j==='skip'?'⏭':j==='hint'?'💡':j==='double'?'✖2':j==='sabotage'?'💣':j==='change'?'🔄':'🃏';
   const jokerColor = j=>j==='sabotage'?'#cc2244':j==='double'?'#39d98a':gold;
 
   const css = `
@@ -3063,7 +3063,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
                     : <div style={{width:'100%',height:'100%',background:'#2a1a0e',
                         display:'flex',alignItems:'center',justifyContent:'center',
                         fontSize:14,color:tipped?gold:'#6e5e54'}}>
-                        {timedOut?'⏱️':tipped?'✅':'⏳'}
+                        {timedOut?'⏱':tipped?'✅':'⏳'}
                       </div>}
                 </div>
                 {/* Name */}
@@ -3451,6 +3451,13 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
           onMouseEnter={e=>e.target.style.opacity=1}
           onMouseLeave={e=>e.target.style.opacity=.4}>✕</button>}
       </div>)}
+    </Card>
+    {/* ── QR Code – always visible in right panel ── */}
+    <Card t={t} style={{textAlign:'center',marginBottom:14,padding:'12px'}}>
+      <p style={{fontSize:10,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 8px'}}>📱 BEITRETEN</p>
+      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a0e07&color=e8360a`}
+        alt="QR" style={{width:90,height:90,borderRadius:6}}/>
+      <p style={{fontSize:16,fontFamily:'monospace',letterSpacing:3,color:'#e8360a',fontWeight:800,margin:'6px 0 0'}}>{room.code}</p>
     </Card>
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:14}}>{i.stats}</p>
