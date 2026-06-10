@@ -99,7 +99,7 @@ export default [
   {id:"ekel_097",q:"Wie viele Millionen Parasiten kann ein Mensch beherbergen?",a:1,unit:"Million",hint:"Darmenparasiten bei Infektion.",emoji:"🪱"},
   {id:"ekel_098",q:"Wie viele Gramm Zellreste sind in einem normalen Stuhlgang?",a:50,unit:"Gramm",hint:"Abgestorbene Darmzellen.",emoji:"💩"},
   {id:"ekel_099",q:"Wie viele Liter Flüssigkeit produziert der Darm täglich?",a:8,unit:"Liter",hint:"Fast alle werden rückresorbiert.",emoji:"🌀"},
-  {id:"ekel_100",q:"Wie viele Milliarden Bakterien werden bei 60°C in wenigen Sekunden abgetötet?",a:1,unit:"Milliarden",hint:"Pasteurisierung nutzt genau das.",emoji:"🌡️"},
+  {id:"ekel_100",q:"Wie viele Minuten bei 60°C reichen aus um Milchbakterien abzutöten (Pasteurisierung)?",a:30,unit:"Minuten",hint:"30 Min. bei 60°C oder 15 Sek. bei 72°C – das ist HTST-Pasteurisierung.",emoji:"🌡️"},
   {id:"ekel_101",q:"Wie viele Milligramm wiegt ein durchschnittlicher Pups?",a:70,unit:"Milligramm",hint:"70mg – das entspricht ca. 70ml Gas.",emoji:"💨"},
   {id:"ekel_102",q:"Wie viele Liter Schleim schluckt man beim Schnupfen täglich?",a:1,unit:"Liter",hint:"Mehr als man denkt.",emoji:"🤧"},
   {id:"ekel_103",q:"Wie viele Gramm Körperfett werden pro Stunde Schlaf verbrannt?",a:10,unit:"Gramm",hint:"Insgesamt 70g pro Nacht.",emoji:"😴"},
