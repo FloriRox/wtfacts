@@ -142,7 +142,6 @@ export default [
   {q:"Wie viele Gramm Protein hat 100g Tempeh?",a:19,unit:"Gramm",hint:"Tempeh hat mehr Protein als Tofu.",emoji:"🫘"},
   {q:"Wie viele Millionen Tonnen Zucker isst die Welt pro Jahr?",a:200,unit:"Millionen Tonnen",hint:"Millionen Tonnen – steigend.",emoji:"🍬"},
   {q:"Wie viele kcal hat ein Gulasch mit Reis?",a:800,unit:"kcal",hint:"Ein sättigendes Mittagessen.",emoji:"🍲"},
-  {q:"Wie viele Gramm Kohlenhydrate hat 100g Weißbrot?",a:50,unit:"Gramm",hint:"Weißbrot hat einen hohen glykämischen Index.",emoji:"🍞"},
   {q:"Wie viele Millionen Tonnen Fisch werden weltweit pro Jahr gegessen?",a:90,unit:"Millionen Tonnen",hint:"Millionen Tonnen – die Ozeane werden überfischt.",emoji:"🐟"},
   {q:"Wie viele kcal hat 100g Leberwurst?",a:330,unit:"kcal",hint:"Sehr fett- und kalorienreich.",emoji:"🌭"},
   {q:"Wie viele Gramm Ballaststoffe hat 100g Vollkornbrot?",a:7,unit:"Gramm",hint:"Deutlich mehr als Weißbrot (2g).",emoji:"🍞"},

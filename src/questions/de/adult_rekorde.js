@@ -232,7 +232,6 @@ export default [
   {q:"Wie viele Minuten hielt jemand einen Handstand?",a:56,unit:"Minuten",hint:"Fast eine Stunde kopfüber.",emoji:"🤸"},
   {q:"Wie viele Meter weit warf der Rekordhalter einen Bumerang?",a:1401,unit:"Meter",hint:"Und er kam zurück (Stand ~2024).",emoji:"🪃"},
   {q:"Wie viele Stunden jonglierte jemand nonstop?",a:12,unit:"Stunden",hint:"Mit 3 Bällen ohne Unterbrechung.",emoji:"🎪"},
-  {q:"Wie viele Meter lang war der längste Schal?",a:4565,unit:"Meter",hint:"Fast 5 km Schal gestrickt (Stand ~2024).",emoji:"🧣"},
   {q:"Wie viele Stunden blieb jemand wach als Weltrekord?",a:449,unit:"Stunden",hint:"Randy Gardner – offizieller Weltrekord 264h (Stand ~2024).",emoji:"😴"},
   {q:"Wie viele Liegestütze schaffte jemand mit einem Arm in einer Minute?",a:64,unit:"Liegestütze",hint:"Mit einem Arm – ein-Arm-Liegestütz-Rekord.",emoji:"💪"},
   {q:"Wie viele km weit segelte ein Mensch allein nonstop?",a:33000,unit:"km",hint:"Die Weltumsegelung solo und nonstop.",emoji:"⛵"},
