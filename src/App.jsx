@@ -2100,56 +2100,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
       </div>
     </div>
 
-    {/* ── TIMER BAR ── */}
-    {speedMode&&myGuess==null&&timeLeft!=null&&
-      <div style={{padding:"6px 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-          <span style={{fontSize:12,fontWeight:700,
-            color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}
->
-          ⏱ {timeLeft}s</span>
-          <span style={{fontSize:11,color:t.muted}}>{doneCount}/{activePl.length} ✓</span>
-        </div>
-        <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}>
-          <div style={{height:"100%",
-            width:`${(timeLeft/timerSecs)*100}%`,
-            background:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green,
-            borderRadius:3,transition:"width 1s linear, background .3s"}}/>
-        </div>
-      </div>}
-
-    {/* ── QUESTION CARD ── */}
-    <div style={{padding:"8px 16px 0",flex:1,display:"flex",flexDirection:"column",gap:8}}>
-      <Card t={t} glow>
-        <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
-          <span style={{fontSize:28,fontFamily:"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>{(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}</span>
-          <div style={{flex:1}}>
-            <Pill t={t} color={t.muted} style={{marginBottom:6}}>{q.cat}</Pill>
-            <p style={{fontSize:t.id==="kids"?18:16,lineHeight:1.55,
-              fontWeight:t.id==="kids"?700:500,marginTop:6}}>{q.q}</p>
-            <p style={{marginTop:8,color:t.muted,fontSize:13}}>
-              {i.tipIn}: <strong style={{color:t.gold}}>{q.unit}</strong>
-            </p>
-          </div>
-        </div>
-        {room.hintVisible&&(room.hintFor===myId||!room.hintFor)&&
-          <p style={{marginTop:8,padding:"7px 10px",background:t.gold+"18",
-            borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>
-            {i.hintLabel} {q.hint}
-          </p>}
-        {/* 50/50 hint – only for user who played it */}
-        {room.extraHint&&room.extraHintFor===myId&&
-          <div style={{marginTop:8,padding:"8px 10px",
-            background:(room.extraHintColor||t.gold)+"18",
-            border:`1.5px solid ${room.extraHintColor||t.gold}`,
-            borderRadius:t.radius,textAlign:"center"}}>
-            <div style={{fontSize:10,color:room.extraHintColor||t.gold,
-              fontWeight:700,marginBottom:2}}>📊 50/50</div>
-            <div style={{fontSize:14,color:room.extraHintColor||t.gold,
-              fontWeight:800}}>{room.extraHint}</div>
-          </div>}
-      </Card>
-
 
         {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
@@ -2273,6 +2223,57 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             </div>
           </Card>
         </details>}
+    {/* ── TIMER BAR ── */}
+    {speedMode&&myGuess==null&&timeLeft!=null&&
+      <div style={{padding:"6px 16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+          <span style={{fontSize:12,fontWeight:700,
+            color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}
+>
+          ⏱ {timeLeft}s</span>
+          <span style={{fontSize:11,color:t.muted}}>{doneCount}/{activePl.length} ✓</span>
+        </div>
+        <div style={{height:5,background:t.border,borderRadius:3,overflow:"hidden"}}>
+          <div style={{height:"100%",
+            width:`${(timeLeft/timerSecs)*100}%`,
+            background:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green,
+            borderRadius:3,transition:"width 1s linear, background .3s"}}/>
+        </div>
+      </div>}
+
+    {/* ── QUESTION CARD ── */}
+    <div style={{padding:"8px 16px 0",flex:1,display:"flex",flexDirection:"column",gap:8}}>
+      <Card t={t} glow>
+        <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+          <span style={{fontSize:28,fontFamily:"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>{(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}</span>
+          <div style={{flex:1}}>
+            <Pill t={t} color={t.muted} style={{marginBottom:6}}>{q.cat}</Pill>
+            <p style={{fontSize:t.id==="kids"?18:16,lineHeight:1.55,
+              fontWeight:t.id==="kids"?700:500,marginTop:6}}>{q.q}</p>
+            <p style={{marginTop:8,color:t.muted,fontSize:13}}>
+              {i.tipIn}: <strong style={{color:t.gold}}>{q.unit}</strong>
+            </p>
+          </div>
+        </div>
+        {room.hintVisible&&(room.hintFor===myId||!room.hintFor)&&
+          <p style={{marginTop:8,padding:"7px 10px",background:t.gold+"18",
+            borderRadius:t.radius,fontSize:13,color:t.gold,fontWeight:600}}>
+            {i.hintLabel} {q.hint}
+          </p>}
+        {/* 50/50 hint – only for user who played it */}
+        {room.extraHint&&room.extraHintFor===myId&&
+          <div style={{marginTop:8,padding:"8px 10px",
+            background:(room.extraHintColor||t.gold)+"18",
+            border:`1.5px solid ${room.extraHintColor||t.gold}`,
+            borderRadius:t.radius,textAlign:"center"}}>
+            <div style={{fontSize:10,color:room.extraHintColor||t.gold,
+              fontWeight:700,marginBottom:2}}>📊 50/50</div>
+            <div style={{fontSize:14,color:room.extraHintColor||t.gold,
+              fontWeight:800}}>{room.extraHint}</div>
+          </div>}
+      </Card>
+
+
 
       {/* ── INPUT OR SUBMITTED ── */}
       {showInput
