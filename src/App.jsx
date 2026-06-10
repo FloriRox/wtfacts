@@ -1713,13 +1713,13 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
             <div>
-              <p style={{fontSize:11,color:t.muted,margin:'0 0 4px',paddingLeft:2}}>🏷️ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🏷️ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
               <Inp value={spitzname} onChange={setSpitzname}
                 placeholder={lang==="en"?"e.g. The Guessing King":lang==="es"?"ej. El Rey Estimador":"z.B. Der Schätzkönig"}
                 t={t}/>
             </div>
             <div>
-              <p style={{fontSize:11,color:t.muted,margin:'0 0 4px',paddingLeft:2}}>🔥 {lang==="en"?"Fun fact (optional)":lang==="es"?"Dato curioso (opcional)":"Fun Fact (optional)"}</p>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🔥 {lang==="en"?"Fun fact (optional)":lang==="es"?"Dato curioso (opcional)":"Fun Fact (optional)"}</p>
               <Inp value={funfact} onChange={setFunfact}
                 placeholder={lang==="en"?"e.g. I sleep standing up":lang==="es"?"ej. Duermo de pie":"z.B. Ich schlafe stehend"}
                 t={t}/>
