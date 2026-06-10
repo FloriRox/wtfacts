@@ -961,7 +961,7 @@ function QRCode({url,t,lang}){
   const fg=t.id==="adult"?"e8360a":"ff5c5c";
   const label=(UI[lang]||UI.de).scanJoin;
   return <div style={{textAlign:"center",marginTop:18}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:10}}>{(UI[lang]||UI.de).inviteQr}</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:10}}>{(UI[lang]||UI.de).inviteQr}</p>
     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}&bgcolor=${bg}&color=${fg}`} alt="QR" style={{width:130,height:130,borderRadius:t.radius,border:`2px solid ${t.border}`}}/>
     <p style={{fontSize:12,color:t.muted,marginTop:7}}>{label}</p>
   </div>;
@@ -1229,7 +1229,7 @@ function DailyChallengeScreen({t, lang, onBack}) {
     </div>
     {phase==='play'&&<>
       <Card t={t} style={{marginBottom:16}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:8}}>{i.dailyChallenge.toUpperCase()}</p>
+        <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>{i.dailyChallenge.toUpperCase()}</p>
         <p style={{fontSize:18,fontWeight:700,lineHeight:1.4}}>{q.q}</p>
         {q.unit&&<p style={{color:t.gold,fontSize:13,marginTop:6}}>{i.tipIn}: <strong>{q.unit}</strong></p>}
       </Card>
@@ -1409,7 +1409,7 @@ function OnboardingScreen({t, lang, onDone}) {
     {demoPhase==='result'&&<>
       <Card t={t} style={{marginBottom:16,textAlign:'center',
         background:t.gold+'18',border:`2px solid ${t.gold}`}}>
-        <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:1,margin:'0 0 8px'}}>{i.demoAnswerLabel}</p>
+        <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:1,margin:'0 0 8px'}}>{i.demoAnswerLabel}</p>
         <p style={{fontSize:40,fontWeight:900,color:t.gold,margin:'0 0 4px'}}>
           {fmtNum(demoQ.a)} <span style={{fontSize:18}}>{demoQ.unit}</span>
         </p>
@@ -1696,7 +1696,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.gameMode}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.gameMode}</p>
       <div style={{display:"flex",gap:10}}>
         {[{id:"adult",icon:"🔥",label:i.adultMode,sub:i.adultSub},{id:"kids",icon:"🌈",label:i.kidsMode,sub:i.kidsSub}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
@@ -1709,8 +1709,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     </Card>}
     <Card t={t}>
       <div style={col}>
-        <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
-        {tab==="join"&&<Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>}
+        <div style={{width:'100%'}}>
+          <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>👤 {lang==="en"?"Your name":lang==="es"?"Tu nombre":"Dein Name"}</p>
+          <Inp value={name} onChange={setName} placeholder={t.id==="kids"?"😊 "+i.yourName:i.yourName} t={t} autoFocus/>
+        </div>
+        {tab==="join"&&<div style={{width:'100%'}}>
+          <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🔑 {lang==="en"?"Room code":lang==="es"?"Código de sala":"Raumcode"}</p>
+          <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>
+        </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
             <div>
               <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🏷️ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
@@ -1796,7 +1802,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     <Logo t={t} size="sm"/>
 
     {/* ── Speed ── */}
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'14px 0 4px'}}>⚡ SPEED-MODUS</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'14px 0 4px'}}>⚡ SPEED-MODUS</p>
     <ToggleRow label={speedMode?i.speed:i.noTimer} desc={speedMode?`Timer: ${timerSecs}s`:'Kein Zeitlimit'}
       checked={speedMode} onChange={()=>setSpeedMode(p=>!p)} color={t.accent}/>
     {speedMode&&<div style={{display:'flex',gap:6,marginTop:-2,marginBottom:4}}>
@@ -1813,7 +1819,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     </div>}
 
     {/* ── Joker ── */}
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>🃏 JOKER</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>🃏 JOKER</p>
     <ToggleRow label='🃏 Joker aktivieren' desc={withJokers?`${enabled.length} Joker ausgewählt`:'Keine Joker im Spiel'}
       checked={withJokers} onChange={()=>setWithJokers(p=>!p)} color={t.gold}/>
     {withJokers&&<div style={{display:'flex',flexDirection:'column',gap:4,paddingLeft:8,borderLeft:`2px solid ${t.gold}44`,marginLeft:6}}>
@@ -1828,7 +1834,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     </div>}
 
     {/* ── Wetten ── */}
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>🏆 WETTEN</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>🏆 WETTEN</p>
     <ToggleRow label={i.bettingSection} desc={withBets?`${betModes.length} Wett-Modus aktiv`:'Keine Wetten'}
       checked={withBets} onChange={()=>setWithBets(p=>!p)} color={t.gold}/>
     {withBets&&<div style={{display:'flex',flexDirection:'column',gap:4,paddingLeft:8,borderLeft:`2px solid ${t.gold}44`,marginLeft:6}}>
@@ -1840,7 +1846,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     </div>}
 
     {/* ── Extras ── */}
-    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'8px 0 4px'}}>⚙️ EXTRAS</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>⚙️ EXTRAS</p>
     <ToggleRow label={i.debugMode} checked={debugModeLocal}
       onChange={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} color={t.accent}/>
 
@@ -1944,7 +1950,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
       <Btn t={t} variant="secondary" onClick={copy} style={{padding:"7px 13px",fontSize:13}}>{copied?"✓ Kopiert!":"📋 Link"}</Btn>
     </div>
     <Card t={t} style={{marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.7,marginBottom:12}}>{i.players} ({pl.length})</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.7,marginBottom:12}}>{i.players} ({pl.length})</p>
       <div style={col}>
         {pl.map(p=>(
           <div key={p.id} style={{...row,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`}}>
@@ -2415,14 +2421,14 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
       {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:18,minWidth:20}}>{medals[i]||`${i+1}.`}</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>{pts>0&&<Pill t={t} color={exact?t.green:t.gold}>+{pts}P</Pill>}</div>;})}
       {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>⏱️</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
@@ -2455,7 +2461,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
       </p>
     </div>}
     <Card t={t} style={{marginBottom:18}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
     {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
@@ -3399,7 +3405,7 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       </span>
     </div>}
     <Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>{i.finalStand}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:14}}>{i.finalStand}</p>
       {sorted.map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<sorted.length-1?`1px solid ${t.border}`:"none",animation:`fu .4s ${i*.08}s ease both`}}>
         <span style={{fontSize:20,minWidth:26}}>{medals[i]||`${i+1}.`}</span>
         <Avatar name={p.name} t={t}/>
@@ -3415,7 +3421,7 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       </div>)}
     </Card>
     {statCards.length>0&&<Card t={t} style={{textAlign:"left",marginBottom:14}}>
-      <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.8,marginBottom:14}}>{i.stats}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:14}}>{i.stats}</p>
       {statCards.map((s,i)=><div key={i} style={{...row,padding:"10px 12px",borderRadius:t.radius,background:s.color+"14",border:`1px solid ${s.color}33`,marginBottom:8}}>
         <div style={{fontSize:26,minWidth:34}}>{s.icon}</div>
         <div style={{flex:1}}>
