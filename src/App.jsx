@@ -3010,8 +3010,8 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
               <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 10px'}}>
                 📱 BEITRETEN
               </p>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
-                alt="QR" style={{width:160,height:160,borderRadius:8}}/>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
+                alt="QR" style={{width:220,height:220,borderRadius:8}}/>
               <p style={{fontSize:20,fontFamily:'monospace',letterSpacing:4,
                 color:'#e8360a',fontWeight:800,margin:'10px 0 0'}}>{room.code}</p>
             </div>
