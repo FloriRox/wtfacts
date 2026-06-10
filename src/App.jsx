@@ -3875,6 +3875,12 @@ function App(){
     setLoading(true);
     const r=await dbGet(c);
     if(!r){ setLoading(false); return; } // room gone
+    // Block kicked players from rejoining
+    if((r.kicked||{})[uid]){
+      setLoading(false);
+      alert((UI[lang]||UI.de).kicked||'Du wurdest vom Host entfernt.');
+      return;
+    }
     const effectiveId = uid || myId;
     await dbPatch(c,{players:{...r.players,[effectiveId]:{id:effectiveId,name}},order:[...(r.order||[]),effectiveId]});
     listenRoom(c);
@@ -4069,6 +4075,15 @@ function App(){
     updates[`rooms/${code}/order`]=newOrder;
     updates[`rooms/${code}/kicked/${playerId}`]=true;
     updates[`rooms/${code}/players/${playerId}`]=null;
+    // Clean up all player data so they don't appear in rankings/stats
+    updates[`rooms/${code}/guesses/${playerId}`]=null;
+    updates[`rooms/${code}/bets/${playerId}`]=null;
+    updates[`rooms/${code}/scores/${playerId}`]=null;
+    updates[`rooms/${code}/roundScores/${playerId}`]=null;
+    updates[`rooms/${code}/jokers/${playerId}`]=null;
+    updates[`rooms/${code}/steckbriefe/${playerId}`]=null;
+    updates[`rooms/${code}/afkPlayers/${playerId}`]=null;
+    updates[`rooms/${code}/doubleJokers/${playerId}`]=null;
     await update(ref(db),updates);
   }
 
