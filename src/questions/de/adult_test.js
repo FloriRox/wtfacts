@@ -1,4 +1,4 @@
-export const ADULT_TEST_DE = [
+export default [
   {q:"Wie viele Mal schlägt das menschliche Herz pro Tag?",a:100000,unit:"Mal",hint:"70 Schläge/min × 60 × 24 = ca. 100.000 Mal täglich.",emoji:"❤️"},
   {q:"Wie viele Milliarden Neuronen hat das menschliche Gehirn?",a:86,unit:"Milliarden Neuronen",hint:"86 Milliarden Neuronen – mit Billionen von Verbindungen.",emoji:"🧠"},
   {q:"Wie viele Liter Blut hat ein Erwachsener im Körper?",a:5,unit:"Liter",hint:"Ca. 5 Liter – das Herz pumpt sie 1.000 Mal täglich durch.",emoji:"🩸"},

@@ -1,4 +1,4 @@
-export const KIDS_KUNST_DE = [
+export default [
   {q:"Wie viele Farben hat ein Regenbogen?",a:7,unit:"Farben",hint:"Rot, Orange, Gelb, Grün, Blau, Indigo, Violett.",emoji:"🌈"},
   {q:"Wie viele Jahre malte Leonardo da Vinci an der Mona Lisa?",a:4,unit:"Jahre",hint:"Ca. 1503–1507 – manche sagen er hat nie aufgehört.",emoji:"🖼️"},
   {q:"Wie viele Saiten hat eine klassische Gitarre?",a:6,unit:"Saiten",hint:"6 Saiten – Ukulele hat 4, Geige auch 4.",emoji:"🎸"},

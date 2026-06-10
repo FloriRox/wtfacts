@@ -1,4 +1,4 @@
-export const KIDS_MAERCHEN_DE = [
+export default [
   {q:"Wie viele Zwerge hat Schneewittchen?",a:7,unit:"Zwerge",hint:"Hatschi, Schläfer, Brummbär, Happy, Bashful, Grumpy, Doc.",emoji:"⛏️"},
   {q:"Wie viele Jahre schlief Dornröschen?",a:100,unit:"Jahre",hint:"100 Jahre – bis ein Prinz sie weckte.",emoji:"💤"},
   {q:"Wie viele Wünsche gewährt der Flaschengeist in Aladdin?",a:3,unit:"Wünsche",hint:"3 Wünsche – Aladdin nutzt sie weise.",emoji:"🧞"},

@@ -1,4 +1,4 @@
-export const KIDS_OZEANE_DE = [
+export default [
   {q:"Wie viele Ozeane gibt es auf der Erde?",a:5,unit:"Ozeane",hint:"Pazifik, Atlantik, Indischer Ozean, Arktis, Antarktis.",emoji:"🌊"},
   {q:"Wie viele Meter tief ist der Marianengraben?",a:11034,unit:"Meter",hint:"Der tiefste Punkt: Challenger Deep – 11.034m.",emoji:"🌊"},
   {q:"Wie viele Prozent der Erde sind von Wasser bedeckt?",a:71,unit:"%",hint:"71% Wasser – die Erde ist ein Wasserplanet.",emoji:"🌍"},
