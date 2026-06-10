@@ -2202,14 +2202,16 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
         </button>}
         {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
-          <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
-            listStyle:'none',padding:'4px 2px',userSelect:'none'}}>
+          <summary style={{fontSize:13,color:t.text,cursor:'pointer',fontWeight:600,
+            listStyle:'none',padding:'8px 12px',userSelect:'none',
+            background:t.surface,borderRadius:t.radius,
+            border:`1.5px solid ${t.border}`,display:'flex',alignItems:'center',gap:6}}>
             ⚙ Spiel verwalten
           </summary>
           <Card t={t} style={{marginTop:6,padding:'10px 12px',display:'flex',flexDirection:'column',gap:8}}>
             {/* Invite */}
             <div>
-              <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>➕ SPIELER EINLADEN</p>
+              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 5px'}}>➕ SPIELER EINLADEN</p>
               <div style={{display:'flex',gap:6}}>
                 <code style={{flex:1,fontSize:13,fontWeight:800,color:t.accent,
                   background:t.surface,padding:'4px 8px',borderRadius:t.radius,letterSpacing:2}}>{code}</code>
@@ -2220,42 +2222,47 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
               </div>
             </div>
             {/* Controls */}
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              <button onClick={()=>onSkip&&onSkip()}
-                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                ⏭ Skippen
-              </button>
-              <button onClick={()=>onPause&&onPause()}
-                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                ⏸ Pause
-              </button>
-              <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
-                style={{padding:'6px 10px',borderRadius:t.radius,background:t.surface,border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                {isSoundOn()?'🔊':'🔇'} Sound
-              </button>
-              <button onClick={()=>{if(onToggleDebug){onToggleDebug(d=>!d);}}}
-                style={{padding:'6px 10px',borderRadius:t.radius,background:debugMode?t.accent+'22':t.surface,border:`1px solid ${debugMode?t.accent:t.border}`,color:debugMode?t.accent:t.muted,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                🐛 Debug
-              </button>
-              <button onClick={()=>window.confirm('Spiel beenden?')&&onEnd&&onEnd()}
-                style={{padding:'6px 10px',borderRadius:t.radius,background:'none',border:`1px solid ${t.danger}44`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>
-                🛑 Beenden
-              </button>
+            <div>
+              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 6px'}}>🎮 STEUERUNG</p>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                <button onClick={()=>onSkip&&onSkip()}
+                  style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  ⏭ Skippen
+                </button>
+                <button onClick={()=>onPause&&onPause()}
+                  style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  ⏸ Pause
+                </button>
+                <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
+                  style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  {isSoundOn()?'🔊':'🔇'} Sound
+                </button>
+                <button onClick={()=>{if(onToggleDebug){onToggleDebug(d=>!d);}}}
+                  style={{padding:'7px 12px',borderRadius:t.radius,background:debugMode?t.accent+'22':t.surface,border:`1.5px solid ${debugMode?t.accent:t.border}`,color:debugMode?t.accent:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  🐛 Debug
+                </button>
+                <button onClick={()=>window.confirm('Spiel beenden?')&&onEnd&&onEnd()}
+                  style={{padding:'7px 12px',borderRadius:t.radius,background:'none',border:`1.5px solid ${t.danger}44`,color:t.danger,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  🛑 Beenden
+                </button>
+              </div>
             </div>
             {/* Players */}
             <div>
-              <p style={{fontSize:10,fontWeight:700,color:t.muted,letterSpacing:.8,margin:'0 0 5px'}}>👥 SPIELER</p>
+              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 6px'}}>👥 SPIELER</p>
               {(room.order||[]).filter(id=>id!==myId).map(id=>{
                 const p=room.players?.[id]; if(!p) return null;
                 const isAfk=!!(room.afkPlayers||{})[id];
-                return <div key={id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0'}}>
-                  <span style={{fontSize:12,flex:1,color:isAfk?t.muted:t.text}}>{isAfk?'⏸ ':''}{p.name}</span>
+                return <div key={id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:`1px solid ${t.border}22`}}>
+                  <span style={{fontSize:13,flex:1,fontWeight:600,color:isAfk?t.muted:t.text}}>{isAfk?'⏸ ':''}{p.name}</span>
                   <button onClick={async()=>await update(ref(db,`rooms/${code}/afkPlayers`),{[id]:isAfk?null:true})}
-                    style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,color:t.muted,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>
-                    {isAfk?'↩':'⏸'}
+                    style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:t.radius,color:t.text,fontSize:12,cursor:'pointer',padding:'3px 8px',fontWeight:600}}>
+                    {isAfk?'↩ Zurück':'⏸ AFK'}
                   </button>
                   {onKick&&<button onClick={()=>onKick(id)}
-                    style={{background:'none',border:`1px solid ${t.danger}33`,borderRadius:t.radius,color:t.danger,fontSize:10,cursor:'pointer',padding:'1px 6px'}}>✕</button>}
+                    style={{background:'none',border:`1.5px solid ${t.danger}55`,borderRadius:t.radius,color:t.danger,fontSize:12,cursor:'pointer',padding:'3px 8px',fontWeight:600}}>
+                    ✕ Kick
+                  </button>}
                 </div>;
               })}
             </div>
