@@ -3734,10 +3734,18 @@ function App(){
       setRoom({...r});
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
-      if(map[r.phase])setScreen(map[r.phase]);
+      const uid = auth?.currentUser?.uid;
+      const isHost = r.hostId === uid;
+      // Non-host players wait in lobby during setup phases
+      if(map[r.phase]){
+        if(!isHost && (r.phase==="jokerSetup"||r.phase==="categories")){
+          setScreen("lobby"); // stay in lobby, show "waiting for host"
+        } else {
+          setScreen(map[r.phase]);
+        }
+      }
       // Show steckbrief when in lobby and steckbriefEnabled (catches both join and host-enable)
       const prevSteckbrief = prevRoomRef.current?.steckbriefEnabled;
-      const uid = auth?.currentUser?.uid;
       if(r.steckbriefEnabled&&!showSteckbriefShownRef.current&&r.players?.[uid]&&(r.phase==="lobby"||r.phase==="jokerSetup"||r.phase==="categories"||r.phase==="question")){
         showSteckbriefShownRef.current=true;
         setShowSteckbrief(true);
