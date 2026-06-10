@@ -147,7 +147,7 @@ const UI = {
     wins:(name,pts)=>name+" gewinnt mit "+pts+" Punkten! 🎊",
     roundsPlayed:"Runden gespielt",lobbyWaiting:"Warte auf Mitspieler",
     hostLabel:"HOST",youLabel:"DU",
-    adultMode:"Erwachsene",kidsMode:"Kinder",adultSub:"Witzig · obszön",kidsSub:"Bunt · sicher",
+    gameMode:"Spielmodus wählen",adultMode:"Erwachsene",kidsMode:"Kinder",adultSub:"Witzig · obszön",kidsSub:"Bunt · sicher",
     gameMode:"SPIELMODUS",freeSample:"Kostenlos",comingSoon:"Kommt bald",
     startWith:(n,s)=>n+" "+(s===1?"Kategorie":"Kategorien")+" →",
     chooseMin:"Wähle eine Kategorie",minOne:"Wähle mindestens eine Kategorie",
@@ -213,7 +213,7 @@ const UI = {
     wins:(name,pts)=>name+" wins with "+pts+" points! 🎊",
     roundsPlayed:"rounds played",lobbyWaiting:"Waiting for players",
     hostLabel:"HOST",youLabel:"YOU",
-    adultMode:"Adults",kidsMode:"Kids",adultSub:"Funny · edgy",kidsSub:"Colorful · safe",
+    gameMode:"Choose game mode",adultMode:"Adults",kidsMode:"Kids",adultSub:"Funny · edgy",kidsSub:"Colorful · safe",
     gameMode:"GAME MODE",freeSample:"Free",comingSoon:"Coming soon",
     startWith:(n,s)=>n+" "+(s===1?"category":"categories")+" →",
     chooseMin:"Choose a category",minOne:"Choose at least one category",
@@ -279,7 +279,7 @@ const UI = {
     wins:(name,pts)=>"¡"+name+" gana con "+pts+" puntos! 🎊",
     roundsPlayed:"rondas jugadas",lobbyWaiting:"Esperando jugadores",
     hostLabel:"ANFITRIÓN",youLabel:"TÚ",
-    adultMode:"Adultos",kidsMode:"Niños",adultSub:"Divertido · atrevido",kidsSub:"Colorido · seguro",
+    gameMode:"Elegir modo",adultMode:"Adultos",kidsMode:"Niños",adultSub:"Divertido · atrevido",kidsSub:"Colorido · seguro",
     gameMode:"MODO DE JUEGO",freeSample:"Gratis",comingSoon:"Próximamente",
     startWith:(n,s)=>"Empezar con "+n+" "+(s===1?"categoría":"categorías")+" →",
     chooseMin:"Elige una categoría",minOne:"Elige al menos una categoría",
@@ -1698,7 +1698,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.gameMode}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>🎮 {i.gameMode||"Spielmodus wählen"}</p>
       <div style={{display:"flex",gap:10}}>
         {[{id:"adult",icon:"🔥",label:i.adultMode,sub:i.adultSub},{id:"kids",icon:"🌈",label:i.kidsMode,sub:i.kidsSub}].map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:"14px 8px",borderRadius:t.radius,background:mode===m.id?t.accent+"18":t.surface,border:`2px solid ${mode===m.id?t.accent:t.border}`,color:mode===m.id?t.accent:t.muted,cursor:"pointer",transition:"all .2s",fontFamily:t.fontBody,textAlign:"center"}}>
@@ -1849,8 +1849,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 
     {/* ── Extras ── */}
     <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'8px 0 4px'}}>⚙ EXTRAS</p>
-    <ToggleRow label={i.debugMode} checked={debugModeLocal}
-      onChange={()=>{setDebugModeLocal(p=>!p);onToggleDebug(p=>!p);}} color={t.accent}/>
+
 
     <div style={{marginTop:8}}>
       <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief)}>
@@ -2026,6 +2025,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const hintVisible=room.hintVisible;
   const speedMode=room.speedMode;
   const timerSecs=room.timerSecs||30;
+  const timerPaused=!!(room.timerPaused);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2033,6 +2033,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     setTimeLeft(timerSecs);
     const iv=setInterval(()=>{
       setTimeLeft(prev=>{
+        if(timerPaused) return prev; // paused by host
         if(prev<=1){
           clearInterval(iv);
           onGuess(-999999);
@@ -2149,63 +2150,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           </div>}
       </Card>
 
-      {/* ── INPUT OR SUBMITTED ── */}
-      {showInput
-        ?<Card t={t}>
-          <p style={{fontSize:11,fontWeight:700,color:t.muted,
-            letterSpacing:.6,marginBottom:8}}>
-            {changeAllowed?i.changeTip:i.yourTip} ({q.unit})
-          </p>
-          <div style={{display:"flex",gap:8}}>
-            <Inp type="number" value={val} onChange={setVal}
-              placeholder="z.B. 42" t={t} autoFocus
-              style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
-            <Btn t={t} onClick={submit} disabled={!val}
-              style={{flexShrink:0}}>OK ✓</Btn>
-          </div>
-          {/* All-In toggle */}
-          <button onClick={()=>setAllIn(a=>!a)}
-            style={{width:'100%',marginTop:8,padding:'8px',borderRadius:t.radius,
-              background:allIn?t.accent+'33':'none',
-              border:`1px solid ${allIn?t.accent:t.border}`,
-              color:allIn?t.accent:t.muted,fontSize:13,fontWeight:allIn?700:400,
-              cursor:'pointer',fontFamily:t.fontBody,transition:'all .2s'}}>
-            {allIn?i.allInActive:i.allIn}
-          </button>
-          {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>{i.allInHint}</p>}
-          <div style={{display:'none'}}>
-          </div>
-          <p style={{marginTop:8,color:t.muted,fontSize:12}}>
-            {i.discuss}
-          </p>
-        </Card>
-        :<Card t={t} style={{textAlign:"center"}}>
-          <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
-            fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
-          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>{i.tipSubmitted}</p>
-          <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
-            <div style={{height:"100%",
-              width:`${activePl.length?doneCount/activePl.length*100:0}%`,
-              background:`linear-gradient(90deg,${t.accent},${t.gold})`,
-              borderRadius:3,transition:"width .4s ease"}}/>
-          </div>
-          <p style={{fontSize:11,color:t.muted,marginTop:5}}>
-            {doneCount}/{activePl.length} haben getippt
-          </p>
-        </Card>}
-        {/* ── Leave button (non-host only) ── */}
-        {!isHost&&onLeave&&<button onClick={onLeave}
-          style={{marginTop:8,width:'100%',padding:'7px',borderRadius:t.radius,
-            background:'transparent',border:`1px solid ${t.danger}33`,
-            color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>
-          🚪 {(UI[lang]||UI.de).leaveGame||'Spiel verlassen'}
-        </button>}
-
-    </div>
-
-    {/* ── JOKER BAR ── */}
-    {room.enabledJokers?.length>0&&
-      <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
 
         {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
@@ -2232,6 +2176,17 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <div>
               <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 6px'}}>🎮 STEUERUNG</p>
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {speedMode&&<button onClick={()=>{
+                  // Toggle timer pause via Firebase
+                  const paused=!!(room.timerPaused);
+                  update(ref(db,`rooms/${code}`),{timerPaused:paused?null:true});
+                }} style={{padding:'7px 12px',borderRadius:t.radius,
+                  background:room.timerPaused?t.gold+'22':t.surface,
+                  border:`1.5px solid ${room.timerPaused?t.gold:t.border}`,
+                  color:room.timerPaused?t.gold:t.text,
+                  fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+                  {room.timerPaused?'▶ Timer':'⏸ Timer'}
+                </button>}
                 <button onClick={()=>onSkip&&onSkip()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
                   ⏭ Skippen
@@ -2318,6 +2273,65 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             </div>
           </Card>
         </details>}
+
+      {/* ── INPUT OR SUBMITTED ── */}
+      {showInput
+        ?<Card t={t}>
+          <p style={{fontSize:11,fontWeight:700,color:t.muted,
+            letterSpacing:.6,marginBottom:8}}>
+            {changeAllowed?i.changeTip:i.yourTip} ({q.unit})
+          </p>
+          <div style={{display:"flex",gap:8}}>
+            <Inp type="number" value={val} onChange={setVal}
+              placeholder="z.B. 42" t={t} autoFocus
+              style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
+            <Btn t={t} onClick={submit} disabled={!val}
+              style={{flexShrink:0}}>OK ✓</Btn>
+          </div>
+          {/* All-In toggle */}
+          <button onClick={()=>setAllIn(a=>!a)}
+            style={{width:'100%',marginTop:8,padding:'8px',borderRadius:t.radius,
+              background:allIn?t.accent+'33':'none',
+              border:`1px solid ${allIn?t.accent:t.border}`,
+              color:allIn?t.accent:t.muted,fontSize:13,fontWeight:allIn?700:400,
+              cursor:'pointer',fontFamily:t.fontBody,transition:'all .2s'}}>
+            {allIn?i.allInActive:i.allIn}
+          </button>
+          {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>{i.allInHint}</p>}
+          <div style={{display:'none'}}>
+          </div>
+          <p style={{marginTop:8,color:t.muted,fontSize:12}}>
+            {i.discuss}
+          </p>
+        </Card>
+        :<Card t={t} style={{textAlign:"center"}}>
+          <div style={{fontSize:36,fontFamily:t.fontMono,color:t.accent,
+            fontWeight:800,marginBottom:4}}>{fmtNum(myGuess)} {q.unit}</div>
+          <p style={{color:t.green,fontWeight:700,marginBottom:10}}>{i.tipSubmitted}</p>
+          <div style={{height:4,background:t.border,borderRadius:3,overflow:"hidden"}}>
+            <div style={{height:"100%",
+              width:`${activePl.length?doneCount/activePl.length*100:0}%`,
+              background:`linear-gradient(90deg,${t.accent},${t.gold})`,
+              borderRadius:3,transition:"width .4s ease"}}/>
+          </div>
+          <p style={{fontSize:11,color:t.muted,marginTop:5}}>
+            {doneCount}/{activePl.length} haben getippt
+          </p>
+        </Card>}
+        {/* ── Leave button (non-host only) ── */}
+        {!isHost&&onLeave&&<button onClick={onLeave}
+          style={{marginTop:8,width:'100%',padding:'7px',borderRadius:t.radius,
+            background:'transparent',border:`1px solid ${t.danger}33`,
+            color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>
+          🚪 {(UI[lang]||UI.de).leaveGame||'Spiel verlassen'}
+        </button>}
+
+    </div>
+
+    {/* ── JOKER BAR ── */}
+    {room.enabledJokers?.length>0&&
+      <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
+
     {/* ── FIXED BOTTOM BAR: AFK ── */}
     <div style={{
       position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
