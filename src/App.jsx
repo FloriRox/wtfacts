@@ -163,7 +163,7 @@ const UI = {
     pts:"Punkte",
     onboardingSkip:"Überspringen",onboardingNext:"Weiter →",onboardingStart:"Demo spielen!",onboardingDone:"Los geht's!",onboardingReplay:"Nochmal ansehen",
     onboarding:[{emoji:"🎯",title:"Willkommen bei EstiMates!",text:"Das Schätz-Spiel für deine Gruppe. Schätze Zahlen so genau wie möglich – wer am nächsten dran ist gewinnt die Runde."},{emoji:"💡",title:"So funktioniert's",text:"Eine Frage erscheint – alle tippen gleichzeitig ihre Schätzung ein. Dann wird aufgelöst: wer war am nächsten dran?"},{emoji:"🃏",title:"Joker & Wetten",text:"Für gute Schätzungen bekommst du Joker. Setze sie ein um andere zu sabotieren, Hinweise zu enthüllen oder deine Punkte zu verdoppeln."},{emoji:"🏆",title:"Raum erstellen & spielen",text:"Erstelle einen Raum und teile den Code mit deinen Freunden. Alle joinen mit ihrem Handy – kein Download nötig. Jetzt eine kurze Demo-Runde ausprobieren?"}],
-    allIn:"💥 Ich weiß es sicher!",allInActive:"💥 All-In aktiv!",allInHint:"Richtig = 2× Punkte · Falsch = Minus",
+    allIn:"💥 Ich weiß es sicher!",allInActive:"💥 All-In aktiv!",allInHint:"Exakter Treffer = 2× Punkte · Daneben = -1 Punkt",
     countdownReady:"Bereit?",steckbriefTitle:"Stell dich vor!",steckbriefSkip:"Überspringen",steckbriefDone:"Fertig!",steckbriefKampfname:"Kampfname / Spitzname",steckbriefBeruf:"Beruf oder Rolle",steckbriefStaerke:"Deine geheime Stärke",steckbriefHobby:"Hobby",steckbriefFact:"Fun Fact über mich",steckbriefFeind:"Mein größter Feind im Raum",
     feedbackTitle:"Hat dir EstiMates Spaß gemacht?",feedbackYes:"⭐ App bewerten",feedbackNo:"💬 Feedback geben",feedbackBug:"🐛 Fehler melden",feedbackBugSubject:"Fehler in EstiMates",feedbackBugBody:"Frage: \nRichtige Antwort laut App: \nWas stimmt nicht: \n\nVielen Dank! Du erhältst einen Belohnungs-Code per E-Mail.",feedbackThanks:"Danke für dein Feedback!",feedbackReward:"Als Dankeschön senden wir dir einen 2h-Vollzugang-Code per E-Mail 🎁",
     disclaimer:"Alle Fragen dienen der Unterhaltung. Wir übernehmen keine Gewähr für Richtigkeit oder Aktualität der Inhalte.",
@@ -229,7 +229,7 @@ const UI = {
     pts:"pts",
     onboardingSkip:"Skip",onboardingNext:"Next →",onboardingStart:"Play demo!",onboardingDone:"Let's go!",onboardingReplay:"Watch again",
     onboarding:[{emoji:"🎯",title:"Welcome to EstiMates!",text:"The guessing game for your group. Estimate numbers as accurately as possible – whoever is closest wins the round."},{emoji:"💡",title:"How it works",text:"A question appears – everyone types their guess at the same time. Then it's revealed: who was closest?"},{emoji:"🃏",title:"Jokers & Betting",text:"Good guesses earn you jokers. Use them to sabotage others, reveal hints or double your points. Before each round you can bet on the best or worst guesser."},{emoji:"🏆",title:"Create a room & play",text:"Create a room and share the code with your friends. Everyone joins on their phone – no download needed. Want to try a quick demo round?"}],
-    allIn:"💥 I know this one!",allInActive:"💥 All-In active!",allInHint:"Correct = 2× points · Wrong = minus",
+    allIn:"💥 I know this one!",allInActive:"💥 All-In active!",allInHint:"Exact hit = 2× points · Miss = -1 point",
     countdownReady:"Ready?",steckbriefTitle:"Introduce yourself!",steckbriefSkip:"Skip",steckbriefDone:"Done!",steckbriefKampfname:"Nickname / Battle name",steckbriefBeruf:"Job or role",steckbriefStaerke:"Your secret strength",steckbriefHobby:"Hobby",steckbriefFact:"Fun fact about me",steckbriefFeind:"My biggest rival here",
     feedbackTitle:"Did you enjoy EstiMates?",feedbackYes:"⭐ Rate the app",feedbackNo:"💬 Give feedback",feedbackBug:"🐛 Report an error",feedbackBugSubject:"Error in EstiMates",feedbackBugBody:"Question: \nAnswer shown in app: \nWhat is wrong: \n\nThank you! You will receive a reward code by email.",feedbackThanks:"Thanks for your feedback!",feedbackReward:"As a thank you we will send you a 2h full-access code by email 🎁",
     disclaimer:"All questions are for entertainment purposes only. We do not guarantee the accuracy or currentness of any content.",
@@ -295,7 +295,7 @@ const UI = {
     pts:"puntos",
     onboardingSkip:"Saltar",onboardingNext:"Siguiente →",onboardingStart:"¡Jugar demo!",onboardingDone:"¡Vamos!",onboardingReplay:"Ver de nuevo",
     onboarding:[{emoji:"🎯",title:"¡Bienvenido a EstiMates!",text:"El juego de estimación para tu grupo. Estima números con la mayor precisión posible – quien esté más cerca gana la ronda."},{emoji:"💡",title:"¿Cómo funciona?",text:"Aparece una pregunta – todos escriben su estimación al mismo tiempo. Luego se revela: ¿quién estaba más cerca?"},{emoji:"🃏",title:"Comodines y apuestas",text:"Las buenas estimaciones te dan comodines. Úsalos para sabotear a otros, revelar pistas o duplicar tus puntos."},{emoji:"🏆",title:"Crear sala y jugar",text:"Crea una sala y comparte el código con tus amigos. Todos se unen con su móvil – sin descarga. ¿Quieres probar una ronda de demostración?"}],
-    allIn:"💥 ¡Lo sé seguro!",allInActive:"💥 All-In activo!",allInHint:"Correcto = 2× puntos · Incorrecto = menos",
+    allIn:"💥 ¡Lo sé seguro!",allInActive:"💥 All-In activo!",allInHint:"Acierto exacto = 2× puntos · Fallo = -1 punto",
     countdownReady:"¿Listos?",steckbriefTitle:"¡Preséntate!",steckbriefSkip:"Saltar",steckbriefDone:"¡Listo!",steckbriefKampfname:"Apodo / Nombre de batalla",steckbriefBeruf:"Trabajo o rol",steckbriefStaerke:"Tu fuerza secreta",steckbriefHobby:"Afición",steckbriefFact:"Dato curioso sobre mí",steckbriefFeind:"Mi mayor rival aquí",
     feedbackTitle:"¿Te gustó EstiMates?",feedbackYes:"⭐ Valorar la app",feedbackNo:"💬 Dar feedback",feedbackBug:"🐛 Reportar un error",feedbackBugSubject:"Error en EstiMates",feedbackBugBody:"Pregunta: \nRespuesta en la app: \nQué está mal: \n\n¡Gracias! Recibirás un código de recompensa por email.",feedbackThanks:"¡Gracias por tu feedback!",feedbackReward:"Como agradecimiento te enviaremos un código de acceso completo de 2h por email 🎁",
     disclaimer:"Todas las preguntas son solo para entretenimiento. No garantizamos la exactitud ni actualidad de los contenidos.",
@@ -848,12 +848,11 @@ function calcRound(room){
     // Bet counts if the player picked ANY of the tied closest/farthest
     if(closestIds.includes(bet.closest)) pts+=1;
     if(farthestIds.includes(bet.farthest)) pts+=1;
-    // All-In: richtig (nächster oder exakt) → 2×, falsch → -1
+    // All-In: nur bei exaktem Treffer → 2×, sonst immer -1
     const isAllIn = !!(room.allIn||{})[id];
     if(isAllIn){
-      const isWinner = diff===0 || (!anyExact && closestIds.includes(id));
-      if(isWinner) pts = pts*2;
-      else pts = Math.min(pts-1, -1); // immer mindestens -1
+      if(diff===0) pts = pts*2;  // exakter Treffer: Punkte verdoppeln
+      else pts = -1;             // nicht exakt: Abzug egal wie nah
     }
     roundScores[id]=doubleJokers[id]?pts*2:pts;
   });
