@@ -3712,13 +3712,18 @@ function App(){
     const urlRoom = new URLSearchParams(location.search).get('room');
     const storedName = localStorage.getItem('em_lastname');
     if(urlRoom && storedName) {
-      autoJoinedRef.current = true;
-      // Properly join the room with stored name
-      handleJoin(urlRoom, storedName, 'adult', 'de');
-    } else if(urlRoom && !storedName) {
-      // No name yet – send to HomeScreen with room code pre-filled
-      // HomeScreen already reads the URL param for code, so just ensure we're on home
-      setScreen('home');
+      // Only auto-join if this player was already in the room (reconnect)
+      dbGet(urlRoom).then(r => {
+        if(r && r.players && r.players[myId]) {
+          // Already in room – silent reconnect
+          autoJoinedRef.current = true;
+          setCode(urlRoom);
+          setMode(r.mode||'adult');
+          listenRoom(urlRoom);
+        }
+        // else: new player with stored name → HomeScreen with pre-filled code
+        // HomeScreen reads URL param automatically
+      });
     }
   },[myId]);
   const usedIdsRef=useRef([]);
