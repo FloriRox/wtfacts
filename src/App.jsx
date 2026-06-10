@@ -171,7 +171,7 @@ const UI = {
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
-    dailyChallenge:"📅 Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
+    dailyChallenge:"📅 Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",leaveGame:"Spiel verlassen",leaveConfirm:"Spiel wirklich verlassen?",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -237,7 +237,7 @@ const UI = {
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
-    dailyChallenge:"📅 Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
+    dailyChallenge:"📅 Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",leaveGame:"Leave game",leaveConfirm:"Really leave the game?",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -1935,7 +1935,7 @@ function CategoryScreen({mode,onStart,t,lang}){
 }
 
 /* ─── LOBBY ───────────────────────────────────────── */
-function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
+function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=null}){
   const i=UI[lang]||UI.de;
   const[copied,setCopied]=useState(false);
   const isHost=room.hostId===myId;
@@ -1973,8 +1973,16 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
     {/* ── Weiter Button ── */}
     {isHost
       ?<Btn t={t} onClick={onGoJokerSetup} full style={{marginTop:8}}>{i.continueBtn}</Btn>
-      :<p style={{textAlign:"center",color:t.muted,fontSize:13,marginTop:8,marginBottom:0,
-        animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
+      :<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
+        <p style={{textAlign:"center",color:t.muted,fontSize:13,margin:0,
+          animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>
+        {onLeave&&<button onClick={onLeave}
+          style={{padding:'7px',borderRadius:t.radius,background:'transparent',
+            border:`1px solid ${t.danger}44`,color:t.danger,fontSize:12,
+            cursor:'pointer',fontFamily:t.fontBody}}>
+          🚪 {i.leaveGame||'Verlassen'}
+        </button>}
+      </div>}
 
     {/* ── Spielerliste scrollbar unten ── */}
     <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column',minHeight:0}}>
@@ -2002,7 +2010,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null}){
 }
 
 /* ─── QUESTION ────────────────────────────────────── */
-function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=false,onKick=null,onPause=null,onToggleDebug=null,onToggleSound=null,onEnd=null}){
+function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=false,onKick=null,onPause=null,onToggleDebug=null,onToggleSound=null,onEnd=null,onLeave=null}){
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[allIn,setAllIn]=useState(false);
@@ -2176,6 +2184,13 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             {doneCount}/{activePl.length} haben getippt
           </p>
         </Card>}
+        {/* ── Leave button (non-host only) ── */}
+        {!isHost&&onLeave&&<button onClick={onLeave}
+          style={{marginTop:8,width:'100%',padding:'7px',borderRadius:t.radius,
+            background:'transparent',border:`1px solid ${t.danger}33`,
+            color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>
+          🚪 {(UI[lang]||UI.de).leaveGame||'Spiel verlassen'}
+        </button>}
         {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
           <summary style={{fontSize:11,color:t.muted,cursor:'pointer',
@@ -2364,7 +2379,7 @@ function BettingScreen({room,myId,t,onBet,code,lang}){
 }
 
 /* ─── RESULTS ─────────────────────────────────────── */
-function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
+function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null,onLeave=null}){
   const i=UI[lang]||UI.de;
   const myNewJoker=(room.newJokersThisRound||{})[myId];
   useEffect(()=>{
@@ -2485,7 +2500,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null}){
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
-    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>}
+    {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center'}}><p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>{onLeave&&<button onClick={onLeave} style={{padding:'6px 14px',borderRadius:t.radius,background:'transparent',border:`1px solid ${t.danger}33`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>🚪 {i.leaveGame||'Verlassen'}</button>}</div>}
   </div>;
 }
 
@@ -4036,6 +4051,22 @@ function App(){
     await update(ref(db),updates);
   }
 
+  async function handleLeave(){
+    const i=UI[lang]||UI.de;
+    if(!window.confirm(i.leaveConfirm||'Spiel wirklich verlassen?')) return;
+    if(room&&code&&myId){
+      const newOrder=(room.order||[]).filter(id=>id!==myId);
+      const updates={};
+      updates[`rooms/${code}/order`]=newOrder;
+      updates[`rooms/${code}/players/${myId}`]=null;
+      // Remove guesses/bets to not block game progression
+      updates[`rooms/${code}/guesses/${myId}`]=-999999;
+      await update(ref(db),updates);
+    }
+    if(unsubRef.current){unsubRef.current();unsubRef.current=null;}
+    setRoom(null);setCode(null);setScreen('home');
+  }
+
   async function handleSkip(){
     // Fully atomic – re-fetch then write in one patch
     const r=await dbGet(code);
@@ -4093,21 +4124,24 @@ function App(){
       <Spinner t={t}/>
       <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>Verbinde mit Raum...</p>
     </div>}
-    {screen==='lobby'&&room&&(room.kicked||{})[myId]&&
-      <div style={{...page,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,textAlign:'center'}}>
+    {/* ── Kicked overlay – shown on any screen ── */}
+    {room&&(room.kicked||{})[myId]&&
+      <div style={{position:'fixed',inset:0,zIndex:999,background:t.bg,
+        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,textAlign:'center'}}>
         <div style={{fontSize:56}}>🚪</div>
         <p style={{fontWeight:700,fontSize:18}}>{(UI[lang]||UI.de).kicked}</p>
         <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
       </div>}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick}/>}
+    {screen==='lobby'&&room&&(room.kicked||{})[myId]&&null}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={handleKick} onLeave={room.hostId!==myId?handleLeave:null}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={room.hostId===myId} onKick={room.hostId===myId?handleKick:null} onPause={room.hostId===myId?()=>setGamePaused(true):null} onToggleDebug={room.hostId===myId?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={room.hostId===myId?handleEnd:null}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={room.hostId===myId} onKick={room.hostId===myId?handleKick:null} onPause={room.hostId===myId?()=>setGamePaused(true):null} onToggleDebug={room.hostId===myId?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={room.hostId===myId?handleEnd:null} onLeave={room.hostId!==myId?handleLeave:null}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
-    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={room.hostId===myId?handleKick:null}/>}
+    {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={room.hostId===myId?handleKick:null} onLeave={room.hostId!==myId?handleLeave:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
 
   </ErrorBoundary>;
