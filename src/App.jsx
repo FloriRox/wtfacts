@@ -3743,8 +3743,8 @@ function App(){
       setRoom({...r});
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
-      const uid = auth?.currentUser?.uid;
-      const isHost = r.hostId === uid;
+      const uid = auth?.currentUser?.uid || myId;
+      const isHost = uid && r.hostId === uid;
       // Non-host players wait in lobby during setup phases
       if(map[r.phase]){
         if(!isHost && (r.phase==="jokerSetup"||r.phase==="categories")){
