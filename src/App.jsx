@@ -2200,6 +2200,13 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>
           🚪 {(UI[lang]||UI.de).leaveGame||'Spiel verlassen'}
         </button>}
+
+    </div>
+
+    {/* ── JOKER BAR ── */}
+    {room.enabledJokers?.length>0&&
+      <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
+
         {/* ── Manage Panel (Host only) ── */}
         {isHost&&<details style={{marginTop:8}}>
           <summary style={{fontSize:13,color:t.text,cursor:'pointer',fontWeight:600,
@@ -2311,11 +2318,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             </div>
           </Card>
         </details>}
-      {/* ── JOKER BAR ── */}
-      {room.enabledJokers?.length>0&&
-        <JokerBar room={room} myId={myId} code={code} t={t} onSkip={onSkip} lang={lang}/>}
-    </div>
-
     {/* ── FIXED BOTTOM BAR: AFK ── */}
     <div style={{
       position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
