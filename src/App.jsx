@@ -77,6 +77,26 @@ async function saveGlobalStats(roundData,lang){
       const grp=grpSnap.val()||{count:0,totalDiff:0};
       await update(grpRef,{count:grp.count+1, totalDiff:(grp.totalDiff||0)+diff});
     }
+    // Region tracking (timezone-based)
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown';
+      const region = tz.split('/')[0]||'unknown';
+      const country = tz.split('/')[1]?.replace('_',' ')||'unknown';
+      const regionRef = ref(db,`globalStats/demographics/region/${region}/${country}`);
+      const regionSnap = await get(regionRef);
+      const regionData = regionSnap.val()||{count:0};
+      await update(regionRef,{count:regionData.count+1});
+    } catch(e){ /* region tracking optional */ }
+    // Language tracking
+    try {
+      const langRef = ref(db,`globalStats/demographics/lang/${lang||'de'}`);
+      const langSnap = await get(langRef);
+      const langData = langSnap.val()||{count:0,totalDiff:0};
+      await update(langRef,{
+        count: langData.count+1,
+        totalDiff: (langData.totalDiff||0)+diff,
+      });
+    } catch(e){ /* lang tracking optional */ }
   } catch(e){ console.warn("Stats save failed",e); }
 }
 
@@ -2444,13 +2464,34 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,onKick=null,onLeave=null})
           const avg=newSum/newCount;
           const variance=Math.max(0,(newSumSq/newCount)-(avg*avg));
           const stdDev=Math.sqrt(variance);
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown';
+          const region = tz.split('/')[0]||'unknown';
           const ts=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+          // Difficulty score: 0-100
+          // Based on: avg relative error (diff/answer), exact hit rate, stdDev
+          const relError = room.q.a > 0 ? Math.abs(myGuess - room.q.a) / room.q.a : 0;
+          const newExactHits = (qprev.exactHits||0) + (myGuess===room.q.a?1:0);
+          const exactRate = newExactHits / newCount;
+          // High relError + low exactRate = hard question
+          const difficulty = Math.min(100, Math.round(
+            (Math.min(relError, 2) / 2) * 70 +  // 70% weight: how far off
+            ((1 - exactRate) * 30)                // 30% weight: exact hit rate
+          ));
+
           await update(qref,{
             count:newCount, sum:newSum, sumSq:newSumSq,
             avg:Math.round(avg*100)/100,
             stdDev:Math.round(stdDev*100)/100,
             answer:room.q.a,
+            exactHits:newExactHits,
+            difficulty,  // 0=easy, 100=impossible
             [`guesses/${ts}`]:myGuess,
+            [`byRegion/${region}/count`]:newCount,
+            [`byRegion/${region}/sum`]:newSum,
+            [`byLang/${room.lang||'de'}/count`]:newCount,
+            [`byLang/${room.lang||'de'}/sum`]:newSum,
+            [`byLang/${room.lang||'de'}/avg`]:Math.round(avg*100)/100,
           });
         })().catch(()=>{});
       }
