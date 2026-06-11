@@ -3652,17 +3652,26 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
       const currentUser = auth.currentUser;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if(isMobile) {
-        // Use redirect on mobile (more reliable)
         if(currentUser && currentUser.isAnonymous) {
           await linkWithRedirect(currentUser, provider);
         } else {
           await signInWithRedirect(auth, provider);
         }
-        // Page will redirect - result handled on return
       } else {
-        // Use popup on desktop
         if(currentUser && currentUser.isAnonymous) {
-          await linkWithPopup(currentUser, provider);
+          try {
+            await linkWithPopup(currentUser, provider);
+          } catch(linkErr) {
+            console.log("linkWithPopup failed, trying signInWithPopup:", linkErr.code);
+            // Fallback: direct sign in if linking fails
+            if(linkErr.code === 'auth/credential-already-in-use' ||
+               linkErr.code === 'auth/popup-blocked' ||
+               linkErr.code === 'auth/cancelled-popup-request') {
+              await signInWithPopup(auth, provider);
+            } else {
+              throw linkErr;
+            }
+          }
         } else {
           await signInWithPopup(auth, provider);
         }
@@ -3670,8 +3679,17 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
         onClose();
       }
     } catch(e) {
-      if(e.code !== 'auth/popup-closed-by-user') {
-        setError('Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
+      console.error("loginWith error:", e.code, e.message);
+      if(e.code === 'auth/popup-closed-by-user' ||
+         e.code === 'auth/cancelled-popup-request') {
+        // User closed popup - no error message needed
+        setBusy(false);
+        return;
+      }
+      if(e.code === 'auth/popup-blocked') {
+        setError('Popup blockiert – bitte Popup-Blocker deaktivieren.');
+      } else {
+        setError(`Anmeldung fehlgeschlagen: ${e.code||e.message}`);
       }
       setBusy(false);
     }
