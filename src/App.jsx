@@ -3570,15 +3570,21 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       </p>
       {/* Stars */}
       <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:14}}>
-        {['😴','😐','🙂','😄','🤩'].map((em,idx)=>(
+        {['1','2','3','4','5'].map((num,idx)=>(
           <button key={idx} onClick={()=>setRating(idx+1)}
-            style={{fontSize:28,background:'none',border:'none',cursor:'pointer',
-              opacity:rating===idx+1?1:0.4,
-              transform:rating===idx+1?'scale(1.3)':'scale(1)',
+            style={{width:36,height:36,borderRadius:'50%',
+              background:rating===idx+1?t.accent:t.surface,
+              border:`1.5px solid ${rating===idx+1?t.accent:t.border}`,
+              color:rating===idx+1?'#fff':t.muted,
+              fontSize:14,fontWeight:800,cursor:'pointer',
+              transform:rating===idx+1?'scale(1.2)':'scale(1)',
               transition:'all .15s'}}>
-            {em}
+            {num}
           </button>
         ))}
+        <span style={{fontSize:12,color:t.muted,alignSelf:'center',marginLeft:4}}>
+          {rating?['😞','😐','🙂','😄','🤩'][rating-1]:''}
+        </span>
       </div>
       {/* NPS */}
       <p style={{fontSize:12,color:t.muted,marginBottom:8,textAlign:'center'}}>
