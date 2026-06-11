@@ -20,6 +20,7 @@ const isAdmin = (uid) => ADMIN_UIDS.includes(uid);
 let auth;
 try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 const appleProvider = new OAuthProvider('apple.com');
 const dbRef    = (c)    => ref(db, `rooms/${c}`);
 const dbSet    = (c, v) => set(dbRef(c), v);
@@ -4177,7 +4178,7 @@ function App(){
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
       onDone={()=>setShowOnboarding(false)}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);}} onShowOnboarding={()=>setShowOnboarding(true)}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
