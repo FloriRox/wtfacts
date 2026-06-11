@@ -3743,7 +3743,25 @@ function App(){
           setIsAnonymous(result.user.isAnonymous);
           setShowLoginPrompt(false);
         }
-      }).catch(e=>console.log('Redirect result:', e));
+      }).catch(async e=>{
+        console.log('Redirect result:', e);
+        if(e.code === 'auth/credential-already-in-use') {
+          // Google account already linked to another user – sign in directly
+          try {
+            const credential = e.customData?._tokenResponse ||
+              GoogleAuthProvider.credentialFromError(e);
+            if(credential) {
+              const {signInWithCredential} = await import('firebase/auth');
+              const result = await signInWithCredential(auth, credential);
+              setMyId(result.user.uid);
+              setIsAnonymous(false);
+              setShowLoginPrompt(false);
+            }
+          } catch(err) {
+            console.error('signInWithCredential failed:', err);
+          }
+        }
+      });
     }
 
     // Sign in anonymously on first load
