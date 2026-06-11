@@ -3650,47 +3650,16 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
     if(!auth){ setError("Auth nicht verfügbar"); setBusy(false); return; }
     try {
       const currentUser = auth.currentUser;
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if(isMobile) {
-        if(currentUser && currentUser.isAnonymous) {
-          await linkWithRedirect(currentUser, provider);
-        } else {
-          await signInWithRedirect(auth, provider);
-        }
+      // Always use redirect – more reliable than popup across all browsers/devices
+      if(currentUser && currentUser.isAnonymous) {
+        await linkWithRedirect(currentUser, provider);
       } else {
-        if(currentUser && currentUser.isAnonymous) {
-          try {
-            await linkWithPopup(currentUser, provider);
-          } catch(linkErr) {
-            console.log("linkWithPopup failed, trying signInWithPopup:", linkErr.code);
-            // Fallback: direct sign in if linking fails
-            if(linkErr.code === 'auth/credential-already-in-use' ||
-               linkErr.code === 'auth/popup-blocked' ||
-               linkErr.code === 'auth/cancelled-popup-request') {
-              await signInWithPopup(auth, provider);
-            } else {
-              throw linkErr;
-            }
-          }
-        } else {
-          await signInWithPopup(auth, provider);
-        }
-        onSuccess?.();
-        onClose();
+        await signInWithRedirect(auth, provider);
       }
+      // Page will redirect – result handled in getRedirectResult on return
     } catch(e) {
       console.error("loginWith error:", e.code, e.message);
-      if(e.code === 'auth/popup-closed-by-user' ||
-         e.code === 'auth/cancelled-popup-request') {
-        // User closed popup - no error message needed
-        setBusy(false);
-        return;
-      }
-      if(e.code === 'auth/popup-blocked') {
-        setError('Popup blockiert – bitte Popup-Blocker deaktivieren.');
-      } else {
-        setError(`Anmeldung fehlgeschlagen: ${e.code||e.message}`);
-      }
+      setError(`Anmeldung fehlgeschlagen: ${e.code||e.message}`);
       setBusy(false);
     }
   }
