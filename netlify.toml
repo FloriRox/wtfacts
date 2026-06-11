@@ -13,3 +13,9 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# SPA Catch-all – alle Routen auf index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
