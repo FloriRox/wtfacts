@@ -4065,11 +4065,20 @@ function App(){
     }).catch(()=>{});
 
     // Track individual category play counts
+    const tz2 = Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown';
+    const region2 = tz2.split('/')[0]||'unknown';
     selectedCats.forEach(cat=>{
-      const catRef=ref(db,`globalStats/categories/${cat.replace(/[^a-zA-Z0-9_]/g,'_')}`);
+      const catKey=cat.replace(/[^a-zA-Z0-9_]/g,'_');
+      const catRef=ref(db,`globalStats/categories/${catKey}`);
       get(catRef).then(snap=>{
         const prev=snap.val()||{plays:0,totalDiff:0,exactHits:0};
-        update(catRef,{plays:(prev.plays||0)+1}).catch(()=>{});
+        update(catRef,{
+          plays:(prev.plays||0)+1,
+          // Region breakdown
+          [`byRegion/${region2}`]:(prev.byRegion?.[region2]||0)+1,
+          // Language breakdown
+          [`byLang/${lang||'de'}`]:(prev.byLang?.[lang||'de']||0)+1,
+        }).catch(()=>{});
       }).catch(()=>{});
     });
 
