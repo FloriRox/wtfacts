@@ -4060,8 +4060,34 @@ function App(){
       ts:Date.now(), lang, mode,
       groupSize:(room?.order||[]).length,
       platform,
-      categories:selectedCats.slice(0,5),
+      categories:selectedCats.slice(0,10),
+      catCount:selectedCats.length,
     }).catch(()=>{});
+
+    // Track individual category play counts
+    selectedCats.forEach(cat=>{
+      const catRef=ref(db,`globalStats/categories/${cat.replace(/[^a-zA-Z0-9_]/g,'_')}`);
+      get(catRef).then(snap=>{
+        const prev=snap.val()||{plays:0,totalDiff:0,exactHits:0};
+        update(catRef,{plays:(prev.plays||0)+1}).catch(()=>{});
+      }).catch(()=>{});
+    });
+
+    // Track category combinations (pairs) – which cats are played together
+    if(selectedCats.length>1){
+      for(let a=0;a<Math.min(selectedCats.length,6);a++){
+        for(let b=a+1;b<Math.min(selectedCats.length,6);b++){
+          const pair=[selectedCats[a],selectedCats[b]]
+            .map(c=>c.replace(/[^a-zA-Z0-9_]/g,'_'))
+            .sort().join('__');
+          const pairRef=ref(db,`globalStats/categoryPairs/${pair}`);
+          get(pairRef).then(snap=>{
+            const prev=snap.val()||{count:0};
+            update(pairRef,{count:(prev.count||0)+1}).catch(()=>{});
+          }).catch(()=>{});
+        }
+      }
+    }
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
