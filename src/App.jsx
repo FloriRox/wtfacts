@@ -3746,16 +3746,12 @@ function App(){
       }).catch(async e=>{
         console.log('Redirect result:', e);
         if(e.code === 'auth/credential-already-in-use') {
+          // Google account already linked to existing user – sign out anon and sign in directly
           try {
-            const credential = GoogleAuthProvider.credentialFromError(e);
-            if(credential) {
-              const result = await signInWithCredential(auth, credential);
-              setMyId(result.user.uid);
-              setIsAnonymous(false);
-              setShowLoginPrompt(false);
-            }
+            await signOut(auth);
+            await signInWithRedirect(auth, googleProvider);
           } catch(err) {
-            console.error('signInWithCredential failed:', err);
+            console.error('fallback sign in failed:', err);
           }
         }
       });
@@ -3867,7 +3863,7 @@ function App(){
     setLoadTxt("Raum wird erstellt...");
     setLoading(true);
     isHostRef.current = true;
-    await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{}});
+    await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{},createdAt:Date.now()});
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
@@ -4144,7 +4140,13 @@ function App(){
     });
   }
 
-  async function handleEnd(){await dbPatch(code,{phase:"final"});}
+  async function handleEnd(){
+    await dbPatch(code,{phase:"final"});
+    // Schedule room deletion after 1 hour to save storage
+    setTimeout(async()=>{
+      try{ await dbSet(code,null); }catch(e){}
+    }, 60*60*1000);
+  }
 
   function handleRestart(){
     if(unsubRef.current)unsubRef.current();
