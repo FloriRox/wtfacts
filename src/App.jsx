@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
-import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult, signOut } from "firebase/auth";
+import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, signInWithCredential, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -3746,12 +3746,9 @@ function App(){
       }).catch(async e=>{
         console.log('Redirect result:', e);
         if(e.code === 'auth/credential-already-in-use') {
-          // Google account already linked to another user – sign in directly
           try {
-            const credential = e.customData?._tokenResponse ||
-              GoogleAuthProvider.credentialFromError(e);
+            const credential = GoogleAuthProvider.credentialFromError(e);
             if(credential) {
-              const {signInWithCredential} = await import('firebase/auth');
               const result = await signInWithCredential(auth, credential);
               setMyId(result.user.uid);
               setIsAnonymous(false);
