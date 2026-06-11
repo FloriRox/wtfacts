@@ -3442,6 +3442,32 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
   const[globalRank,setGlobalRank]=useState(null);
   const[showCamera,setShowCamera]=useState(false);
   const[winnerPhoto,setWinnerPhoto]=useState(null);
+  const[rating,setRating]=useState(null);       // 1-5 stars
+  const[nps,setNps]=useState(null);             // 0-10
+  const[ratingDone,setRatingDone]=useState(false);
+  const[ratingSkipped,setRatingSkipped]=useState(false);
+  const isHost = room.hostId===myId;
+
+  async function submitRating(stars, npsScore, skipped=false){
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown';
+      const region = tz.split('/')[0]||'unknown';
+      const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
+      const ts = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      await update(ref(db,`globalStats/ratings/${ts}`),{
+        stars:        skipped?null:stars,
+        nps:          skipped?null:npsScore,
+        skipped:      skipped?true:false,
+        role:         isHost?'host':'guest',
+        lang:         lang||'de',
+        region,
+        groupSize:    pl.length,
+        rounds:       (room.history||[]).length,
+        ts:           Date.now(),
+      });
+    } catch(e){ console.warn('Rating save failed',e); }
+    setRatingDone(true);
+  }
   useEffect(()=>{
     const history=room.history||[];
     if(!history.length)return;
@@ -3536,6 +3562,61 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
+
+    {/* ── RATING CARD ── */}
+    {!ratingDone&&!ratingSkipped&&<Card t={t} style={{marginBottom:16,textAlign:'left'}}>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:12}}>
+        ⭐ {lang==='en'?'How was the game?':lang==='es'?'¿Cómo fue el juego?':'Wie war die Runde?'}
+      </p>
+      {/* Stars */}
+      <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:14}}>
+        {['😴','😐','🙂','😄','🤩'].map((em,idx)=>(
+          <button key={idx} onClick={()=>setRating(idx+1)}
+            style={{fontSize:28,background:'none',border:'none',cursor:'pointer',
+              opacity:rating===idx+1?1:0.4,
+              transform:rating===idx+1?'scale(1.3)':'scale(1)',
+              transition:'all .15s'}}>
+            {em}
+          </button>
+        ))}
+      </div>
+      {/* NPS */}
+      <p style={{fontSize:12,color:t.muted,marginBottom:8,textAlign:'center'}}>
+        {lang==='en'?'Recommend EstiMates? (0–10)':lang==='es'?'¿Recomendarías EstiMates? (0–10)':'EstiMates weiterempfehlen? (0–10)'}
+      </p>
+      <div style={{display:'flex',gap:4,justifyContent:'center',flexWrap:'wrap',marginBottom:14}}>
+        {[0,1,2,3,4,5,6,7,8,9,10].map(n=>(
+          <button key={n} onClick={()=>setNps(n)}
+            style={{width:30,height:30,borderRadius:6,fontSize:12,fontWeight:700,
+              cursor:'pointer',border:`1.5px solid ${nps===n?t.accent:t.border}`,
+              background:nps===n?t.accent:'none',
+              color:nps===n?'#fff':t.text,transition:'all .15s'}}>
+            {n}
+          </button>
+        ))}
+      </div>
+      {/* Buttons */}
+      <div style={{display:'flex',gap:8}}>
+        <button onClick={()=>{submitRating(null,null,true);setRatingSkipped(true);}}
+          style={{flex:1,padding:'8px',borderRadius:t.radius,background:'none',
+            border:`1px solid ${t.border}`,color:t.muted,fontSize:12,cursor:'pointer'}}>
+          {lang==='en'?'Skip':lang==='es'?'Omitir':'Überspringen'}
+        </button>
+        <button onClick={()=>{if(rating||nps!==null)submitRating(rating,nps);}}
+          disabled={!rating&&nps===null}
+          style={{flex:2,padding:'8px',borderRadius:t.radius,
+            background:rating||nps!==null?t.accent:t.surface,
+            border:'none',color:'#fff',fontSize:13,fontWeight:700,
+            cursor:rating||nps!==null?'pointer':'default',
+            opacity:rating||nps!==null?1:0.5}}>
+          {lang==='en'?'Submit ✓':lang==='es'?'Enviar ✓':'Abschicken ✓'}
+        </button>
+      </div>
+    </Card>}
+
+    {ratingDone&&<div style={{textAlign:'center',marginBottom:16,fontSize:13,color:t.green,fontWeight:600}}>
+      ✓ {lang==='en'?'Thanks for your feedback!':lang==='es'?'¡Gracias!':'Danke für dein Feedback!'}
+    </div>}
     <div style={{fontSize:68,animation:"pop .7s ease both"}}>{t.id==="kids"?"🏆🎉🌟":"🏆"}</div>
     <div style={{fontFamily:t.fontTitle,fontSize:50,color:t.gold,marginTop:6,animation:"pop .7s .1s ease both",lineHeight:1}}>{winner?.name||"?"}</div>
     <p style={{color:t.muted,fontSize:16,margin:"5px 0 12px"}}>{scores[winner?.id]||0} {i.pts}! 🎊</p>
