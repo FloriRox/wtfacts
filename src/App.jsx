@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, update, onValue, get } from "firebase/database";
+import { getDatabase, ref, set, update, onValue, get, remove } from "firebase/database";
 import { getAuth, signInAnonymously, signInWithPopup, signInWithRedirect, signInWithCredential, GoogleAuthProvider, OAuthProvider, linkWithPopup, linkWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
@@ -1608,7 +1608,7 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1834,6 +1834,12 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             </button>
           </div>
       }
+      {onMyQuestions&&<button onClick={onMyQuestions}
+        style={{marginTop:12,background:'none',border:`1px solid ${t.border}`,
+          borderRadius:t.radius,padding:'8px 20px',color:t.muted,
+          fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%'}}>
+        📝 {lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}
+      </button>}
     </div>
   </div>;
 }
@@ -1937,10 +1943,21 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   </div>;
 }
 /* ─── CATEGORY SELECTION ─────────────────────────── */
-function CategoryScreen({mode,onStart,t,lang}){
+function CategoryScreen({mode,onStart,t,lang,myId=null}){
   const i=UI[lang]||UI.de;
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked})).sort((a,b)=>a.name.localeCompare(b.name));
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
+  const[customQuestions,setCustomQuestions]=useState([]);
+  const CUSTOM_CAT = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
+
+  useEffect(()=>{
+    if(!myId) return;
+    get(ref(db,`userQuestions/${myId}`)).then(snap=>{
+      const data=snap.val()||{};
+      const list=Object.entries(data).map(([id,q])=>({id:`custom_${id}`,...q}));
+      setCustomQuestions(list);
+    }).catch(()=>{});
+  },[myId]);
   const[selected,setSelected]=useState(allCats);
   function toggle(c,locked){
     if(locked)return;
@@ -3994,6 +4011,238 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
   </div>;
 }
 
+
+/* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
+function MyQuestionsScreen({myId, t, lang, onBack}){
+  const i=UI[lang]||UI.de;
+  const[questions,setQuestions]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[editing,setEditing]=useState(null); // null=list, 'new'=new, {id,...}=edit
+  const[error,setError]=useState('');
+
+  useEffect(()=>{
+    if(!myId) return;
+    const qRef=ref(db,`userQuestions/${myId}`);
+    const unsub=onValue(qRef,snap=>{
+      const data=snap.val()||{};
+      const list=Object.entries(data).map(([id,q])=>({id,...q}))
+        .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      setQuestions(list);
+      setLoading(false);
+    });
+    return()=>unsub();
+  },[myId]);
+
+  if(editing!==null){
+    return <QuestionEditorScreen
+      myId={myId} t={t} lang={lang}
+      initial={editing==='new'?null:editing}
+      onSave={async(q)=>{
+        const qId=editing==='new'?Date.now().toString(36):editing.id;
+        const qData={...q, createdAt:editing==='new'?Date.now():editing.createdAt, authorId:myId};
+        await update(ref(db,`userQuestions/${myId}/${qId}`),qData);
+        // Also write to community (anonymized)
+        await update(ref(db,`communityQuestions/${qId}`),{
+          ...qData, authorId:null,
+          upvotes:0, downvotes:0, plays:0,
+          status:'pending'
+        });
+        setEditing(null);
+      }}
+      onCancel={()=>setEditing(null)}
+    />;
+  }
+
+  return <div style={{...page,animation:'fu .3s ease both'}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+      <button onClick={onBack} style={{background:'none',border:'none',color:t.muted,
+        fontSize:20,cursor:'pointer',padding:0}}>←</button>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+        {lang==='en'?'My Questions':lang==='es'?'Mis Preguntas':'Meine Fragen'}
+      </h2>
+    </div>
+
+    <Btn t={t} full onClick={()=>setEditing('new')} style={{marginBottom:16}}>
+      + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
+    </Btn>
+
+    {loading&&<div style={{textAlign:'center',padding:20}}><Spinner t={t}/></div>}
+
+    {!loading&&questions.length===0&&<Card t={t} style={{textAlign:'center',padding:32}}>
+      <div style={{fontSize:40,marginBottom:12}}>📝</div>
+      <p style={{color:t.muted,fontSize:14}}>
+        {lang==='en'?'No questions yet – create your first!':
+         lang==='es'?'Sin preguntas aún – crea la primera!':
+         'Noch keine Fragen – erstelle deine erste!'}
+      </p>
+    </Card>}
+
+    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {questions.map(q=><Card key={q.id} t={t} style={{padding:'12px 14px'}}>
+        <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+          <span style={{fontSize:22,flexShrink:0}}>{q.emoji||'📝'}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:13,fontWeight:600,color:t.text,margin:'0 0 2px',
+              overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.q}</p>
+            <p style={{fontSize:12,color:t.accent,margin:0,fontWeight:700}}>
+              {q.a} {q.unit}
+            </p>
+          </div>
+          <div style={{display:'flex',gap:6,flexShrink:0}}>
+            <button onClick={()=>setEditing(q)}
+              style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,
+                color:t.text,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>
+              ✏
+            </button>
+            <button onClick={async()=>{
+              if(!window.confirm(lang==='en'?'Delete?':lang==='es'?'Borrar?':'Löschen?')) return;
+              await remove(ref(db,`userQuestions/${myId}/${q.id}`));
+              await remove(ref(db,`communityQuestions/${q.id}`));
+            }} style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:t.radius,
+              color:t.danger,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>
+              ✕
+            </button>
+          </div>
+        </div>
+        {q.hint&&<p style={{fontSize:11,color:t.muted,margin:'6px 0 0',paddingLeft:32}}>
+          💡 {q.hint}
+        </p>}
+        <div style={{display:'flex',gap:8,marginTop:8,paddingLeft:32}}>
+          {q.plays>0&&<span style={{fontSize:10,color:t.muted}}>🎮 {q.plays}x</span>}
+          {q.status==='approved'&&<span style={{fontSize:10,color:t.green}}>✓ Genehmigt</span>}
+          {q.status==='pending'&&<span style={{fontSize:10,color:t.muted}}>⏳ In Prüfung</span>}
+        </div>
+      </Card>)}
+    </div>
+  </div>;
+}
+
+/* ─── QUESTION EDITOR ──────────────────────────────────── */
+function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel}){
+  const isNew = !initial;
+  const[q,setQ]=useState(initial?.q||'');
+  const[a,setA]=useState(initial?.a!=null?String(initial.a):'');
+  const[unit,setUnit]=useState(initial?.unit||'');
+  const[hint,setHint]=useState(initial?.hint||'');
+  const[emoji,setEmoji]=useState(initial?.emoji||'📝');
+  const[error,setError]=useState('');
+  const[saving,setSaving]=useState(false);
+
+  const EMOJIS=['📝','🎯','🔢','💡','🌍','🏆','🎲','⭐','🔬','🎭','🍔','🎵','🚀','💰','🏋️','🐾'];
+
+  async function save(){
+    if(!q.trim()){setError('Bitte eine Frage eingeben.');return;}
+    const num=parseFloat(a.replace(',','.'));
+    if(isNaN(num)){setError('Antwort muss eine Zahl sein.');return;}
+    if(!unit.trim()){setError('Bitte eine Einheit angeben.');return;}
+    setError('');setSaving(true);
+    await onSave({q:q.trim(),a:num,unit:unit.trim(),
+      hint:hint.trim(),emoji,lang});
+    setSaving(false);
+  }
+
+  const labelStyle={fontSize:13,color:t.text,fontWeight:600,margin:'0 0 4px',display:'block'};
+
+  return <div style={{...page,animation:'fu .3s ease both'}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+      <button onClick={onCancel} style={{background:'none',border:'none',color:t.muted,
+        fontSize:20,cursor:'pointer',padding:0}}>←</button>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+        {isNew
+          ?(lang==='en'?'New Question':lang==='es'?'Nueva Pregunta':'Neue Frage')
+          :(lang==='en'?'Edit Question':lang==='es'?'Editar Pregunta':'Frage bearbeiten')}
+      </h2>
+    </div>
+
+    <Card t={t} style={{display:'flex',flexDirection:'column',gap:14}}>
+      {/* Emoji picker */}
+      <div>
+        <span style={labelStyle}>Emoji</span>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {EMOJIS.map(em=><button key={em} onClick={()=>setEmoji(em)}
+            style={{fontSize:22,background:emoji===em?t.accent+'22':'none',
+              border:`1.5px solid ${emoji===em?t.accent:t.border}`,
+              borderRadius:t.radius,padding:'4px 6px',cursor:'pointer'}}>
+            {em}
+          </button>)}
+        </div>
+      </div>
+
+      {/* Question */}
+      <div>
+        <span style={labelStyle}>
+          {lang==='en'?'Question (start with "How many...")':
+           lang==='es'?'Pregunta (empieza con "Cuántos...")':
+           'Frage (beginne mit "Wie viele...")'}
+        </span>
+        <textarea value={q} onChange={e=>setQ(e.target.value)}
+          placeholder={lang==='en'?'How many days did...':
+            lang==='es'?'Cuántos días duró...':'Wie viele Tage dauerte...'}
+          rows={3}
+          style={{width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
+            borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
+            fontFamily:t.fontBody,resize:'none',boxSizing:'border-box'}}/>
+      </div>
+
+      {/* Answer + Unit */}
+      <div style={{display:'flex',gap:10}}>
+        <div style={{flex:1}}>
+          <span style={labelStyle}>
+            {lang==='en'?'Answer (number)':lang==='es'?'Respuesta (número)':'Antwort (Zahl)'}
+          </span>
+          <Inp value={a} onChange={setA} placeholder="42" t={t}
+            style={{fontFamily:'monospace',fontWeight:700}}/>
+        </div>
+        <div style={{flex:1}}>
+          <span style={labelStyle}>
+            {lang==='en'?'Unit':lang==='es'?'Unidad':'Einheit'}
+          </span>
+          <Inp value={unit} onChange={setUnit}
+            placeholder={lang==='en'?'e.g. days':lang==='es'?'ej. días':'z.B. Tage'} t={t}/>
+        </div>
+      </div>
+
+      {/* Hint */}
+      <div>
+        <span style={labelStyle}>
+          💡 {lang==='en'?'Hint (optional)':lang==='es'?'Pista (opcional)':'Hinweis (optional)'}
+        </span>
+        <Inp value={hint} onChange={setHint}
+          placeholder={lang==='en'?'Fun fact about the answer...':
+            lang==='es'?'Dato curioso sobre la respuesta...':
+            'Fun Fact zur Antwort...'} t={t}/>
+      </div>
+
+      {/* Preview */}
+      {q&&a&&unit&&<div style={{background:t.surface,borderRadius:t.radius,
+        padding:'12px',border:`1.5px solid ${t.border}`}}>
+        <p style={{fontSize:11,color:t.muted,margin:'0 0 8px',fontWeight:700,letterSpacing:.8}}>
+          VORSCHAU
+        </p>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:28,marginBottom:4}}>{emoji}</div>
+          <p style={{fontSize:14,color:t.text,margin:'0 0 8px'}}>{q}</p>
+          <p style={{fontSize:28,fontFamily:t.fontTitle,color:t.accent,fontWeight:900,margin:0}}>
+            {a} {unit.toUpperCase()}
+          </p>
+          {hint&&<p style={{fontSize:12,color:t.muted,marginTop:8}}>{hint}</p>}
+        </div>
+      </div>}
+
+      {error&&<p style={{color:t.danger,fontSize:13,margin:0}}>{error}</p>}
+
+      <div style={{display:'flex',gap:8}}>
+        <Btn t={t} variant="secondary" onClick={onCancel} style={{flex:1}}>
+          {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
+        </Btn>
+        <Btn t={t} onClick={save} disabled={saving} style={{flex:2}}>
+          {saving?'...':(lang==='en'?'Save question':lang==='es'?'Guardar':'Frage speichern')}
+        </Btn>
+      </div>
+    </Card>
+  </div>;
+}
+
 function App(){
   const[screen,setScreen]=useState("home");
   const[room,setRoom]=useState(null);
@@ -4511,7 +4760,8 @@ function App(){
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
       onDone={()=>setShowOnboarding(false)}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)}/>}
+    {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
@@ -4529,7 +4779,7 @@ function App(){
     {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
-    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
+    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?async()=>{
