@@ -1614,6 +1614,9 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[name,setName]=useState("");
   const[spitzname,setSpitzname]=useState("");
   const[funfact,setFunfact]=useState("");
+  const[selfieHome,setSelfieHome]=useState(null);
+  const[streamHome,setStreamHome]=useState(null);
+  const videoRefHome=React.useRef(null);
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
@@ -1624,7 +1627,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   async function submit(){
     if(!name.trim()){setError(i.enterName);return;}
     setError("");
-    if(tab==="host"){localStorage.setItem('em_lastname',name.trim());onHost(name.trim(),mode);}
+    if(tab==="host"){localStorage.setItem('em_lastname',name.trim());onHost(name.trim(),mode,{kampfname:spitzname.trim(),fact:funfact.trim(),selfie:selfieHome});}
     else{
       const c=code.trim().toUpperCase();
       if(!c){setError(i.enterCode);return;}
@@ -1635,7 +1638,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       // Allow joining mid-game - player will catch up from current state
       if((room.order||[]).length>=50){setError(i.roomFull);return;}
       localStorage.setItem('em_lastname', name.trim());
-      onJoin(c,name.trim(),room.mode,room.lang||"de",{kampfname:spitzname.trim(),fact:funfact.trim()});
+      onJoin(c,name.trim(),room.mode,room.lang||"de",{kampfname:spitzname.trim(),fact:funfact.trim(),selfie:selfieHome});
     }
   }
 
@@ -1753,6 +1756,59 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
               <Inp value={funfact} onChange={setFunfact}
                 placeholder={lang==="en"?"e.g. I sleep standing up":lang==="es"?"ej. Duermo de pie":"z.B. Ich schlafe stehend"}
                 t={t}/>
+            </div>
+            {/* Selfie */}
+            <div>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>📸 {lang==="en"?"Profile photo (optional)":lang==="es"?"Foto de perfil (opcional)":"Profilfoto (optional)"}</p>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:64,height:64,borderRadius:'50%',overflow:'hidden',
+                  background:t.surface,border:`2px solid ${selfieHome?t.accent:t.border}`,
+                  flexShrink:0,position:'relative'}}>
+                  {selfieHome
+                    ? <img src={selfieHome} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',
+                        justifyContent:'center',fontSize:24,color:t.muted}}>👤</div>}
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:6,flex:1}}>
+                  <video ref={videoRefHome} autoPlay playsInline muted
+                    style={{display:streamHome?'block':'none',width:'100%',maxHeight:120,
+                      borderRadius:t.radius,objectFit:'cover'}}/>
+                  {!streamHome
+                    ? <button onClick={async()=>{
+                        try{
+                          const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+                          videoRefHome.current.srcObject=s;
+                          setStreamHome(s);
+                        }catch(e){console.warn('Camera error',e);}
+                      }} style={{padding:'7px',borderRadius:t.radius,background:t.surface,
+                        border:`1.5px solid ${t.border}`,color:t.text,fontSize:12,
+                        cursor:'pointer',fontFamily:t.fontBody}}>
+                        {lang==="en"?"Open camera":lang==="es"?"Abrir cámara":"Kamera öffnen"}
+                      </button>
+                    : <button onClick={()=>{
+                        const v=videoRefHome.current;
+                        const c=document.createElement('canvas');
+                        c.width=200;c.height=200;
+                        const ctx=c.getContext('2d');
+                        const size=Math.min(v.videoWidth,v.videoHeight);
+                        const sx=(v.videoWidth-size)/2;
+                        const sy=(v.videoHeight-size)/2;
+                        ctx.drawImage(v,sx,sy,size,size,0,0,200,200);
+                        setSelfieHome(c.toDataURL('image/jpeg',0.6));
+                        streamHome.getTracks().forEach(tr=>tr.stop());
+                        setStreamHome(null);
+                      }} style={{padding:'7px',borderRadius:t.radius,background:t.accent,
+                        border:'none',color:'#fff',fontSize:12,cursor:'pointer',
+                        fontFamily:t.fontBody,fontWeight:700}}>
+                        📸 {lang==="en"?"Take photo":lang==="es"?"Tomar foto":"Foto aufnehmen"}
+                      </button>}
+                  {selfieHome&&<button onClick={()=>{setSelfieHome(null);}}
+                    style={{padding:'4px',borderRadius:t.radius,background:'none',
+                      border:`1px solid ${t.border}`,color:t.muted,fontSize:11,cursor:'pointer'}}>
+                    {lang==="en"?"Remove":lang==="es"?"Quitar":"Entfernen"}
+                  </button>}
+                </div>
+              </div>
             </div>
           </div>}
         {error&&<p style={{color:t.danger,fontSize:13}}>{error}</p>}
@@ -4042,7 +4098,7 @@ function App(){
     });
   }
 
-  async function handleHost(name,m){
+  async function handleHost(name,m,steckbriefData=null){
     // Ensure auth is ready before creating room
     let uid = auth?.currentUser?.uid;
     if(!uid){
@@ -4059,6 +4115,13 @@ function App(){
     setLoading(true);
     isHostRef.current = true;
     await dbSet(c,{code:c,mode:m,lang,hostId:uid,players:{[uid]:{id:uid,name}},order:[uid],phase:"lobby",guesses:{},bets:{},scores:{},roundScores:{},q:null,qIdx:0,history:[],jokers:{},enabledJokers:[],jokerStats:{},sabotageStats:{},farthestStreak:{},afkPlayers:{},createdAt:Date.now()});
+    if(steckbriefData){
+      await update(ref(db,`rooms/${c}/steckbriefe/${uid}`),{
+        name, kampfname:steckbriefData.kampfname||'',
+        fact:steckbriefData.fact||'',
+        selfie:steckbriefData.selfie||null,
+      });
+    }
     listenRoom(c);
     setLoading(false);
     setScreen("lobby");
@@ -4097,7 +4160,7 @@ function App(){
     await dbPatch(c,{players:{...r.players,[effectiveId]:{id:effectiveId,name}},order:[...(r.order||[]),effectiveId]});
     listenRoom(c);
     // Save inline steckbrief data if provided (from join form)
-    if(steckbriefData&&(steckbriefData.kampfname||steckbriefData.fact)){
+    if(steckbriefData&&(steckbriefData.kampfname||steckbriefData.fact||steckbriefData.selfie)){
       const uid2=auth?.currentUser?.uid||uid;
       update(ref(db,`rooms/${c}/steckbriefe/${uid2}`),{
         name, ...steckbriefData
