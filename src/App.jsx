@@ -2062,21 +2062,19 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
 
   // KERS: charge 25%/round, only when not locked (depleting)
   const prevQIdxRef = React.useRef(-1);
-  useEffect(()=>{
-    const qIdx = room.qIdx||0;
-    console.log('KERS effect:', {qIdx, prev: prevQIdxRef.current, boostLocked: boostLockedRef.current, boostCharge});
-    if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== qIdx){
-      if(!boostLockedRef.current){
-        setBoostCharge(prev=>{
-          const next = prev >= 100 ? 100 : prev + 25;
-          console.log('KERS charging:', prev, '->', next);
-          return next;
-        });
-      }
-      setAllIn(false);
-    }
-    prevQIdxRef.current = qIdx;
-  },[room.qIdx]);
+  const currentQIdx = room.qIdx||0;
+  if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== currentQIdx && !boostLockedRef.current){
+    // New question detected – charge immediately (synchronous, not in effect)
+    setBoostCharge(prev=>{
+      const next = prev >= 100 ? 100 : prev + 25;
+      console.log('KERS charging:', prev, '->', next);
+      return next;
+    });
+    setAllIn(false);
+  }
+  if(prevQIdxRef.current !== currentQIdx){
+    prevQIdxRef.current = currentQIdx;
+  }
 
   // Speed mode timer
   useEffect(()=>{
