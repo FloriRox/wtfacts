@@ -2061,10 +2061,10 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   useEffect(()=>{ boostLockedRef.current = boostLocked; },[boostLocked]);
 
   // KERS: charge 25%/round, only when not locked (depleting)
-  const prevQIdRef = React.useRef(null);
+  const prevQIdxRef = React.useRef(null);
   useEffect(()=>{
-    if(!q?.id) return;
-    if(prevQIdRef.current && prevQIdRef.current !== q.id){
+    const qIdx = room.qIdx||0;
+    if(prevQIdxRef.current !== null && prevQIdxRef.current !== qIdx){
       if(!boostLockedRef.current){
         setBoostCharge(prev=>{
           if(prev >= 100) return 100;
@@ -2073,8 +2073,8 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
       }
       setAllIn(false);
     }
-    prevQIdRef.current = q.id;
-  },[q?.id]);
+    prevQIdxRef.current = qIdx;
+  },[room.qIdx]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2196,7 +2196,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
                   border:`1.5px solid ${room.timerPaused?t.gold:t.border}`,
                   color:room.timerPaused?t.gold:t.text,
                   fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  {room.timerPaused?'▶ Timer':'⏸ Timer'}
+                  {room.timerPaused?'▶ Timer fortsetzen':'|| Timer pausieren'}
                 </button>}
                 <button onClick={()=>onSkip&&onSkip()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
