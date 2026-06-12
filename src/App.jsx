@@ -2054,25 +2054,24 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
 
   const myBoostCharge = (room.boostCharge||{})[myId]||0;
   const myBoostLocked = !!(room.boostLocked||{})[myId];
+  const myLastChargedQIdx = (room.boostLastQIdx||{})[myId]??-1;
   const boostAvailable = myBoostCharge >= 100 || (myBoostLocked && myBoostCharge >= 50);
   const chargePercent = myBoostCharge;
 
-  const prevQIdxRef = React.useRef(-1);
+  // KERS: charge 25% per new question – idempotent via Firebase
   useEffect(()=>{
     const qIdx = room.qIdx||0;
-    const curCharge = (room.boostCharge||{})[myId]||0;
-    const curLocked = !!(room.boostLocked||{})[myId];
-    console.log('KERS:', {qIdx, prev: prevQIdxRef.current, curCharge, curLocked});
-    if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== qIdx){
-      if(!curLocked && curCharge < 100){
-        const next = Math.min(100, curCharge + 25);
-        console.log('KERS charging:', curCharge, '->', next);
-        update(ref(db,`rooms/${code}/boostCharge`),{[myId]: next});
-      }
-      setAllIn(false);
-    }
-    prevQIdxRef.current = qIdx;
-  },[room.qIdx, room.boostCharge, room.boostLocked]);
+    if(qIdx === 0) return; // skip first question
+    if(myLastChargedQIdx === qIdx) return; // already charged for this question
+    if(myBoostLocked) return; // depleting
+    if(myBoostCharge >= 100) return; // already full
+    const next = Math.min(100, myBoostCharge + 25);
+    update(ref(db,`rooms/${code}`),{
+      [`boostCharge/${myId}`]: next,
+      [`boostLastQIdx/${myId}`]: qIdx,
+    });
+    setAllIn(false);
+  },[room.qIdx, myLastChargedQIdx]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -4152,7 +4151,7 @@ function App(){
         }
       }
     }
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},boostLastQIdx:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
   async function handleGuess(val, isAllIn=false){
