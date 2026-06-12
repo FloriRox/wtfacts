@@ -4678,14 +4678,15 @@ function App(){
     if(auth) {
       getRedirectResult(auth).then(result=>{
         if(result?.user){
+          console.log('Redirect result success:', result.user.uid, result.user.isAnonymous);
           setMyId(result.user.uid);
           setIsAnonymous(result.user.isAnonymous);
+          setUserName(result.user.displayName||result.user.email||null);
           setShowLoginPrompt(false);
         }
       }).catch(async e=>{
-        console.log('Redirect result:', e);
+        console.log('Redirect result error:', e.code);
         if(e.code === 'auth/credential-already-in-use') {
-          // Google account already linked to existing user – sign out anon and sign in directly
           try {
             await signOut(auth);
             await signInWithRedirect(auth, googleProvider);
@@ -4699,11 +4700,14 @@ function App(){
     // Sign in anonymously on first load
     const unsubAuth = auth.onAuthStateChanged(user=>{
       if(user){
+        console.log('Auth state changed:', user.uid, 'anon:', user.isAnonymous);
         setMyId(user.uid);
         setIsAnonymous(user.isAnonymous);
         setUserName(user.displayName||user.email||null);
         setIsPro(isAdmin(user.uid));
         setAuthReady(true);
+        // Auto-close login prompt if user is now logged in with Google
+        if(!user.isAnonymous) setShowLoginPrompt(false);
       } else {
         signInAnonymously(auth).catch(err=>console.error('Auth error:',err));
       }
