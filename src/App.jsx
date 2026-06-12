@@ -2820,7 +2820,37 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
           color:'#ff8c2a',ts:now});
     });
 
-    // Exact hit – GRÜN (perfekt) – nur bei Auflösung zeigen, nicht während Frage
+    // All-In gesetzt – GOLD (riskant/aufregend)
+    const curAllIn=room.allIn||{}, prevAllIn=prev.allIn||{};
+    pl.forEach(p=>{
+      if(curAllIn[p.id]&&!prevAllIn[p.id])
+        newEvents.push({id:now+Math.random(),type:'allin',
+          emoji:'⚡',
+          text:p.name+' '+(i.dispAllIn||'setzt ALL-IN!')+'',
+          color:'#ffd700',ts:now});
+    });
+
+    // All-In Ergebnis – bei Auflösung
+    if(isReveal){
+      pl.forEach(p=>{
+        if(curAllIn[p.id]&&curG[p.id]!=null&&answer!=null){
+          const diff=Math.abs(curG[p.id]-answer);
+          const rs=room.roundScores||{};
+          const pts=rs[p.id]||0;
+          if(diff===0){
+            newEvents.push({id:now+Math.random(),type:'allin_win',
+              emoji:'⚡',
+              text:p.name+' '+(i.dispAllInWin||'ALL-IN getroffen!')+' +'+pts+'P',
+              color:'#ffd700',ts:now});
+          } else {
+            newEvents.push({id:now+Math.random(),type:'allin_lose',
+              emoji:'⚡',
+              text:p.name+' '+(i.dispAllInLose||'ALL-IN verzockt!')+' '+pts+'P',
+              color:'#ff3355',ts:now});
+          }
+        }
+      });
+    }
     const curG=room.guesses||{}, prevG=prev.guesses||{};
     const answer=room.q?.a;
     const isReveal = room.phase==='results'||room.phase==='reveal';
@@ -3059,15 +3089,17 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const afkPlayers = room?.afkPlayers||{};
   const tippedCount = pl.filter(p=>guesses[p.id]!=null).length;
   const[timerDisplaySecs,setTimerDisplaySecs]=useState(room.timerSecs||30);
+  const timerPausedDispRef = React.useRef(!!(room.timerPaused));
+  useEffect(()=>{ timerPausedDispRef.current = !!(room.timerPaused); },[room.timerPaused]);
   useEffect(()=>{
     if(phase!=='question'||!room.timerSecs) return;
     setTimerDisplaySecs(room.timerSecs);
     const iv=setInterval(()=>{
-      if(room.timerPaused) return;
+      if(timerPausedDispRef.current) return;
       setTimerDisplaySecs(prev=>Math.max(0,prev-1));
     },1000);
     return()=>clearInterval(iv);
-  },[room.q?.id,room.timerPaused]);
+  },[room.q?.id]);
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
