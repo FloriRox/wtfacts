@@ -153,7 +153,7 @@ const UI = {
     endGame:"Beenden",waitNext:"Warte auf den Spielleiter 🙂",
     finalStand:"ENDSTAND",stats:"STATISTIKEN",
     shareBtn:"📤 Ergebnis teilen / speichern",playAgain:"🔄 Nochmal spielen!",
-    afkAway:"⏸ Kurz weg",afkBack:"▶ Ich bin wieder da!",
+    afkAway:"II Kurz weg",afkBack:"▶ Ich bin wieder da!",
     jokerWon:"Joker gewonnen!",jokers:"JOKER",jokerUsed:"diese Runde verbraucht",
     speedMode:"⚡ SPEED-MODUS",noTimer:"🐢 Kein Timer",speed:"⚡ Speed!",
     jokerSection:"🃏 JOKER",jokerOn:"An",jokerOff:"Aus",
@@ -219,7 +219,7 @@ const UI = {
     endGame:"End Game",waitNext:"Waiting for the host 🙂",
     finalStand:"FINAL STANDINGS",stats:"STATISTICS",
     shareBtn:"📤 Share / save result",playAgain:"🔄 Play again!",
-    afkAway:"⏸ Taking a break",afkBack:"▶ I\'m back!",
+    afkAway:"II Taking a break",afkBack:"▶ I\'m back!",
     jokerWon:"Joker won!",jokers:"JOKERS",jokerUsed:"used this round",
     speedMode:"⚡ SPEED MODE",noTimer:"🐢 No Timer",speed:"⚡ Speed!",
     jokerSection:"🃏 JOKERS",jokerOn:"On",jokerOff:"Off",
@@ -285,7 +285,7 @@ const UI = {
     endGame:"Terminar",waitNext:"Esperando al anfitrión 🙂",
     finalStand:"CLASIFICACIÓN FINAL",stats:"ESTADÍSTICAS",
     shareBtn:"📤 Compartir / guardar resultado",playAgain:"🔄 ¡Jugar de nuevo!",
-    afkAway:"⏸ Un momento",afkBack:"▶ ¡Ya estoy!",
+    afkAway:"II Un momento",afkBack:"▶ ¡Ya estoy!",
     jokerWon:"¡Comodín ganado!",jokers:"COMODINES",jokerUsed:"usado esta ronda",
     speedMode:"⚡ MODO RÁPIDO",noTimer:"🐢 Sin tiempo",speed:"⚡ ¡Rápido!",
     jokerSection:"🃏 COMODINES",jokerOn:"Sí",jokerOff:"No",
@@ -2064,11 +2064,13 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const prevQIdxRef = React.useRef(null);
   useEffect(()=>{
     const qIdx = room.qIdx||0;
+    console.log('KERS effect:', {qIdx, prev: prevQIdxRef.current, boostLocked: boostLockedRef.current, boostCharge});
     if(prevQIdxRef.current !== null && prevQIdxRef.current !== qIdx){
       if(!boostLockedRef.current){
         setBoostCharge(prev=>{
-          if(prev >= 100) return 100;
-          return prev + 25;
+          const next = prev >= 100 ? 100 : prev + 25;
+          console.log('KERS charging:', prev, '->', next);
+          return next;
         });
       }
       setAllIn(false);
@@ -2196,7 +2198,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
                   border:`1.5px solid ${room.timerPaused?t.gold:t.border}`,
                   color:room.timerPaused?t.gold:t.text,
                   fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  {room.timerPaused?'▶ Timer fortsetzen':'|| Timer pausieren'}
+                  {room.timerPaused?'▶ Timer fortsetzen':'II Timer pausieren'}
                 </button>}
                 <button onClick={()=>onSkip&&onSkip()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
@@ -2204,7 +2206,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
                 </button>
                 <button onClick={()=>onPause&&onPause()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  ⏸ Pause
+                  II Spiel pausieren
                 </button>
                 <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
