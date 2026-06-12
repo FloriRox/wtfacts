@@ -3632,6 +3632,7 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
   const[nps,setNps]=useState(null);             // 0-10
   const[ratingDone,setRatingDone]=useState(false);
   const[ratingSkipped,setRatingSkipped]=useState(false);
+  const[ratingComment,setRatingComment]=useState('');
   const isHost = room.hostId===myId;
 
   async function submitRating(stars, npsScore, skipped=false){
@@ -3643,6 +3644,7 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       await update(ref(db,`globalStats/ratings/${ts}`),{
         stars:        skipped?null:stars,
         nps:          skipped?null:npsScore,
+        comment:      (!skipped&&ratingComment.trim())?ratingComment.trim():null,
         skipped:      skipped?true:false,
         role:         isHost?'host':'guest',
         lang:         lang||'de',
@@ -3787,6 +3789,17 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
           </button>
         ))}
       </div>
+      {/* Comment field – shown when rating is bad */}
+      {((rating&&rating<4)||(nps!==null&&nps<7))&&<div>
+        <p style={{fontSize:12,color:t.muted,margin:'0 0 4px'}}>
+          {lang==='en'?'What can we improve?':lang==='es'?'¿Qué podemos mejorar?':'Was können wir verbessern?'}
+        </p>
+        <textarea value={ratingComment} onChange={e=>setRatingComment(e.target.value)}
+          rows={2} placeholder={lang==='en'?'Your feedback...':lang==='es'?'Tu opinión...':'Dein Feedback...'}
+          style={{width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
+            borderRadius:t.radius,color:t.text,fontSize:13,padding:'8px 10px',
+            fontFamily:t.fontBody,resize:'none',boxSizing:'border-box'}}/>
+      </div>}
       {/* Buttons */}
       <div style={{display:'flex',gap:8}}>
         <button onClick={()=>{submitRating(null,null,true);setRatingSkipped(true);}}
@@ -4086,6 +4099,10 @@ function AdminDashboard({t, lang, onBack}){
         const avgGroupSize = sessions.length>0
           ? (sessions.reduce((s,r)=>s+(r.groupSize||1),0)/sessions.length).toFixed(1) : '-';
 
+        // Feedback comments – bad ratings only
+        const feedbacks = ratings
+          .filter(r=>r.comment&&r.comment.trim()&&!r.skipped)
+          .sort((a,b)=>(b.ts||0)-(a.ts||0));
         setStats({
           ratings, rated, avgStars, nps, skipRate,
           promoters, detractors, npsRatings,
@@ -4093,6 +4110,7 @@ function AdminDashboard({t, lang, onBack}){
           sessions, totalSessions, byLang, byRegion, byPlatform, byGroupSize, avgGroupSize,
           categories: cats(catsSnap), pairs: pairs.slice(0,20),
           questions: questions.slice(0,50),
+          feedbacks,
         });
       } catch(e){ console.error('Admin stats error:', e); }
       setLoading(false);
@@ -4150,6 +4168,7 @@ function AdminDashboard({t, lang, onBack}){
         {id:'regions',label:'Regionen'},
         {id:'categories',label:'Kategorien'},
         {id:'questions',label:'Fragen'},
+        {id:'feedback',label:'Feedback'},
       ].map(tb=>(
         <button key={tb.id} onClick={()=>setTab(tb.id)}
           style={{padding:'6px 14px',borderRadius:100,fontSize:12,fontWeight:700,
@@ -4302,41 +4321,89 @@ function AdminDashboard({t, lang, onBack}){
         </div>
       </div>}
 
+      {/* ── FEEDBACK ── */}
+      {tab==='feedback'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <p style={{fontSize:11,color:muted,margin:'0 0 8px'}}>
+          Kommentare bei Bewertungen unter 4★ oder NPS unter 7 · {stats.feedbacks.length} Einträge
+        </p>
+        {stats.feedbacks.length===0&&<div style={{background:surface,borderRadius:10,
+          padding:'20px',textAlign:'center',border:`1px solid ${border}`}}>
+          <p style={{color:muted,fontSize:13}}>Noch keine Feedback-Kommentare.</p>
+        </div>}
+        {stats.feedbacks.map((f,idx)=>{
+          const date=f.ts?new Date(f.ts).toLocaleDateString('de-DE',{
+            day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
+          }):'–';
+          return <div key={idx} style={{background:surface,borderRadius:10,
+            padding:'12px 14px',border:`1px solid ${f.stars&&f.stars<3?accent+'55':border}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                {f.stars&&<span style={{color:gold,fontSize:13,fontWeight:700}}>
+                  {'★'.repeat(f.stars)}{'☆'.repeat(5-f.stars)}
+                </span>}
+                {f.nps!=null&&<span style={{fontSize:11,color:f.nps>=7?green:accent,
+                  fontWeight:700,background:f.nps>=7?green+'22':accent+'22',
+                  padding:'2px 6px',borderRadius:100}}>
+                  NPS {f.nps}
+                </span>}
+                <span style={{fontSize:10,color:muted,background:border,
+                  padding:'2px 6px',borderRadius:100}}>
+                  {f.role||'?'}
+                </span>
+              </div>
+              <span style={{fontSize:10,color:muted}}>{date}</span>
+            </div>
+            <p style={{fontSize:13,color:t.text,margin:0,lineHeight:1.5,
+              fontStyle:'italic'}}>"{f.comment}"</p>
+            <div style={{display:'flex',gap:8,marginTop:6}}>
+              {f.lang&&<span style={{fontSize:10,color:muted}}>{f.lang.toUpperCase()}</span>}
+              {f.region&&<span style={{fontSize:10,color:muted}}>{f.region}</span>}
+              {f.groupSize&&<span style={{fontSize:10,color:muted}}>{f.groupSize}P</span>}
+            </div>
+          </div>;
+        })}
+      </div>}
+
       {/* ── FRAGEN ── */}
       {tab==='questions'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
         <p style={{fontSize:11,color:muted,margin:'0 0 8px'}}>
           Top 50 meistgespielte Fragen
         </p>
-        {stats.questions.map((q,idx)=>(
-          <div key={q.id} style={{background:surface,borderRadius:10,
+        {stats.questions.map((q,idx)=>{
+          // Look up question text from question files
+          const allQs = Object.values(QUESTIONS_RAW?.adult||{}).flatMap(c=>c.questions||[])
+            .concat(Object.values(QUESTIONS_RAW?.kids||{}).flatMap(c=>c.questions||[]));
+          const qObj = allQs.find(x=>x.id===q.id);
+          return <div key={q.id} style={{background:surface,borderRadius:10,
             padding:'10px 12px',border:`1px solid ${border}`}}>
             <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
-              <span style={{fontSize:11,color:muted,minWidth:24,fontFamily:'monospace'}}>
-                {idx+1}.
-              </span>
+              <span style={{fontSize:11,color:muted,minWidth:24,fontFamily:'monospace',
+                flexShrink:0}}>{idx+1}.</span>
               <div style={{flex:1}}>
-                <p style={{fontSize:12,color:t.text,margin:'0 0 4px',fontWeight:600}}>
+                {qObj&&<p style={{fontSize:12,color:t.text,margin:'0 0 3px',fontWeight:600,
+                  lineHeight:1.4}}>{qObj.q}</p>}
+                <p style={{fontSize:10,color:muted,margin:'0 0 4px',fontFamily:'monospace'}}>
                   {q.id}
                 </p>
-                <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-                  <span style={{fontSize:11,color:accent}}>
-                    Ø {q.avg!=null?q.avg:'–'} {q.unit||''}
+                <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                  <span style={{fontSize:11,color:accent,fontWeight:700}}>
+                    Ø {q.avg!=null?q.avg:'–'} {q.unit||qObj?.unit||''}
                   </span>
                   <span style={{fontSize:11,color:muted}}>
                     σ {q.stdDev!=null?q.stdDev:'–'}
                   </span>
                   <span style={{fontSize:11,color:gold}}>
-                    {q.count||0}x gespielt
+                    {q.count||0}x
                   </span>
-                  <span style={{fontSize:11,
+                  {q.difficulty!=null&&<span style={{fontSize:11,fontWeight:700,
                     color:q.difficulty>70?accent:q.difficulty>40?gold:green}}>
-                    {q.difficulty!=null?q.difficulty+'% schwer':''}
-                  </span>
+                    {q.difficulty}% schwer
+                  </span>}
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          </div>;
+        })}
       </div>}
 
     </>}
