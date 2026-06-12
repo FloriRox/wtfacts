@@ -2119,6 +2119,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
   const chargePercent = boostCharge; // 0-100 for single bar
+  const isAfkMe = !!(afkPlayers[myId]);
 
   return <div style={{
     minHeight:"100vh", display:"flex", flexDirection:"column",
