@@ -2067,11 +2067,20 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
         {i.players} ({pl.length})
       </p>
       <div style={{overflowY:'auto',flex:1,display:'flex',flexDirection:'column',gap:6}}>
-        {pl.map(p=>(
-          <div key={p.id} style={{...row,padding:"8px 12px",background:t.surface,borderRadius:t.radius,
+        {pl.map(p=>{
+          const sb=(room.steckbriefe||{})[p.id];
+          return <div key={p.id} style={{...row,padding:"8px 12px",background:t.surface,borderRadius:t.radius,
             border:`1.5px solid ${p.id===myId?t.accent+"55":t.border}`,flexShrink:0}}>
-            <Avatar name={p.name} t={t}/>
-            <span style={{flex:1,fontWeight:600,fontSize:14}}>{p.name}</span>
+            {sb?.selfie
+              ? <div style={{width:36,height:36,borderRadius:'50%',overflow:'hidden',flexShrink:0,
+                  border:`2px solid ${p.id===myId?t.accent:t.border}`}}>
+                  <img src={sb.selfie} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                </div>
+              : <Avatar name={p.name} t={t}/>}
+            <div style={{flex:1,minWidth:0}}>
+              <span style={{fontWeight:600,fontSize:14}}>{p.name}</span>
+              {sb?.kampfname&&<span style={{fontSize:11,color:t.muted,marginLeft:6}}>aka {sb.kampfname}</span>}
+            </div>
             {p.id===room.hostId&&<Pill t={t} color={t.gold}>{i.hostLabel}</Pill>}
             {isHost&&p.id!==myId&&onKick&&<button onClick={()=>onKick(p.id)}
               style={{padding:'3px 10px',borderRadius:t.radius,border:`1px solid ${t.danger}44`,
@@ -2079,8 +2088,8 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
               {i.kickPlayer}
             </button>}
             {p.id===myId&&p.id!==room.hostId&&<Pill t={t}>{i.youLabel}</Pill>}
-          </div>
-        ))}
+          </div>;
+        })}
       </div>
     </div>
   </div>;
