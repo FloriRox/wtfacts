@@ -1458,7 +1458,7 @@ function OnboardingScreen({t, lang, onDone}) {
 function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
   const i = UI[lang]||UI.de;
   const fields = [
-    {key:'kampfname', label:i.steckbriefKampfname, emoji:'🏷', placeholder:'z.B. Der Schätzkönig'},
+    {key:'kampfname', label:i.steckbriefKampfname, emoji:'✏', placeholder:'z.B. Der Schätzkönig'},
     {key:'fact',      label:i.steckbriefFact,       emoji:'🔥', placeholder:'z.B. Ich schlafe stehend'},
   ];
   const [vals, setVals] = React.useState({});
@@ -1746,7 +1746,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
             <div>
-              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🏷 {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>✏ {lang==="en"?"Nickname/Battle name":lang==="es"?"Apodo/Nombre":"Spitzname/Kampfname"}</p>
               <Inp value={spitzname} onChange={setSpitzname}
                 placeholder={lang==="en"?"e.g. The Guessing King":lang==="es"?"ej. El Rey Estimador":"z.B. Der Schätzkönig"}
                 t={t}/>
@@ -1759,7 +1759,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             </div>
             {/* Selfie */}
             <div>
-              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>📸 {lang==="en"?"Profile photo (optional)":lang==="es"?"Foto de perfil (opcional)":"Profilfoto (optional)"}</p>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>{lang==="en"?"📷 Profile photo (optional)":lang==="es"?"📷 Foto de perfil (opcional)":"📷 Profilfoto (optional)"}</p>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <div style={{width:64,height:64,borderRadius:'50%',overflow:'hidden',
                   background:t.surface,border:`2px solid ${selfieHome?t.accent:t.border}`,
@@ -1800,7 +1800,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
                       }} style={{padding:'7px',borderRadius:t.radius,background:t.accent,
                         border:'none',color:'#fff',fontSize:12,cursor:'pointer',
                         fontFamily:t.fontBody,fontWeight:700}}>
-                        📸 {lang==="en"?"Take photo":lang==="es"?"Tomar foto":"Foto aufnehmen"}
+                        {lang==="en"?"Take photo":lang==="es"?"Tomar foto":"Foto aufnehmen"}
                       </button>}
                   {selfieHome&&<button onClick={()=>{setSelfieHome(null);}}
                     style={{padding:'4px',borderRadius:t.radius,background:'none',
