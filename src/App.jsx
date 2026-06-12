@@ -2339,28 +2339,27 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
           {/* KERS All-In Button */}
-          <button onClick={()=>myBoostCharge>=100&&setAllIn(a=>!a)}
-            disabled={myBoostCharge<100}
+          <button onClick={()=>boostAvailable&&setAllIn(a=>!a)}
+            disabled={!boostAvailable}
             style={{width:'100%',marginTop:8,padding:'8px 12px',borderRadius:t.radius,
-              background:allIn?t.accent+'33':myBoostCharge>=100?t.surface:'none',
-              border:`1.5px solid ${allIn?t.accent:myBoostCharge>=100?t.gold:t.border}`,
-              color:allIn?t.accent:myBoostCharge>=100?t.gold:t.muted,
-              fontSize:13,fontWeight:allIn||myBoostCharge>=100?700:400,
-              cursor:myBoostCharge>=100?'pointer':'default',
+              background:allIn?t.accent+'33':boostAvailable?t.surface:'none',
+              border:`1.5px solid ${allIn?t.accent:boostAvailable?t.gold:t.border}`,
+              color:allIn?t.accent:boostAvailable?t.gold:t.muted,
+              fontSize:13,fontWeight:allIn||boostAvailable?700:400,
+              cursor:boostAvailable?'pointer':'default',
               fontFamily:t.fontBody,transition:'all .2s',
-              opacity:myBoostCharge>=100?1:0.6}}>
+              opacity:boostAvailable?1:0.6}}>
             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center'}}>
               <span>⚡ ALL-IN</span>
               <div style={{width:60,height:6,borderRadius:3,background:t.border,overflow:'hidden'}}>
                 <div style={{height:'100%',borderRadius:3,
-                  background:myBoostCharge>=100?t.gold:t.accent,
+                  background:boostAvailable?t.gold:t.accent,
                   width:`${myBoostCharge}%`,transition:'width .4s ease',
-                  boxShadow:myBoostCharge>=100?`0 0 6px ${t.gold}`:'none'}}/>
+                  boxShadow:boostAvailable?`0 0 6px ${t.gold}`:'none'}}/>
               </div>
-              <span style={{fontSize:10,color:myBoostCharge>=100?t.gold:t.muted,fontWeight:700,minWidth:28}}>
-                {myBoostCharge>=100?'READY':myBoostCharge+'%'}
+              <span style={{fontSize:10,color:boostAvailable?t.gold:t.muted,fontWeight:700,minWidth:28}}>
+                {boostAvailable?(myBoostLocked?'×1':'READY'):myBoostCharge+'%'}
               </span>
-              {myBoostLocked&&myBoostCharge>0&&<span style={{fontSize:10,color:t.gold}}>×1</span>}
             </div>
           </button>
           {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>
@@ -3000,6 +2999,16 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const phase = room?.phase||'lobby';
   const afkPlayers = room?.afkPlayers||{};
   const tippedCount = pl.filter(p=>guesses[p.id]!=null).length;
+  const[timerDisplaySecs,setTimerDisplaySecs]=useState(room.timerSecs||30);
+  useEffect(()=>{
+    if(phase!=='question'||!room.timerSecs) return;
+    setTimerDisplaySecs(room.timerSecs);
+    const iv=setInterval(()=>{
+      if(room.timerPaused) return;
+      setTimerDisplaySecs(prev=>Math.max(0,prev-1));
+    },1000);
+    return()=>clearInterval(iv);
+  },[room.q?.id,room.timerPaused]);
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
@@ -3127,6 +3136,12 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
             width:`${(tippedCount/Math.max(pl.length,1))*100}%`}}/>
         </div>
         <span style={{fontSize:12,color:'#6e5e54'}}>{tippedCount}/{pl.length} {i.dispTipped}</span>
+        {room.timerSecs&&<span style={{
+          fontSize:14,fontWeight:800,
+          color:room.timerPaused?'#6e5e54':timerDisplaySecs<=5?'#ff3355':timerDisplaySecs<=10?gold:'#6e5e54',
+          fontFamily:'monospace',minWidth:32}}>
+          {room.timerPaused?'II':timerDisplaySecs+'s'}
+        </span>}
       </div>}
       <div style={{display:'flex',alignItems:'center',gap:12}}>
         <span style={{fontSize:16,fontWeight:800,color:gold,letterSpacing:2}}>#{code}</span>
@@ -4410,7 +4425,14 @@ function App(){
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
-    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?()=>setGamePaused(true):null} onToggleDebug={isHostRef.current?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={isHostRef.current?handleEnd:null} onLeave={!isHostRef.current?handleLeave:null}/>}
+    {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?async()=>{
+      // Set all non-host players to AFK
+      const updates={};
+      (room.order||[]).forEach(pid=>{
+        if(pid!==myId) updates[`rooms/${code}/afkPlayers/${pid}`]=true;
+      });
+      await update(ref(db),updates);
+    }:null} onToggleDebug={isHostRef.current?setDebugMode:null} onToggleSound={()=>setSoundOn(isSoundOn())} onEnd={isHostRef.current?handleEnd:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
