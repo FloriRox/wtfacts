@@ -2063,20 +2063,25 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   // KERS: charge from Firebase – reliable across re-renders
   const myBoostCharge = (room.boostCharge||{})[myId]||0;
   const myBoostLocked = !!(room.boostLocked||{})[myId];
-  const boostAvailable = myBoostCharge >= 100 && !allIn || (myBoostLocked && myBoostCharge >= 50 && !allIn);
+  const boostAvailable = myBoostCharge >= 100 || (myBoostLocked && myBoostCharge >= 50);
+  const chargePercent = myBoostCharge;
 
   const prevQIdxRef = React.useRef(-1);
   useEffect(()=>{
     const qIdx = room.qIdx||0;
+    const curCharge = (room.boostCharge||{})[myId]||0;
+    const curLocked = !!(room.boostLocked||{})[myId];
+    console.log('KERS:', {qIdx, prev: prevQIdxRef.current, curCharge, curLocked});
     if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== qIdx){
-      // New question → charge if not locked
-      if(!myBoostLocked && myBoostCharge < 100){
-        update(ref(db,`rooms/${code}/boostCharge`),{[myId]: Math.min(100, myBoostCharge+25)});
+      if(!curLocked && curCharge < 100){
+        const next = Math.min(100, curCharge + 25);
+        console.log('KERS charging:', curCharge, '->', next);
+        update(ref(db,`rooms/${code}/boostCharge`),{[myId]: next});
       }
       setAllIn(false);
     }
     prevQIdxRef.current = qIdx;
-  },[room.qIdx]);
+  },[room.qIdx, room.boostCharge, room.boostLocked]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2118,7 +2123,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   }
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
-  const chargePercent = boostCharge; // 0-100 for single bar
   const isAfkMe = !!(afkPlayers[myId]);
 
   return <div style={{
