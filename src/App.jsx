@@ -2060,21 +2060,23 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const boostLockedRef = React.useRef(false);
   useEffect(()=>{ boostLockedRef.current = boostLocked; },[boostLocked]);
 
-  // KERS: charge 25%/round, only when not locked (depleting)
+  // KERS: charge from Firebase – reliable across re-renders
+  const myBoostCharge = (room.boostCharge||{})[myId]||0;
+  const myBoostLocked = !!(room.boostLocked||{})[myId];
+  const boostAvailable = myBoostCharge >= 100 && !allIn || (myBoostLocked && myBoostCharge >= 50 && !allIn);
+
   const prevQIdxRef = React.useRef(-1);
-  const currentQIdx = room.qIdx||0;
-  if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== currentQIdx && !boostLockedRef.current){
-    // New question detected – charge immediately (synchronous, not in effect)
-    setBoostCharge(prev=>{
-      const next = prev >= 100 ? 100 : prev + 25;
-      console.log('KERS charging:', prev, '->', next);
-      return next;
-    });
-    setAllIn(false);
-  }
-  if(prevQIdxRef.current !== currentQIdx){
-    prevQIdxRef.current = currentQIdx;
-  }
+  useEffect(()=>{
+    const qIdx = room.qIdx||0;
+    if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== qIdx){
+      // New question → charge if not locked
+      if(!myBoostLocked && myBoostCharge < 100){
+        update(ref(db,`rooms/${code}/boostCharge`),{[myId]: Math.min(100, myBoostCharge+25)});
+      }
+      setAllIn(false);
+    }
+    prevQIdxRef.current = qIdx;
+  },[room.qIdx]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2107,17 +2109,9 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     }
     onGuess(n, allIn);
     if(allIn){
-      setBoostCharge(prev=>{
-        const next = prev - 50;
-        if(next <= 0){
-          // Fully depleted → unlock charging
-          setBoostLocked(false);
-          return 0;
-        }
-        // Still 50% left → lock charging until second boost used
-        setBoostLocked(true);
-        return next;
-      });
+      const newCharge = myBoostCharge - 50;
+      update(ref(db,`rooms/${code}/boostCharge`),{[myId]: Math.max(0, newCharge)});
+      update(ref(db,`rooms/${code}/boostLocked`),{[myId]: newCharge > 0 ? true : null});
     }
     setVal("");
     setAllIn(false);
@@ -2351,30 +2345,28 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
           {/* KERS All-In Button */}
-          <button onClick={()=>boostAvailable&&setAllIn(a=>!a)}
-            disabled={!boostAvailable}
+          <button onClick={()=>myBoostCharge>=100&&setAllIn(a=>!a)}
+            disabled={myBoostCharge<100}
             style={{width:'100%',marginTop:8,padding:'8px 12px',borderRadius:t.radius,
-              background:allIn?t.accent+'33':boostAvailable?t.surface:'none',
-              border:`1.5px solid ${allIn?t.accent:boostAvailable?t.gold:t.border}`,
-              color:allIn?t.accent:boostAvailable?t.gold:t.muted,
-              fontSize:13,fontWeight:allIn||boostAvailable?700:400,
-              cursor:boostAvailable?'pointer':'default',
+              background:allIn?t.accent+'33':myBoostCharge>=100?t.surface:'none',
+              border:`1.5px solid ${allIn?t.accent:myBoostCharge>=100?t.gold:t.border}`,
+              color:allIn?t.accent:myBoostCharge>=100?t.gold:t.muted,
+              fontSize:13,fontWeight:allIn||myBoostCharge>=100?700:400,
+              cursor:myBoostCharge>=100?'pointer':'default',
               fontFamily:t.fontBody,transition:'all .2s',
-              opacity:boostAvailable?1:0.6}}>
+              opacity:myBoostCharge>=100?1:0.6}}>
             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center'}}>
               <span>⚡ ALL-IN</span>
-              <div style={{display:'flex',gap:3,alignItems:'center'}}>
-                <div style={{width:50,height:6,borderRadius:3,background:t.border,overflow:'hidden'}}>
-                  <div style={{height:'100%',borderRadius:3,
-                    background:chargePercent>=100?t.gold:t.accent,
-                    width:`${chargePercent}%`,transition:'width .4s ease',
-                    boxShadow:chargePercent>=100?`0 0 6px ${t.gold}`:'none'}}/>
-                </div>
-                <span style={{fontSize:10,color:boostCharge>=100?t.gold:t.muted,fontWeight:700,minWidth:32}}>
-                  {boostCharge>=100?'READY':`${boostCharge}%`}
-                </span>
+              <div style={{width:60,height:6,borderRadius:3,background:t.border,overflow:'hidden'}}>
+                <div style={{height:'100%',borderRadius:3,
+                  background:myBoostCharge>=100?t.gold:t.accent,
+                  width:`${myBoostCharge}%`,transition:'width .4s ease',
+                  boxShadow:myBoostCharge>=100?`0 0 6px ${t.gold}`:'none'}}/>
               </div>
-              {boostLocked&&boostCharge>0&&<span style={{fontSize:10,color:t.gold}}>×1</span>}
+              <span style={{fontSize:10,color:myBoostCharge>=100?t.gold:t.muted,fontWeight:700,minWidth:28}}>
+                {myBoostCharge>=100?'READY':myBoostCharge+'%'}
+              </span>
+              {myBoostLocked&&myBoostCharge>0&&<span style={{fontSize:10,color:t.gold}}>×1</span>}
             </div>
           </button>
           {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>
@@ -4165,7 +4157,7 @@ function App(){
         }
       }
     }
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
   async function handleGuess(val, isAllIn=false){
