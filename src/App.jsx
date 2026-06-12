@@ -2035,12 +2035,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[allIn,setAllIn]=useState(false);
-  // KERS All-In: single bar 0-100%, charges 25%/round
-  // Must be 100% to use, each use costs 50% (so 2 uses per full charge)
-  // Must reach 0% before recharging
-  const[boostCharge,setBoostCharge]=useState(0);    // 0-100
-  const[boostLocked,setBoostLocked]=useState(false); // true = depleting, can't charge yet
-  const boostAvailable = boostCharge === 100 || (boostLocked && boostCharge === 50);
+  // KERS All-In: stored in Firebase per player for reliability
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
@@ -2057,10 +2052,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const timerPausedRef = React.useRef(timerPaused);
   useEffect(()=>{ timerPausedRef.current = timerPaused; },[timerPaused]);
 
-  const boostLockedRef = React.useRef(false);
-  useEffect(()=>{ boostLockedRef.current = boostLocked; },[boostLocked]);
-
-  // KERS: charge from Firebase – reliable across re-renders
   const myBoostCharge = (room.boostCharge||{})[myId]||0;
   const myBoostLocked = !!(room.boostLocked||{})[myId];
   const boostAvailable = myBoostCharge >= 100 || (myBoostLocked && myBoostCharge >= 50);
