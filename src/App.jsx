@@ -15,7 +15,7 @@ const firebaseConfig = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
-const ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2'];
+const ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2','DpjTjx4Nk4RrivFmwBDsJvxOgj62'];
 const isAdmin = (uid) => ADMIN_UIDS.includes(uid);
 let auth;
 try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
@@ -1608,7 +1608,7 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1839,6 +1839,12 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           borderRadius:t.radius,padding:'8px 20px',color:t.muted,
           fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%'}}>
         📝 {lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}
+      </button>}
+      {onAdmin&&<button onClick={onAdmin}
+        style={{marginTop:8,background:'none',border:`1px solid ${t.accent}44`,
+          borderRadius:t.radius,padding:'8px 20px',color:t.accent,
+          fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%',fontWeight:700}}>
+        📊 Admin Dashboard
       </button>}
     </div>
   </div>;
@@ -4012,6 +4018,331 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
 }
 
 
+
+/* ─── ADMIN DASHBOARD ──────────────────────────────────── */
+function AdminDashboard({t, lang, onBack}){
+  const[stats,setStats]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[tab,setTab]=useState('overview'); // overview|ratings|regions|categories|questions
+
+  useEffect(()=>{
+    async function loadStats(){
+      setLoading(true);
+      try {
+        const [ratingsSnap, sessionsSnap, catsSnap, pairsSnap, questionsSnap] = await Promise.all([
+          get(ref(db,'globalStats/ratings')),
+          get(ref(db,'globalStats/sessions')),
+          get(ref(db,'globalStats/categories')),
+          get(ref(db,'globalStats/categoryPairs')),
+          get(ref(db,'globalStats/questions')),
+        ]);
+
+        const ratings = Object.values(ratingsSnap.val()||{});
+        const sessions = Object.values(sessionsSnap.val()||{});
+        const cats = catSnap => {
+          const d = catsSnap.val()||{};
+          return Object.entries(d).map(([k,v])=>({name:k,...v}))
+            .sort((a,b)=>(b.plays||0)-(a.plays||0));
+        };
+        const pairs = Object.entries(pairsSnap.val()||{})
+          .map(([k,v])=>({pair:k.replace('__',' + '),...v}))
+          .sort((a,b)=>(b.count||0)-(a.count||0));
+        const questions = Object.entries(questionsSnap.val()||{})
+          .map(([k,v])=>({id:k,...v}))
+          .sort((a,b)=>(b.count||0)-(a.count||0));
+
+        // Ratings analysis
+        const rated = ratings.filter(r=>!r.skipped&&r.stars!=null);
+        const avgStars = rated.length>0
+          ? (rated.reduce((s,r)=>s+(r.stars||0),0)/rated.length).toFixed(1) : '-';
+        const npsRatings = ratings.filter(r=>!r.skipped&&r.nps!=null);
+        const promoters = npsRatings.filter(r=>r.nps>=9).length;
+        const detractors = npsRatings.filter(r=>r.nps<=6).length;
+        const nps = npsRatings.length>0
+          ? Math.round((promoters-detractors)/npsRatings.length*100) : null;
+        const skipRate = ratings.length>0
+          ? Math.round(ratings.filter(r=>r.skipped).length/ratings.length*100) : 0;
+        const byRole = {host:rated.filter(r=>r.role==='host'), guest:rated.filter(r=>r.role==='guest')};
+        const avgHost = byRole.host.length>0
+          ? (byRole.host.reduce((s,r)=>s+r.stars,0)/byRole.host.length).toFixed(1) : '-';
+        const avgGuest = byRole.guest.length>0
+          ? (byRole.guest.reduce((s,r)=>s+r.stars,0)/byRole.guest.length).toFixed(1) : '-';
+
+        // Sessions analysis
+        const totalSessions = sessions.length;
+        const byLang = {};
+        const byRegion = {};
+        const byPlatform = {};
+        const byGroupSize = {};
+        sessions.forEach(s=>{
+          byLang[s.lang||'de'] = (byLang[s.lang||'de']||0)+1;
+          const tz = s.tz||'unknown';
+          const region = tz.split('/')[0]||'unknown';
+          byRegion[region] = (byRegion[region]||0)+1;
+          byPlatform[s.platform||'unknown'] = (byPlatform[s.platform||'unknown']||0)+1;
+          const gs = Math.min(s.groupSize||1,10);
+          byGroupSize[gs] = (byGroupSize[gs]||0)+1;
+        });
+        const avgGroupSize = sessions.length>0
+          ? (sessions.reduce((s,r)=>s+(r.groupSize||1),0)/sessions.length).toFixed(1) : '-';
+
+        setStats({
+          ratings, rated, avgStars, nps, skipRate,
+          promoters, detractors, npsRatings,
+          avgHost, avgGuest, totalRatings:ratings.length,
+          sessions, totalSessions, byLang, byRegion, byPlatform, byGroupSize, avgGroupSize,
+          categories: cats(catsSnap), pairs: pairs.slice(0,20),
+          questions: questions.slice(0,50),
+        });
+      } catch(e){ console.error('Admin stats error:', e); }
+      setLoading(false);
+    }
+    loadStats();
+  },[]);
+
+  const gold='#ffd700';
+  const green='#39d98a';
+  const accent='#e8360a';
+  const muted='#6e5e54';
+  const surface='#1a120a';
+  const border='#2a1a0e';
+
+  const StatCard = ({label,value,sub,color})=>(
+    <div style={{background:surface,borderRadius:12,padding:'14px 16px',
+      border:`1px solid ${border}`,flex:1,minWidth:120}}>
+      <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 6px'}}>{label}</p>
+      <p style={{fontSize:28,fontWeight:900,color:color||t.text,margin:0,fontFamily:t.fontTitle}}>{value}</p>
+      {sub&&<p style={{fontSize:11,color:muted,margin:'4px 0 0'}}>{sub}</p>}
+    </div>
+  );
+
+  const Bar = ({label,value,max,color})=>(
+    <div style={{marginBottom:8}}>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+        <span style={{fontSize:12,color:t.text}}>{label}</span>
+        <span style={{fontSize:12,color:color||accent,fontWeight:700}}>{value}</span>
+      </div>
+      <div style={{height:6,background:border,borderRadius:3,overflow:'hidden'}}>
+        <div style={{height:'100%',background:color||accent,borderRadius:3,
+          width:`${Math.min(100,(value/Math.max(max,1))*100)}%`,transition:'width .4s'}}/>
+      </div>
+    </div>
+  );
+
+  return <div style={{...page,paddingBottom:40,animation:'fu .3s ease both'}}>
+    {/* Header */}
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+      <button onClick={onBack} style={{background:'none',border:'none',color:muted,
+        fontSize:20,cursor:'pointer',padding:0}}>←</button>
+      <div>
+        <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,color:t.text}}>
+          Admin Dashboard
+        </h2>
+        <p style={{fontSize:11,color:muted,margin:0}}>EstiMates Analytics</p>
+      </div>
+    </div>
+
+    {/* Tab bar */}
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[
+        {id:'overview',label:'Übersicht'},
+        {id:'ratings',label:'Bewertungen'},
+        {id:'regions',label:'Regionen'},
+        {id:'categories',label:'Kategorien'},
+        {id:'questions',label:'Fragen'},
+      ].map(tb=>(
+        <button key={tb.id} onClick={()=>setTab(tb.id)}
+          style={{padding:'6px 14px',borderRadius:100,fontSize:12,fontWeight:700,
+            cursor:'pointer',border:`1.5px solid ${tab===tb.id?accent:border}`,
+            background:tab===tb.id?accent+'22':'none',
+            color:tab===tb.id?accent:muted,fontFamily:t.fontBody}}>
+          {tb.label}
+        </button>
+      ))}
+    </div>
+
+    {loading&&<div style={{textAlign:'center',padding:40}}><Spinner t={t}/></div>}
+
+    {!loading&&stats&&<>
+
+      {/* ── ÜBERSICHT ── */}
+      {tab==='overview'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="SESSIONS TOTAL" value={stats.totalSessions} color={accent}/>
+          <StatCard label="AVG GRUPPE" value={stats.avgGroupSize+'P'} color={gold}/>
+          <StatCard label="BEWERTUNGEN" value={stats.totalRatings} color={green}/>
+        </div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={gold}
+            sub={`Host: ${stats.avgHost}★ · Guest: ${stats.avgGuest}★`}/>
+          <StatCard label="NPS SCORE"
+            value={stats.nps!=null?stats.nps:'–'}
+            color={stats.nps>=50?green:stats.nps>=0?gold:accent}
+            sub={`${stats.promoters} Prom. · ${stats.detractors} Det.`}/>
+          <StatCard label="SKIP RATE" value={stats.skipRate+'%'} color={muted}
+            sub={`${stats.totalRatings-stats.rated.length} übersprungen`}/>
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            PLATTFORM
+          </p>
+          {Object.entries(stats.byPlatform).map(([k,v])=>(
+            <Bar key={k} label={k} value={v}
+              max={Math.max(...Object.values(stats.byPlatform))}/>
+          ))}
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            GRUPPENGRÖSSE
+          </p>
+          {Object.entries(stats.byGroupSize).sort((a,b)=>Number(a[0])-Number(b[0])).map(([k,v])=>(
+            <Bar key={k} label={k+'P'} value={v}
+              max={Math.max(...Object.values(stats.byGroupSize))} color={gold}/>
+          ))}
+        </div>
+      </div>}
+
+      {/* ── BEWERTUNGEN ── */}
+      {tab==='ratings'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={gold}/>
+          <StatCard label="NPS" value={stats.nps!=null?stats.nps:'–'}
+            color={stats.nps>=50?green:stats.nps>=0?gold:accent}/>
+        </div>
+        {/* Stars distribution */}
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            STERNE VERTEILUNG
+          </p>
+          {[5,4,3,2,1].map(s=>{
+            const count=stats.rated.filter(r=>r.stars===s).length;
+            return <Bar key={s} label={'★'.repeat(s)} value={count}
+              max={stats.rated.length} color={s>=4?gold:s>=3?accent:muted}/>;
+          })}
+        </div>
+        {/* NPS distribution */}
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            NPS VERTEILUNG
+          </p>
+          <div style={{display:'flex',gap:8,marginBottom:10}}>
+            <div style={{flex:1,background:green+'22',borderRadius:8,padding:'8px',textAlign:'center'}}>
+              <p style={{fontSize:20,fontWeight:900,color:green,margin:0}}>{stats.promoters}</p>
+              <p style={{fontSize:10,color:muted,margin:0}}>Promotoren (9-10)</p>
+            </div>
+            <div style={{flex:1,background:gold+'22',borderRadius:8,padding:'8px',textAlign:'center'}}>
+              <p style={{fontSize:20,fontWeight:900,color:gold,margin:0}}>{stats.npsRatings.filter(r=>r.nps>=7&&r.nps<=8).length}</p>
+              <p style={{fontSize:10,color:muted,margin:0}}>Passive (7-8)</p>
+            </div>
+            <div style={{flex:1,background:accent+'22',borderRadius:8,padding:'8px',textAlign:'center'}}>
+              <p style={{fontSize:20,fontWeight:900,color:accent,margin:0}}>{stats.detractors}</p>
+              <p style={{fontSize:10,color:muted,margin:0}}>Detraktoren (0-6)</p>
+            </div>
+          </div>
+          {[...Array(11)].map((_,n)=>{
+            const count=stats.npsRatings.filter(r=>r.nps===n).length;
+            return <Bar key={n} label={String(n)} value={count}
+              max={stats.npsRatings.length}
+              color={n>=9?green:n>=7?gold:accent}/>;
+          })}
+        </div>
+        {/* By role */}
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            HOST vs. GAST
+          </p>
+          <div style={{display:'flex',gap:10}}>
+            <StatCard label="HOST AVG" value={stats.avgHost+'★'} color={gold}/>
+            <StatCard label="GAST AVG" value={stats.avgGuest+'★'} color={accent}/>
+          </div>
+        </div>
+      </div>}
+
+      {/* ── REGIONEN ── */}
+      {tab==='regions'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            NACH SPRACHE
+          </p>
+          {Object.entries(stats.byLang).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+            <Bar key={k} label={k.toUpperCase()} value={v}
+              max={Math.max(...Object.values(stats.byLang))} color={accent}/>
+          ))}
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            NACH REGION (TIMEZONE)
+          </p>
+          {Object.entries(stats.byRegion).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+            <Bar key={k} label={k} value={v}
+              max={Math.max(...Object.values(stats.byRegion))} color={gold}/>
+          ))}
+        </div>
+      </div>}
+
+      {/* ── KATEGORIEN ── */}
+      {tab==='categories'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            BELIEBTESTE KATEGORIEN
+          </p>
+          {stats.categories.map(c=>(
+            <Bar key={c.name} label={c.name} value={c.plays||0}
+              max={stats.categories[0]?.plays||1} color={accent}/>
+          ))}
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            BELIEBTESTE KOMBINATIONEN
+          </p>
+          {stats.pairs.map(p=>(
+            <Bar key={p.pair} label={p.pair} value={p.count||0}
+              max={stats.pairs[0]?.count||1} color={gold}/>
+          ))}
+        </div>
+      </div>}
+
+      {/* ── FRAGEN ── */}
+      {tab==='questions'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <p style={{fontSize:11,color:muted,margin:'0 0 8px'}}>
+          Top 50 meistgespielte Fragen
+        </p>
+        {stats.questions.map((q,idx)=>(
+          <div key={q.id} style={{background:surface,borderRadius:10,
+            padding:'10px 12px',border:`1px solid ${border}`}}>
+            <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+              <span style={{fontSize:11,color:muted,minWidth:24,fontFamily:'monospace'}}>
+                {idx+1}.
+              </span>
+              <div style={{flex:1}}>
+                <p style={{fontSize:12,color:t.text,margin:'0 0 4px',fontWeight:600}}>
+                  {q.id}
+                </p>
+                <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+                  <span style={{fontSize:11,color:accent}}>
+                    Ø {q.avg!=null?q.avg:'–'} {q.unit||''}
+                  </span>
+                  <span style={{fontSize:11,color:muted}}>
+                    σ {q.stdDev!=null?q.stdDev:'–'}
+                  </span>
+                  <span style={{fontSize:11,color:gold}}>
+                    {q.count||0}x gespielt
+                  </span>
+                  <span style={{fontSize:11,
+                    color:q.difficulty>70?accent:q.difficulty>40?gold:green}}>
+                    {q.difficulty!=null?q.difficulty+'% schwer':''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>}
+
+    </>}
+  </div>;
+}
+
 /* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
 function MyQuestionsScreen({myId, t, lang, onBack}){
   const i=UI[lang]||UI.de;
@@ -4760,8 +5091,9 @@ function App(){
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
       onDone={()=>setShowOnboarding(false)}/>}
+    {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onAdmin={isPro?()=>setScreen('admin'):null}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
