@@ -869,12 +869,13 @@ function calcRound(room){
     // Bet counts if the player picked ANY of the tied closest/farthest
     if(closestIds.includes(bet.closest)) pts+=1;
     if(farthestIds.includes(bet.farthest)) pts+=1;
-    // All-In: nur bei exaktem Treffer → 2×, sonst immer -1
+    // All-In KERS: exakter Treffer = +5, daneben = -5
     const isAllIn = !!(room.allIn||{})[id];
     if(isAllIn){
-      if(diff===0) pts = pts*2;  // exakter Treffer: Punkte verdoppeln
-      else pts = -1;             // nicht exakt: Abzug egal wie nah
+      if(diff===0) pts = pts + 4;  // +1 normal +4 bonus = +5 total
+      else pts = -5;
     }
+    // Doppeljoker: verdoppelt alles – auch Verluste (eigene Entscheidung!)
     roundScores[id]=doubleJokers[id]?pts*2:pts;
   });
   const newScores={...room.scores};
@@ -2034,6 +2035,12 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[allIn,setAllIn]=useState(false);
+  // KERS All-In: single bar 0-100%, charges 25%/round
+  // Must be 100% to use, each use costs 50% (so 2 uses per full charge)
+  // Must reach 0% before recharging
+  const[boostCharge,setBoostCharge]=useState(0);    // 0-100
+  const[boostLocked,setBoostLocked]=useState(false); // true = depleting, can't charge yet
+  const boostAvailable = boostCharge === 100 || (boostLocked && boostCharge === 50);
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
@@ -2047,6 +2054,21 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const speedMode=room.speedMode;
   const timerSecs=room.timerSecs||30;
   const timerPaused=!!(room.timerPaused);
+
+  // KERS: charge 25%/round, only when not locked (depleting)
+  const prevQIdRef = React.useRef(null);
+  useEffect(()=>{
+    if(!q?.id) return;
+    if(prevQIdRef.current && prevQIdRef.current !== q.id){
+      setBoostCharge(prev=>{
+        if(boostLocked) return prev; // depleting → can't charge
+        if(prev >= 100) return 100;  // already full
+        return prev + 25;
+      });
+      setAllIn(false);
+    }
+    prevQIdRef.current = q.id;
+  },[q?.id, boostLocked]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2074,18 +2096,29 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   async function submit(){
     const n=parseFloat(val.replace(",","."));
     if(isNaN(n))return;
-    // If this was a "change" joker, clear changeAllowed after submit
     if(changeAllowed){
       await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
     }
     onGuess(n, allIn);
+    if(allIn){
+      setBoostCharge(prev=>{
+        const next = prev - 50;
+        if(next <= 0){
+          // Fully depleted → unlock charging
+          setBoostLocked(false);
+          return 0;
+        }
+        // Still 50% left → lock charging until second boost used
+        setBoostLocked(true);
+        return next;
+      });
+    }
     setVal("");
     setAllIn(false);
   }
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
-
-  const isAfkMe = !!(afkPlayers[myId]);
+  const chargePercent = boostCharge; // 0-100 for single bar
 
   return <div style={{
     minHeight:"100vh", display:"flex", flexDirection:"column",
@@ -2310,16 +2343,38 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <Btn t={t} onClick={submit} disabled={!val}
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
-          {/* All-In toggle */}
-          <button onClick={()=>setAllIn(a=>!a)}
-            style={{width:'100%',marginTop:8,padding:'8px',borderRadius:t.radius,
-              background:allIn?t.accent+'33':'none',
-              border:`1px solid ${allIn?t.accent:t.border}`,
-              color:allIn?t.accent:t.muted,fontSize:13,fontWeight:allIn?700:400,
-              cursor:'pointer',fontFamily:t.fontBody,transition:'all .2s'}}>
-            {allIn?i.allInActive:i.allIn}
+          {/* KERS All-In Button */}
+          <button onClick={()=>boostAvailable&&setAllIn(a=>!a)}
+            disabled={!boostAvailable}
+            style={{width:'100%',marginTop:8,padding:'8px 12px',borderRadius:t.radius,
+              background:allIn?t.accent+'33':boostAvailable?t.surface:'none',
+              border:`1.5px solid ${allIn?t.accent:boostAvailable?t.gold:t.border}`,
+              color:allIn?t.accent:boostAvailable?t.gold:t.muted,
+              fontSize:13,fontWeight:allIn||boostAvailable?700:400,
+              cursor:boostAvailable?'pointer':'default',
+              fontFamily:t.fontBody,transition:'all .2s',
+              opacity:boostAvailable?1:0.6}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center'}}>
+              <span>⚡ ALL-IN</span>
+              <div style={{display:'flex',gap:3,alignItems:'center'}}>
+                <div style={{width:50,height:6,borderRadius:3,background:t.border,overflow:'hidden'}}>
+                  <div style={{height:'100%',borderRadius:3,
+                    background:chargePercent>=100?t.gold:t.accent,
+                    width:`${chargePercent}%`,transition:'width .4s ease',
+                    boxShadow:chargePercent>=100?`0 0 6px ${t.gold}`:'none'}}/>
+                </div>
+                <span style={{fontSize:10,color:boostCharge>=100?t.gold:t.muted,fontWeight:700,minWidth:32}}>
+                  {boostCharge>=100?'READY':`${boostCharge}%`}
+                </span>
+              </div>
+              {boostLocked&&boostCharge>0&&<span style={{fontSize:10,color:t.gold}}>×1</span>}
+            </div>
           </button>
-          {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>{i.allInHint}</p>}
+          {allIn&&<p style={{fontSize:11,color:t.accent,textAlign:'center',marginTop:4,opacity:.8}}>
+            {lang==='en'?'Exact hit = +5pts · Miss = -5pts':
+             lang==='es'?'Exacto = +5pts · Fallo = -5pts':
+             'Exakter Treffer = +5P · Daneben = -5P'}
+          </p>}
           <div style={{display:'none'}}>
           </div>
           <p style={{marginTop:8,color:t.muted,fontSize:12}}>
