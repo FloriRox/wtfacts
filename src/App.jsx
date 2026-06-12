@@ -2061,11 +2061,11 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   useEffect(()=>{ boostLockedRef.current = boostLocked; },[boostLocked]);
 
   // KERS: charge 25%/round, only when not locked (depleting)
-  const prevQIdxRef = React.useRef(null);
+  const prevQIdxRef = React.useRef(-1);
   useEffect(()=>{
     const qIdx = room.qIdx||0;
     console.log('KERS effect:', {qIdx, prev: prevQIdxRef.current, boostLocked: boostLockedRef.current, boostCharge});
-    if(prevQIdxRef.current !== null && prevQIdxRef.current !== qIdx){
+    if(prevQIdxRef.current !== -1 && prevQIdxRef.current !== qIdx){
       if(!boostLockedRef.current){
         setBoostCharge(prev=>{
           const next = prev >= 100 ? 100 : prev + 25;
