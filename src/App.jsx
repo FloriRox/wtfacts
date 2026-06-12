@@ -2054,21 +2054,27 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const speedMode=room.speedMode;
   const timerSecs=room.timerSecs||30;
   const timerPaused=!!(room.timerPaused);
+  const timerPausedRef = React.useRef(timerPaused);
+  useEffect(()=>{ timerPausedRef.current = timerPaused; },[timerPaused]);
+
+  const boostLockedRef = React.useRef(false);
+  useEffect(()=>{ boostLockedRef.current = boostLocked; },[boostLocked]);
 
   // KERS: charge 25%/round, only when not locked (depleting)
   const prevQIdRef = React.useRef(null);
   useEffect(()=>{
     if(!q?.id) return;
     if(prevQIdRef.current && prevQIdRef.current !== q.id){
-      setBoostCharge(prev=>{
-        if(boostLocked) return prev; // depleting → can't charge
-        if(prev >= 100) return 100;  // already full
-        return prev + 25;
-      });
+      if(!boostLockedRef.current){
+        setBoostCharge(prev=>{
+          if(prev >= 100) return 100;
+          return prev + 25;
+        });
+      }
       setAllIn(false);
     }
     prevQIdRef.current = q.id;
-  },[q?.id, boostLocked]);
+  },[q?.id]);
 
   // Speed mode timer
   useEffect(()=>{
@@ -2076,7 +2082,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     setTimeLeft(timerSecs);
     const iv=setInterval(()=>{
       setTimeLeft(prev=>{
-        if(timerPaused) return prev; // paused by host
+        if(timerPausedRef.current) return prev; // paused by host
         if(prev<=1){
           clearInterval(iv);
           onGuess(-999999);
