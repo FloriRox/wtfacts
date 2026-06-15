@@ -1650,7 +1650,12 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       } catch(e){
         console.error('join read failed:',e);
         setBusy(false);
-        setError(i.roomNotFound);
+        const perm = e?.code==='PERMISSION_DENIED' || /permission/i.test(e?.message||'');
+        setError(perm
+          ? (lang==='en'?'Access denied – check Firebase rules (rooms .read).'
+            :lang==='es'?'Acceso denegado – revisa las reglas (rooms .read).'
+            :'Zugriff verweigert – Firebase-Rules prüfen (rooms .read).')
+          : i.roomNotFound);
         return;
       }
       setBusy(false);
