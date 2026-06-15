@@ -3611,14 +3611,32 @@ function FeedbackWidget({t, lang, currentQuestion=null}) {
 /* ─── BUG REPORT BUTTON ─────────────────────────── */
 function BugReportButton({t, lang, question}) {
   const i = UI[lang]||UI.de;
-  const SUPPORT_EMAIL = 'support@playestimates.app';
+  const [sent, setSent] = React.useState(false);
 
-  function report() {
-    const subject = encodeURIComponent(i.feedbackBugSubject||'Fehler');
-    const qText = question ? `Frage: "${question.q}"\nAntwort laut App: ${question.a} ${question.unit}\nWas stimmt nicht: ` : '';
-    const body = encodeURIComponent(qText + '\n\n' + (i.feedbackReward||''));
-    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  async function report() {
+    if(sent) return;
+    setSent(true); // optimistic – kein mailto-Sprung mitten im Spiel
+    try {
+      const id = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      await update(ref(db,`bugReports/${id}`), {
+        qId:        question?.id != null ? question.id : null,
+        q:          question?.q || null,
+        a:          question?.a != null ? question.a : null,
+        unit:       question?.unit || null,
+        lang:       lang || 'de',
+        reporterId: auth?.currentUser?.uid || null,
+        ts:         Date.now(),
+        status:     'open',
+      });
+    } catch(e) { console.error('bug report failed:', e); }
   }
+
+  if(sent) return (
+    <span style={{fontSize:11,color:t.gold,opacity:.85,padding:'4px 0',
+      display:'inline-block'}}>
+      ✅ {i.feedbackThanks||'Danke, gemeldet!'}
+    </span>
+  );
 
   return (
     <button onClick={report}
@@ -4086,31 +4104,36 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
 function AdminDashboard({t, lang, onBack}){
   const[stats,setStats]=useState(null);
   const[loading,setLoading]=useState(true);
-  const[tab,setTab]=useState('overview'); // overview|ratings|regions|categories|questions
+  const[tab,setTab]=useState('overview'); // overview|accounts|ratings|feedback|community|bugs|categories|questions|regions
+  const[qSort,setQSort]=useState('played'); // played|hard|easy|ambiguous
+  const[commFilter,setCommFilter]=useState('pending'); // pending|approved|rejected|all
+  const[editComm,setEditComm]=useState(null); // {id,q,a,unit}
+  const[busyId,setBusyId]=useState(null);
 
   useEffect(()=>{
     async function loadStats(){
       setLoading(true);
       try {
-        const [ratingsSnap, sessionsSnap, catsSnap, pairsSnap, questionsSnap] = await Promise.all([
-          get(ref(db,'globalStats/ratings')),
-          get(ref(db,'globalStats/sessions')),
-          get(ref(db,'globalStats/categories')),
-          get(ref(db,'globalStats/categoryPairs')),
-          get(ref(db,'globalStats/questions')),
+        const safe = p => p.then(s=>s.val()||null).catch(()=>null);
+        const [ratingsV, sessionsV, catsV, pairsV, questionsV, communityV, bugsV, usersV] = await Promise.all([
+          safe(get(ref(db,'globalStats/ratings'))),
+          safe(get(ref(db,'globalStats/sessions'))),
+          safe(get(ref(db,'globalStats/categories'))),
+          safe(get(ref(db,'globalStats/categoryPairs'))),
+          safe(get(ref(db,'globalStats/questions'))),
+          safe(get(ref(db,'communityQuestions'))),
+          safe(get(ref(db,'bugReports'))),
+          safe(get(ref(db,'globalStats/users'))),
         ]);
 
-        const ratings = Object.values(ratingsSnap.val()||{});
-        const sessions = Object.values(sessionsSnap.val()||{});
-        const cats = catSnap => {
-          const d = catsSnap.val()||{};
-          return Object.entries(d).map(([k,v])=>({name:k,...v}))
-            .sort((a,b)=>(b.plays||0)-(a.plays||0));
-        };
-        const pairs = Object.entries(pairsSnap.val()||{})
+        const ratings = Object.values(ratingsV||{});
+        const sessions = Object.values(sessionsV||{});
+        const catsList = Object.entries(catsV||{}).map(([k,v])=>({name:k,...v}))
+          .sort((a,b)=>(b.plays||0)-(a.plays||0));
+        const pairs = Object.entries(pairsV||{})
           .map(([k,v])=>({pair:k.replace('__',' + '),...v}))
           .sort((a,b)=>(b.count||0)-(a.count||0));
-        const questions = Object.entries(questionsSnap.val()||{})
+        const questions = Object.entries(questionsV||{})
           .map(([k,v])=>({id:k,...v}))
           .sort((a,b)=>(b.count||0)-(a.count||0));
 
@@ -4149,24 +4172,124 @@ function AdminDashboard({t, lang, onBack}){
         const avgGroupSize = sessions.length>0
           ? (sessions.reduce((s,r)=>s+(r.groupSize||1),0)/sessions.length).toFixed(1) : '-';
 
+        // #3 Zeitverlauf – Sessions pro Tag (letzte 14 Tage) + 7d-Vergleich
+        const DAY=86400000;
+        const dayStart=new Date(); dayStart.setHours(0,0,0,0);
+        const todayMs=dayStart.getTime();
+        const sparkDays=[];
+        for(let k=13;k>=0;k--){
+          const d0=todayMs-k*DAY;
+          sparkDays.push({day:d0, count:sessions.filter(s=>s.ts>=d0&&s.ts<d0+DAY).length});
+        }
+        const last7  = sessions.filter(s=>s.ts>=todayMs-6*DAY).length;
+        const prev7  = sessions.filter(s=>s.ts>=todayMs-13*DAY&&s.ts<todayMs-6*DAY).length;
+        const delta7 = prev7>0 ? Math.round((last7-prev7)/prev7*100) : null;
+
+        // #5 Accounts
+        const users = Object.values(usersV||{});
+        const totalUsers  = users.length;
+        const registered  = users.filter(u=>!u.anon).length;
+        const anonUsers    = users.filter(u=>u.anon).length;
+        const returning    = users.filter(u=>(u.opens||1)>1).length;
+        const newUsers7    = users.filter(u=>(u.firstSeen||0)>=todayMs-6*DAY).length;
+        const active7      = users.filter(u=>(u.lastSeen||0)>=todayMs-6*DAY).length;
+        const usersByLang  = {};
+        users.forEach(u=>{ const l=u.lang||'de'; usersByLang[l]=(usersByLang[l]||0)+1; });
+
+        // #1 Community-Fragen
+        const community = Object.entries(communityV||{})
+          .map(([k,v])=>({id:k,...v}))
+          .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+        const communityPending  = community.filter(q=>(q.status||'pending')==='pending');
+        const communityApproved = community.filter(q=>q.status==='approved');
+        const communityRejected = community.filter(q=>q.status==='rejected');
+
+        // #2 Bug-Reports
+        const bugs = Object.entries(bugsV||{})
+          .map(([k,v])=>({id:k,...v}))
+          .sort((a,b)=>(b.ts||0)-(a.ts||0));
+        const bugsOpen = bugs.filter(b=>(b.status||'open')==='open').length;
+
         // Feedback comments – bad ratings only
         const feedbacks = ratings
           .filter(r=>r.comment&&r.comment.trim()&&!r.skipped)
           .sort((a,b)=>(b.ts||0)-(a.ts||0));
+
         setStats({
           ratings, rated, avgStars, nps, skipRate,
           promoters, detractors, npsRatings,
           avgHost, avgGuest, totalRatings:ratings.length,
           sessions, totalSessions, byLang, byRegion, byPlatform, byGroupSize, avgGroupSize,
-          categories: cats(catsSnap), pairs: pairs.slice(0,20),
-          questions: questions.slice(0,50),
+          categories: catsList, pairs: pairs.slice(0,20),
+          questions: questions.slice(0,50), questionsAll: questions,
           feedbacks,
+          sparkDays, last7, prev7, delta7,
+          totalUsers, registered, anonUsers, returning, newUsers7, active7, usersByLang,
+          community, communityPending, communityApproved, communityRejected,
+          bugs, bugsOpen,
         });
       } catch(e){ console.error('Admin stats error:', e); }
       setLoading(false);
     }
     loadStats();
   },[]);
+
+  // ── Re-derive community status buckets after a local mutation ──
+  const rebucket = (community)=>({
+    community,
+    communityPending:  community.filter(q=>(q.status||'pending')==='pending'),
+    communityApproved: community.filter(q=>q.status==='approved'),
+    communityRejected: community.filter(q=>q.status==='rejected'),
+  });
+  async function setCommStatus(id,status){
+    setBusyId(id);
+    try { await update(ref(db,`communityQuestions/${id}`),{status}); }
+    catch(e){ console.error('community status failed:',e); }
+    setStats(p=>p?{...p,...rebucket(p.community.map(q=>q.id===id?{...q,status}:q))}:p);
+    setBusyId(null);
+  }
+  async function delComm(id){
+    setBusyId(id);
+    try { await remove(ref(db,`communityQuestions/${id}`)); }
+    catch(e){ console.error('community delete failed:',e); }
+    setStats(p=>p?{...p,...rebucket(p.community.filter(q=>q.id!==id))}:p);
+    setBusyId(null);
+  }
+  async function saveCommEdit(){
+    if(!editComm) return;
+    const {id,q,a,unit}=editComm;
+    const patch={q,a:a===''?null:Number(a),unit};
+    setBusyId(id);
+    try { await update(ref(db,`communityQuestions/${id}`),patch); }
+    catch(e){ console.error('community edit failed:',e); }
+    setStats(p=>p?{...p,...rebucket(p.community.map(x=>x.id===id?{...x,...patch}:x))}:p);
+    setBusyId(null); setEditComm(null);
+  }
+  async function setBugStatus(id,status){
+    setBusyId(id);
+    try { await update(ref(db,`bugReports/${id}`),{status}); }
+    catch(e){ console.error('bug status failed:',e); }
+    setStats(p=>{ if(!p) return p;
+      const bugs=p.bugs.map(b=>b.id===id?{...b,status}:b);
+      return {...p,bugs,bugsOpen:bugs.filter(b=>(b.status||'open')==='open').length}; });
+    setBusyId(null);
+  }
+  async function delBug(id){
+    setBusyId(id);
+    try { await remove(ref(db,`bugReports/${id}`)); }
+    catch(e){ console.error('bug delete failed:',e); }
+    setStats(p=>{ if(!p) return p;
+      const bugs=p.bugs.filter(b=>b.id!==id);
+      return {...p,bugs,bugsOpen:bugs.filter(b=>(b.status||'open')==='open').length}; });
+    setBusyId(null);
+  }
+
+  // Look up the playable question text for a given community/stats id (for bug context)
+  const lookupQ = (id)=>{
+    const allQs = Object.values(QUESTIONS_RAW?.adult||{}).flatMap(c=>c.questions||[])
+      .concat(Object.values(QUESTIONS_RAW?.kids||{}).flatMap(c=>c.questions||[]));
+    return allQs.find(x=>x.id===id);
+  };
 
   const gold='#ffd700';
   const green='#39d98a';
@@ -4197,6 +4320,11 @@ function AdminDashboard({t, lang, onBack}){
     </div>
   );
 
+  const actBtn = (c)=>({padding:'6px 11px',borderRadius:8,border:`1px solid ${c}`,
+    background:c+'18',color:c,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:t.fontBody});
+  const inpStyle = {background:'#0d0805',color:t.text,border:`1px solid ${border}`,
+    borderRadius:8,padding:'8px',fontSize:13,fontFamily:t.fontBody};
+
   return <div style={{...page,paddingBottom:40,animation:'fu .3s ease both'}}>
     {/* Header */}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
@@ -4214,11 +4342,14 @@ function AdminDashboard({t, lang, onBack}){
     <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
       {[
         {id:'overview',label:'Übersicht'},
+        {id:'accounts',label:'Accounts'},
+        {id:'community',label:'Community'+(stats?.communityPending?.length?` (${stats.communityPending.length})`:'')},
+        {id:'bugs',label:'Bugs'+(stats?.bugsOpen?` (${stats.bugsOpen})`:'')},
         {id:'ratings',label:'Bewertungen'},
-        {id:'regions',label:'Regionen'},
+        {id:'feedback',label:'Feedback'},
         {id:'categories',label:'Kategorien'},
         {id:'questions',label:'Fragen'},
-        {id:'feedback',label:'Feedback'},
+        {id:'regions',label:'Regionen'},
       ].map(tb=>(
         <button key={tb.id} onClick={()=>setTab(tb.id)}
           style={{padding:'6px 14px',borderRadius:100,fontSize:12,fontWeight:700,
@@ -4241,6 +4372,38 @@ function AdminDashboard({t, lang, onBack}){
           <StatCard label="AVG GRUPPE" value={stats.avgGroupSize+'P'} color={gold}/>
           <StatCard label="BEWERTUNGEN" value={stats.totalRatings} color={green}/>
         </div>
+
+        {/* #3 Traktion + #5 Account-Headline */}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="SESSIONS 7 TAGE" value={stats.last7} color={accent}
+            sub={stats.delta7!=null?`${stats.delta7>=0?'▲':'▼'} ${Math.abs(stats.delta7)}% vs. Vorwoche`:'keine Vorwoche'}/>
+          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={gold}
+            sub={`${stats.registered} registriert · ${stats.anonUsers} anon`}/>
+          <StatCard label="AKTIV 7 TAGE" value={stats.active7} color={green}
+            sub={`${stats.newUsers7} neu · ${stats.returning} wiederkehrend`}/>
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 12px'}}>
+            SESSIONS / TAG · LETZTE 14 TAGE
+          </p>
+          {(()=>{
+            const mx=Math.max(1,...stats.sparkDays.map(d=>d.count));
+            return <div style={{display:'flex',alignItems:'flex-end',gap:3,height:60}}>
+              {stats.sparkDays.map((d,idx)=>(
+                <div key={idx} title={new Date(d.day).toLocaleDateString('de-DE')+': '+d.count}
+                  style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'flex-end',height:'100%'}}>
+                  <div style={{height:`${Math.max(2,(d.count/mx)*100)}%`,
+                    background:idx>=7?accent:accent+'66',borderRadius:'3px 3px 0 0',transition:'height .3s'}}/>
+                </div>
+              ))}
+            </div>;
+          })()}
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
+            <span style={{fontSize:9,color:muted}}>vor 14 Tagen</span>
+            <span style={{fontSize:9,color:muted}}>heute</span>
+          </div>
+        </div>
+
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
           <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={gold}
             sub={`Host: ${stats.avgHost}★ · Guest: ${stats.avgGuest}★`}/>
@@ -4415,45 +4578,218 @@ function AdminDashboard({t, lang, onBack}){
       </div>}
 
       {/* ── FRAGEN ── */}
-      {tab==='questions'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-        <p style={{fontSize:11,color:muted,margin:'0 0 8px'}}>
-          Top 50 meistgespielte Fragen
-        </p>
-        {stats.questions.map((q,idx)=>{
-          // Look up question text from question files
-          const allQs = Object.values(QUESTIONS_RAW?.adult||{}).flatMap(c=>c.questions||[])
-            .concat(Object.values(QUESTIONS_RAW?.kids||{}).flatMap(c=>c.questions||[]));
-          const qObj = allQs.find(x=>x.id===q.id);
-          return <div key={q.id} style={{background:surface,borderRadius:10,
-            padding:'10px 12px',border:`1px solid ${border}`}}>
-            <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
-              <span style={{fontSize:11,color:muted,minWidth:24,fontFamily:'monospace',
-                flexShrink:0}}>{idx+1}.</span>
-              <div style={{flex:1}}>
-                {qObj&&<p style={{fontSize:12,color:t.text,margin:'0 0 3px',fontWeight:600,
-                  lineHeight:1.4}}>{qObj.q}</p>}
-                <p style={{fontSize:10,color:muted,margin:'0 0 4px',fontFamily:'monospace'}}>
-                  {q.id}
-                </p>
-                <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-                  <span style={{fontSize:11,color:accent,fontWeight:700}}>
-                    Ø {q.avg!=null?q.avg:'–'} {q.unit||qObj?.unit||''}
-                  </span>
-                  <span style={{fontSize:11,color:muted}}>
-                    σ {q.stdDev!=null?q.stdDev:'–'}
-                  </span>
-                  <span style={{fontSize:11,color:gold}}>
-                    {q.count||0}x
-                  </span>
-                  {q.difficulty!=null&&<span style={{fontSize:11,fontWeight:700,
-                    color:q.difficulty>70?accent:q.difficulty>40?gold:green}}>
-                    {q.difficulty}% schwer
-                  </span>}
+      {/* ── #1 COMMUNITY-MODERATION ── */}
+      {tab==='community'&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {[
+            {id:'pending',label:`Offen (${stats.communityPending.length})`,c:gold},
+            {id:'approved',label:`Frei (${stats.communityApproved.length})`,c:green},
+            {id:'rejected',label:`Abgelehnt (${stats.communityRejected.length})`,c:accent},
+            {id:'all',label:`Alle (${stats.community.length})`,c:muted},
+          ].map(f=>(
+            <button key={f.id} onClick={()=>setCommFilter(f.id)}
+              style={{padding:'5px 12px',borderRadius:100,fontSize:11,fontWeight:700,cursor:'pointer',
+                border:`1.5px solid ${commFilter===f.id?f.c:border}`,
+                background:commFilter===f.id?f.c+'22':'none',
+                color:commFilter===f.id?f.c:muted,fontFamily:t.fontBody}}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {(()=>{
+          const list = commFilter==='pending'?stats.communityPending
+            : commFilter==='approved'?stats.communityApproved
+            : commFilter==='rejected'?stats.communityRejected
+            : stats.community;
+          if(!list.length) return <div style={{background:surface,borderRadius:10,padding:'20px',
+            textAlign:'center',border:`1px solid ${border}`}}>
+            <p style={{color:muted,fontSize:13,margin:0}}>Keine Fragen in dieser Ansicht.</p></div>;
+          return list.map(q=>{
+            const st=q.status||'pending';
+            const stColor=st==='approved'?green:st==='rejected'?accent:gold;
+            const busy=busyId===q.id;
+            const date=q.createdAt?new Date(q.createdAt).toLocaleDateString('de-DE',
+              {day:'2-digit',month:'2-digit',year:'numeric'}):'–';
+            if(editComm&&editComm.id===q.id){
+              return <div key={q.id} style={{background:surface,borderRadius:10,padding:'12px 14px',
+                border:`1px solid ${gold}55`}}>
+                <textarea value={editComm.q} onChange={e=>setEditComm({...editComm,q:e.target.value})}
+                  rows={2} style={{...inpStyle,width:'100%',boxSizing:'border-box',resize:'vertical'}}/>
+                <div style={{display:'flex',gap:8,marginTop:8}}>
+                  <input value={editComm.a} onChange={e=>setEditComm({...editComm,a:e.target.value})}
+                    placeholder="Antwort" inputMode="decimal" style={{...inpStyle,flex:1,minWidth:0}}/>
+                  <input value={editComm.unit} onChange={e=>setEditComm({...editComm,unit:e.target.value})}
+                    placeholder="Einheit" style={{...inpStyle,flex:1,minWidth:0}}/>
                 </div>
+                <div style={{display:'flex',gap:8,marginTop:10}}>
+                  <button onClick={saveCommEdit} disabled={busy}
+                    style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:green,color:'#04210f',
+                      fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>Speichern</button>
+                  <button onClick={()=>setEditComm(null)} disabled={busy}
+                    style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${border}`,background:'none',
+                      color:muted,fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:t.fontBody}}>Abbrechen</button>
+                </div>
+              </div>;
+            }
+            return <div key={q.id} style={{background:surface,borderRadius:10,padding:'12px 14px',
+              border:`1px solid ${st==='pending'?gold+'44':border}`,opacity:busy?.5:1}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <span style={{fontSize:10,fontWeight:700,color:stColor,background:stColor+'22',
+                  padding:'2px 8px',borderRadius:100,textTransform:'uppercase'}}>{st}</span>
+                <span style={{fontSize:10,color:muted}}>{date}{q.lang?' · '+q.lang.toUpperCase():''}</span>
               </div>
+              <p style={{fontSize:13,color:t.text,margin:'0 0 4px',fontWeight:600,lineHeight:1.4}}>
+                {q.emoji?q.emoji+' ':''}{q.q}
+              </p>
+              <p style={{fontSize:12,color:accent,fontWeight:700,margin:'0 0 2px'}}>
+                Antwort: {q.a!=null?q.a:'–'} {q.unit||''}
+              </p>
+              {q.hint&&<p style={{fontSize:11,color:muted,margin:'2px 0 0',fontStyle:'italic'}}>{q.hint}</p>}
+              <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:10}}>
+                {st!=='approved'&&<button onClick={()=>setCommStatus(q.id,'approved')} disabled={busy} style={actBtn(green)}>✓ Freigeben</button>}
+                {st!=='rejected'&&<button onClick={()=>setCommStatus(q.id,'rejected')} disabled={busy} style={actBtn(accent)}>✕ Ablehnen</button>}
+                <button onClick={()=>setEditComm({id:q.id,q:q.q||'',a:q.a!=null?String(q.a):'',unit:q.unit||''})} disabled={busy} style={actBtn(gold)}>✎ Bearbeiten</button>
+                <button onClick={()=>delComm(q.id)} disabled={busy} style={actBtn(muted)}>🗑</button>
+              </div>
+            </div>;
+          });
+        })()}
+      </div>}
+
+      {/* ── #2 BUG-REPORTS ── */}
+      {tab==='bugs'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <p style={{fontSize:11,color:muted,margin:'0 0 4px'}}>
+          {stats.bugsOpen} offen · {stats.bugs.length} gesamt
+        </p>
+        {!stats.bugs.length&&<div style={{background:surface,borderRadius:10,padding:'20px',
+          textAlign:'center',border:`1px solid ${border}`}}>
+          <p style={{color:muted,fontSize:13,margin:0}}>Keine Bug-Reports.</p></div>}
+        {stats.bugs.map(b=>{
+          const busy=busyId===b.id;
+          const open=(b.status||'open')==='open';
+          const date=b.ts?new Date(b.ts).toLocaleDateString('de-DE',
+            {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'–';
+          const qObj=b.qId?lookupQ(b.qId):null;
+          return <div key={b.id} style={{background:surface,borderRadius:10,padding:'12px 14px',
+            border:`1px solid ${open?accent+'44':border}`,opacity:busy?.5:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <span style={{fontSize:10,fontWeight:700,color:open?accent:green,
+                background:(open?accent:green)+'22',padding:'2px 8px',borderRadius:100,
+                textTransform:'uppercase'}}>{open?'offen':'erledigt'}</span>
+              <span style={{fontSize:10,color:muted}}>{date}{b.lang?' · '+b.lang.toUpperCase():''}</span>
+            </div>
+            <p style={{fontSize:13,color:t.text,margin:'0 0 4px',fontWeight:600,lineHeight:1.4}}>
+              {b.q||qObj?.q||'(ohne Fragetext)'}
+            </p>
+            <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:8}}>
+              {b.a!=null&&<span style={{fontSize:11,color:accent}}>App-Antwort: {b.a} {b.unit||''}</span>}
+              {b.qId&&<span style={{fontSize:10,color:muted,fontFamily:'monospace'}}>{b.qId}</span>}
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <button onClick={()=>setBugStatus(b.id,open?'resolved':'open')} disabled={busy}
+                style={actBtn(open?green:gold)}>{open?'✓ Erledigt':'↩ Wieder öffnen'}</button>
+              <button onClick={()=>delBug(b.id)} disabled={busy} style={actBtn(muted)}>🗑</button>
             </div>
           </div>;
         })}
+      </div>}
+
+      {/* ── #5 ACCOUNTS ── */}
+      {tab==='accounts'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={gold}/>
+          <StatCard label="REGISTRIERT" value={stats.registered} color={green}
+            sub={stats.totalUsers?Math.round(stats.registered/stats.totalUsers*100)+'%':'–'}/>
+          <StatCard label="ANONYM" value={stats.anonUsers} color={muted}/>
+        </div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <StatCard label="AKTIV 7T" value={stats.active7} color={accent}/>
+          <StatCard label="NEU 7T" value={stats.newUsers7} color={green}/>
+          <StatCard label="WIEDERKEHREND" value={stats.returning} color={gold}
+            sub={stats.totalUsers?Math.round(stats.returning/stats.totalUsers*100)+'%':'–'}/>
+        </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            ACCOUNTS NACH SPRACHE
+          </p>
+          {Object.entries(stats.usersByLang).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+            <Bar key={k} label={k.toUpperCase()} value={v}
+              max={Math.max(1,...Object.values(stats.usersByLang))} color={gold}/>
+          ))}
+          {!Object.keys(stats.usersByLang).length&&<p style={{fontSize:12,color:muted,margin:0}}>
+            Noch keine Account-Daten.</p>}
+        </div>
+        <p style={{fontSize:10,color:muted,margin:0,lineHeight:1.5}}>
+          Hinweis: Account-Daten werden erst seit diesem Update erfasst (Heartbeat beim App-Start) –
+          die Werte wachsen ab Deploy.
+        </p>
+      </div>}
+
+      {tab==='questions'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:4}}>
+          {[
+            {id:'played',label:'Meistgespielt'},
+            {id:'hard',label:'Schwerste'},
+            {id:'ambiguous',label:'Mehrdeutigste'},
+            {id:'easy',label:'Leichteste'},
+          ].map(s=>(
+            <button key={s.id} onClick={()=>setQSort(s.id)}
+              style={{padding:'5px 12px',borderRadius:100,fontSize:11,fontWeight:700,
+                cursor:'pointer',border:`1.5px solid ${qSort===s.id?gold:border}`,
+                background:qSort===s.id?gold+'22':'none',
+                color:qSort===s.id?gold:muted,fontFamily:t.fontBody}}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <p style={{fontSize:11,color:muted,margin:'0 0 4px'}}>
+          {qSort==='hard'&&'Höchster Difficulty-Score zuerst – Kandidaten zum Entschärfen.'}
+          {qSort==='ambiguous'&&'Höchste Streuung (σ/Ø) zuerst – Frage evtl. unklar formuliert.'}
+          {qSort==='easy'&&'Niedrigster Difficulty-Score zuerst.'}
+          {qSort==='played'&&'Top 50 meistgespielte Fragen.'}
+        </p>
+        {(()=>{
+          const arr=[...(stats.questionsAll||[])];
+          let sorted;
+          if(qSort==='hard') sorted=arr.filter(q=>q.difficulty!=null).sort((a,b)=>b.difficulty-a.difficulty);
+          else if(qSort==='easy') sorted=arr.filter(q=>q.difficulty!=null).sort((a,b)=>a.difficulty-b.difficulty);
+          else if(qSort==='ambiguous') sorted=arr.filter(q=>q.stdDev!=null&&q.avg).sort((a,b)=>(b.stdDev/Math.abs(b.avg))-(a.stdDev/Math.abs(a.avg)));
+          else sorted=arr.sort((a,b)=>(b.count||0)-(a.count||0));
+          return sorted.slice(0,50).map((q,idx)=>{
+            const qObj=lookupQ(q.id);
+            const cv=(q.stdDev!=null&&q.avg)?(q.stdDev/Math.abs(q.avg)):null;
+            return <div key={q.id} style={{background:surface,borderRadius:10,
+              padding:'10px 12px',border:`1px solid ${border}`}}>
+              <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+                <span style={{fontSize:11,color:muted,minWidth:24,fontFamily:'monospace',
+                  flexShrink:0}}>{idx+1}.</span>
+                <div style={{flex:1}}>
+                  {qObj&&<p style={{fontSize:12,color:t.text,margin:'0 0 3px',fontWeight:600,
+                    lineHeight:1.4}}>{qObj.q}</p>}
+                  <p style={{fontSize:10,color:muted,margin:'0 0 4px',fontFamily:'monospace'}}>
+                    {q.id}
+                  </p>
+                  <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                    <span style={{fontSize:11,color:accent,fontWeight:700}}>
+                      Ø {q.avg!=null?q.avg:'–'} {q.unit||qObj?.unit||''}
+                    </span>
+                    <span style={{fontSize:11,color:qSort==='ambiguous'?gold:muted,
+                      fontWeight:qSort==='ambiguous'?700:400}}>
+                      σ {q.stdDev!=null?q.stdDev:'–'}{cv!=null?` (cv ${cv.toFixed(2)})`:''}
+                    </span>
+                    <span style={{fontSize:11,color:gold}}>
+                      {q.count||0}x
+                    </span>
+                    {q.difficulty!=null&&<span style={{fontSize:11,fontWeight:700,
+                      color:q.difficulty>70?accent:q.difficulty>40?gold:green}}>
+                      {q.difficulty}% schwer
+                    </span>}
+                  </div>
+                </div>
+              </div>
+            </div>;
+          });
+        })()}
       </div>}
 
     </>}
@@ -4764,6 +5100,7 @@ function App(){
     }
 
     // Sign in anonymously on first load
+    let lastHeartbeatUid=null;
     const unsubAuth = auth.onAuthStateChanged(user=>{
       if(user){
         console.log('Auth state changed:', user.uid, 'anon:', user.isAnonymous);
@@ -4774,6 +5111,21 @@ function App(){
         setAuthReady(true);
         // Auto-close login prompt if user is now logged in with Google
         if(!user.isAnonymous) setShowLoginPrompt(false);
+        // Account-Heartbeat für Admin-Statistik (anon vs. registriert, returning)
+        if(user.uid!==lastHeartbeatUid){
+          lastHeartbeatUid=user.uid;
+          const uref=ref(db,`globalStats/users/${user.uid}`);
+          get(uref).then(s=>{
+            const prev=s.val()||{};
+            update(uref,{
+              anon:user.isAnonymous,
+              lang:(typeof localStorage!=='undefined'&&localStorage.getItem('em_lang'))||'de',
+              firstSeen:prev.firstSeen||Date.now(),
+              lastSeen:Date.now(),
+              opens:(prev.opens||0)+1,
+            }).catch(()=>{});
+          }).catch(()=>{});
+        }
       } else {
         signInAnonymously(auth).catch(err=>console.error('Auth error:',err));
       }
@@ -4953,6 +5305,7 @@ function App(){
       ts:Date.now(), lang, mode,
       groupSize:(room?.order||[]).length,
       platform,
+      tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown',
       categories:selectedCats.slice(0,10),
       catCount:selectedCats.length,
     }).catch(()=>{});
