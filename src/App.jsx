@@ -1979,6 +1979,24 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
   }
   const allSelected=allCats.every(c=>selected.includes(c));
 
+  // Eigene Fragen nach Pack gruppieren
+  const customPacks={};
+  customQuestions.forEach(cq=>{ const c=cq.category||CUSTOM_CAT; (customPacks[c]=customPacks[c]||[]).push(cq); });
+  const customPackNames=Object.keys(customPacks);
+  function toggleCustom(name){
+    setSelected(prev=>prev.includes(name)?prev.filter(x=>x!==name):[...prev,name]);
+  }
+  function startGame(){
+    // gewählte eigene Packs host-seitig in den Fragen-Pool injizieren
+    customPackNames.forEach(name=>{
+      if(selected.includes(name)){
+        QUESTIONS[mode]=QUESTIONS[mode]||{};
+        QUESTIONS[mode][name]=customPacks[name].map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint,emoji:x.emoji}));
+      }
+    });
+    onStart(selected);
+  }
+
   return <div style={{
     minHeight:"100vh",display:"flex",flexDirection:"column",
     maxWidth:520,margin:"0 auto",padding:"8px 16px 80px",
@@ -1993,7 +2011,10 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
         <p style={{fontSize:15,fontWeight:800}}>Kategorien</p>
         <p style={{fontSize:12,color:t.muted}}>{selected.length} von {allCats.length} gewählt</p>
       </div>
-      <button onClick={()=>setSelected(allSelected?[]:allCats)}
+      <button onClick={()=>{
+          const customSel=selected.filter(c=>customPackNames.includes(c));
+          setSelected(allSelected?customSel:[...allCats,...customSel]);
+        }}
         style={{padding:"7px 14px",borderRadius:t.radius,
           background:allSelected?t.accent+"18":t.surface,
           border:`1.5px solid ${allSelected?t.accent:t.border}`,
@@ -2026,6 +2047,37 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
           </span>
         </div>;
       })}
+
+      {/* Eigene Packs */}
+      {customPackNames.length>0&&<>
+        <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,
+          margin:"10px 0 2px",paddingLeft:2}}>
+          {lang==='en'?'YOUR PACKS':lang==='es'?'TUS PAQUETES':'EIGENE PACKS'}
+        </p>
+        {customPackNames.map(name=>{
+          const sel=selected.includes(name);
+          return <div key={name} onClick={()=>toggleCustom(name)}
+            style={{display:"flex",alignItems:"center",gap:10,
+              padding:"5px 10px",borderRadius:t.radius,cursor:"pointer",
+              background:sel?t.gold+"18":t.surface,
+              border:`1.5px solid ${sel?t.gold:t.border}`,transition:"all .15s"}}>
+            <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>
+              {sel?"✅":"⬜"}
+            </span>
+            <span style={{flex:1,fontSize:12,fontWeight:600,
+              color:sel?t.gold:t.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {name}
+            </span>
+            <span style={{fontSize:9,color:t.muted,flexShrink:0,
+              border:`1px solid ${t.border}`,borderRadius:100,padding:"1px 6px"}}>
+              🔒 {lang==='en'?'private':lang==='es'?'privado':'privat'}
+            </span>
+            <span style={{fontSize:11,color:t.muted,flexShrink:0}}>
+              {customPacks[name].length}
+            </span>
+          </div>;
+        })}
+      </>}
     </div>
 
     {/* Fixed bottom button */}
@@ -2034,7 +2086,7 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       padding:"10px 16px",background:t.bg+"ee",
       borderTop:`1px solid ${t.border}`,backdropFilter:"blur(8px)",zIndex:50}}>
       <Btn t={t} full disabled={selected.length===0}
-        onClick={()=>onStart(selected)}>
+        onClick={startGame}>
         {selected.length===0?"Wähle eine Kategorie":
          `Starten mit ${selected.length} ${selected.length===1?"Kategorie":i.categories} →`}
       </Btn>
@@ -4884,10 +4936,11 @@ function AdminDashboard({t, lang, onBack}){
 /* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
 function MyQuestionsScreen({myId, t, lang, onBack}){
   const i=UI[lang]||UI.de;
+  const DEFAULT_PACK = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
   const[questions,setQuestions]=useState([]);
   const[loading,setLoading]=useState(true);
   const[editing,setEditing]=useState(null); // null=list, 'new'=new, {id,...}=edit
-  const[error,setError]=useState('');
+  const[shareMsg,setShareMsg]=useState('');
 
   useEffect(()=>{
     if(!myId) return;
@@ -4902,25 +4955,55 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
     return()=>unsub();
   },[myId]);
 
+  const existingPacks=[...new Set(questions.map(q=>q.category).filter(Boolean))];
+
+  async function sharePack(name, qs){
+    try{
+      const packId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      await update(ref(db,`sharedPacks/${packId}`),{
+        name, ownerId:myId, createdAt:Date.now(), lang,
+        questions: qs.map(x=>({q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'})),
+      });
+      const url=`${location.origin}${location.pathname}?pack=${packId}`;
+      if(navigator.share){
+        await navigator.share({title:name, text:(lang==='en'?'Question pack: ':lang==='es'?'Paquete: ':'Fragen-Pack: ')+name, url});
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareMsg(name); setTimeout(()=>setShareMsg(''),2500);
+      }
+    }catch(e){ if(e?.name!=='AbortError') console.error('share pack failed:',e); }
+  }
+
   if(editing!==null){
     return <QuestionEditorScreen
       myId={myId} t={t} lang={lang}
+      existingPacks={existingPacks}
       initial={editing==='new'?null:editing}
       onSave={async(q)=>{
         const qId=editing==='new'?Date.now().toString(36):editing.id;
         const qData={...q, createdAt:editing==='new'?Date.now():editing.createdAt, authorId:myId};
         await update(ref(db,`userQuestions/${myId}/${qId}`),qData);
-        // Also write to community (anonymized)
-        await update(ref(db,`communityQuestions/${qId}`),{
-          ...qData, authorId:null,
-          upvotes:0, downvotes:0, plays:0,
-          status:'pending'
-        });
+        if(q.visibility==='submit'){
+          // Opt-in: anonymisiert zur Moderation vorschlagen
+          await update(ref(db,`communityQuestions/${qId}`),{
+            ...qData, authorId:null,
+            upvotes:0, downvotes:0, plays:0,
+            status:'pending'
+          });
+        } else {
+          // Privat: evtl. früher eingereichte Version aus dem Pool zurückziehen
+          await remove(ref(db,`communityQuestions/${qId}`)).catch(()=>{});
+        }
         setEditing(null);
       }}
       onCancel={()=>setEditing(null)}
     />;
   }
+
+  // Gruppierung nach Pack
+  const packs={};
+  questions.forEach(q=>{ const c=q.category||DEFAULT_PACK; (packs[c]=packs[c]||[]).push(q); });
+  const packNames=Object.keys(packs);
 
   return <div style={{...page,animation:'fu .3s ease both'}}>
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
@@ -4935,6 +5018,13 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
     </Btn>
 
+    {shareMsg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,
+      borderRadius:t.radius,padding:'10px 12px',marginBottom:12,textAlign:'center'}}>
+      <p style={{fontSize:12,color:t.green,fontWeight:700,margin:0}}>
+        🔗 {lang==='en'?'Link copied':lang==='es'?'Enlace copiado':'Link kopiert'}: {shareMsg}
+      </p>
+    </div>}
+
     {loading&&<div style={{textAlign:'center',padding:20}}><Spinner t={t}/></div>}
 
     {!loading&&questions.length===0&&<Card t={t} style={{textAlign:'center',padding:32}}>
@@ -4946,58 +5036,85 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       </p>
     </Card>}
 
-    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-      {questions.map(q=><Card key={q.id} t={t} style={{padding:'12px 14px'}}>
-        <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
-          <span style={{fontSize:22,flexShrink:0}}>{q.emoji||'📝'}</span>
-          <div style={{flex:1,minWidth:0}}>
-            <p style={{fontSize:13,fontWeight:600,color:t.text,margin:'0 0 2px',
-              overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.q}</p>
-            <p style={{fontSize:12,color:t.accent,margin:0,fontWeight:700}}>
-              {q.a} {q.unit}
-            </p>
-          </div>
-          <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button onClick={()=>setEditing(q)}
-              style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,
-                color:t.text,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>
-              ✏
-            </button>
-            <button onClick={async()=>{
-              if(!window.confirm(lang==='en'?'Delete?':lang==='es'?'Borrar?':'Löschen?')) return;
-              await remove(ref(db,`userQuestions/${myId}/${q.id}`));
-              await remove(ref(db,`communityQuestions/${q.id}`));
-            }} style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:t.radius,
-              color:t.danger,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>
-              ✕
-            </button>
-          </div>
+    {packNames.map(packName=>(
+      <div key={packName} style={{marginBottom:18}}>
+        {/* Pack-Header mit Teilen */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+          gap:8,margin:'0 0 8px',paddingLeft:2}}>
+          <p style={{fontSize:13,fontWeight:800,color:t.text,margin:0}}>
+            {packName} <span style={{color:t.muted,fontWeight:600}}>· {packs[packName].length}</span>
+          </p>
+          <button onClick={()=>sharePack(packName,packs[packName])}
+            style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,
+              color:t.accent,fontSize:11,fontWeight:700,cursor:'pointer',padding:'4px 11px',
+              whiteSpace:'nowrap',fontFamily:t.fontBody}}>
+            🔗 {lang==='en'?'Share pack':lang==='es'?'Compartir':'Pack teilen'}
+          </button>
         </div>
-        {q.hint&&<p style={{fontSize:11,color:t.muted,margin:'6px 0 0',paddingLeft:32}}>
-          💡 {q.hint}
-        </p>}
-        <div style={{display:'flex',gap:8,marginTop:8,paddingLeft:32}}>
-          {q.plays>0&&<span style={{fontSize:10,color:t.muted}}>🎮 {q.plays}x</span>}
-          {q.status==='approved'&&<span style={{fontSize:10,color:t.green}}>✓ Genehmigt</span>}
-          {q.status==='pending'&&<span style={{fontSize:10,color:t.muted}}>⏳ In Prüfung</span>}
+
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {packs[packName].map(q=><Card key={q.id} t={t} style={{padding:'12px 14px'}}>
+            <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+              <span style={{fontSize:22,flexShrink:0}}>{q.emoji||'📝'}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:13,fontWeight:600,color:t.text,margin:'0 0 2px',
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.q}</p>
+                <p style={{fontSize:12,color:t.accent,margin:0,fontWeight:700}}>
+                  {q.a} {q.unit}
+                </p>
+              </div>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>setEditing(q)}
+                  style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,
+                    color:t.text,fontSize:11,fontWeight:600,cursor:'pointer',padding:'3px 9px',whiteSpace:'nowrap'}}>
+                  ✏ {lang==='en'?'Edit':lang==='es'?'Editar':'Bearbeiten'}
+                </button>
+                <button onClick={async()=>{
+                  if(!window.confirm(lang==='en'?'Delete?':lang==='es'?'Borrar?':'Löschen?')) return;
+                  await remove(ref(db,`userQuestions/${myId}/${q.id}`));
+                  await remove(ref(db,`communityQuestions/${q.id}`)).catch(()=>{});
+                }} style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:t.radius,
+                  color:t.danger,fontSize:11,fontWeight:600,cursor:'pointer',padding:'3px 9px',whiteSpace:'nowrap'}}>
+                  ✕ {lang==='en'?'Delete':lang==='es'?'Borrar':'Löschen'}
+                </button>
+              </div>
+            </div>
+            {q.hint&&<p style={{fontSize:11,color:t.muted,margin:'6px 0 0',paddingLeft:32}}>
+              💡 {q.hint}
+            </p>}
+            <div style={{display:'flex',gap:8,marginTop:8,paddingLeft:32,flexWrap:'wrap'}}>
+              {q.plays>0&&<span style={{fontSize:10,color:t.muted}}>🎮 {q.plays}x</span>}
+              {q.visibility==='submit'
+                ? (q.status==='approved'
+                    ? <span style={{fontSize:10,color:t.green,fontWeight:700}}>✓ {lang==='en'?'Approved':'Genehmigt'}</span>
+                    : q.status==='rejected'
+                    ? <span style={{fontSize:10,color:t.danger,fontWeight:700}}>✕ {lang==='en'?'Rejected':'Abgelehnt'}</span>
+                    : <span style={{fontSize:10,color:t.gold,fontWeight:700}}>🌍 {lang==='en'?'In review':'In Prüfung'}</span>)
+                : <span style={{fontSize:10,color:t.muted}}>🔒 {lang==='en'?'Private':lang==='es'?'Privada':'Privat'}</span>}
+            </div>
+          </Card>)}
         </div>
-      </Card>)}
-    </div>
+      </div>
+    ))}
   </div>;
 }
 
 /* ─── QUESTION EDITOR ──────────────────────────────────── */
-function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel}){
+function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existingPacks=[]}){
+  const DEFAULT_PACK = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
   const isNew = !initial;
   const[q,setQ]=useState(initial?.q||'');
   const[a,setA]=useState(initial?.a!=null?String(initial.a):'');
   const[unit,setUnit]=useState(initial?.unit||'');
   const[hint,setHint]=useState(initial?.hint||'');
   const[emoji,setEmoji]=useState(initial?.emoji||'📝');
+  const[category,setCategory]=useState(initial?.category||DEFAULT_PACK);
+  const[visibility,setVisibility]=useState(initial?.visibility||'private');
   const[error,setError]=useState('');
   const[saving,setSaving]=useState(false);
 
   const EMOJIS=['📝','🎯','🔢','💡','🌍','🏆','🎲','⭐','🔬','🎭','🍔','🎵','🚀','💰','🏋️','🐾'];
+  const packSuggestions=[...new Set([DEFAULT_PACK,...existingPacks])].filter(Boolean);
 
   async function save(){
     if(!q.trim()){setError('Bitte eine Frage eingeben.');return;}
@@ -5007,7 +5124,9 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel}){
     setError('');setSaving(true);
     try {
       await onSave({q:q.trim(),a:num,unit:unit.trim(),
-        hint:hint.trim(),emoji,lang});
+        hint:hint.trim(),emoji,lang,
+        category:(category.trim()||DEFAULT_PACK),
+        visibility:(visibility==='submit'?'submit':'private')});
       // bei Erfolg unmountet der Screen (onSave setzt editing=null) – kein setSaving nötig
     } catch(e) {
       console.error('save question failed:', e);
@@ -5093,6 +5212,58 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel}){
           placeholder={lang==='en'?'Fun fact about the answer...':
             lang==='es'?'Dato curioso sobre la respuesta...':
             'Fun Fact zur Antwort...'} t={t}/>
+      </div>
+
+      {/* Pack / Kategorie */}
+      <div>
+        <span style={labelStyle}>
+          📦 {lang==='en'?'Pack / category':lang==='es'?'Paquete / categoría':'Pack / Kategorie'}
+        </span>
+        <Inp value={category} onChange={setCategory}
+          placeholder={lang==='en'?'e.g. Anna\'s Wedding':lang==='es'?'p.ej. Boda de Ana':'z.B. Lisas Hochzeit'} t={t}/>
+        {packSuggestions.length>0&&<div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:8}}>
+          {packSuggestions.map(p=>(
+            <button key={p} onClick={()=>setCategory(p)}
+              style={{padding:'4px 10px',borderRadius:100,fontSize:11,fontWeight:600,cursor:'pointer',
+                border:`1.5px solid ${category===p?t.accent:t.border}`,
+                background:category===p?t.accent+'18':'none',
+                color:category===p?t.accent:t.muted,fontFamily:t.fontBody}}>
+              {p}
+            </button>
+          ))}
+        </div>}
+      </div>
+
+      {/* Sichtbarkeit */}
+      <div>
+        <span style={labelStyle}>
+          {lang==='en'?'Visibility':lang==='es'?'Visibilidad':'Sichtbarkeit'}
+        </span>
+        <div style={{display:'flex',gap:8}}>
+          {[
+            {id:'private',icon:'🔒',label:lang==='en'?'My games only':lang==='es'?'Solo mis partidas':'Nur meine Runden'},
+            {id:'submit',icon:'🌍',label:lang==='en'?'Suggest for all':lang==='es'?'Proponer para todos':'Für alle vorschlagen'},
+          ].map(v=>(
+            <button key={v.id} onClick={()=>setVisibility(v.id)}
+              style={{flex:1,padding:'9px 10px',borderRadius:t.radius,cursor:'pointer',
+                border:`1.5px solid ${visibility===v.id?t.accent:t.border}`,
+                background:visibility===v.id?t.accent+'18':t.surface,
+                color:visibility===v.id?t.accent:t.muted,fontWeight:700,fontSize:12,
+                fontFamily:t.fontBody,textAlign:'center'}}>
+              <span style={{fontSize:16,display:'block',marginBottom:2}}>{v.icon}</span>
+              {v.label}
+            </button>
+          ))}
+        </div>
+        <p style={{fontSize:11,color:t.muted,margin:'6px 0 0',lineHeight:1.4}}>
+          {visibility==='submit'
+            ?(lang==='en'?'Will be sent to the team for review before it can appear for everyone.'
+              :lang==='es'?'Se enviará al equipo para revisión antes de aparecer para todos.'
+              :'Wird zur Prüfung eingereicht, bevor sie für alle erscheinen kann.')
+            :(lang==='en'?'Stays private – usable in your games and shareable via pack link.'
+              :lang==='es'?'Queda privada – usable en tus partidas y compartible por enlace.'
+              :'Bleibt privat – nutzbar in deinen Runden und per Pack-Link teilbar.')}
+        </p>
       </div>
 
       {/* Preview */}
@@ -5231,6 +5402,39 @@ function App(){
 
     return ()=>unsubAuth();
   },[]);
+
+  // Pack-Import via ?pack= Link
+  useEffect(()=>{
+    if(!authReady||!myId) return;
+    const packId=new URLSearchParams(location.search).get('pack');
+    if(!packId) return;
+    get(ref(db,`sharedPacks/${packId}`)).then(snap=>{
+      const pack=snap.val();
+      if(pack&&Array.isArray(pack.questions)&&pack.questions.length){
+        const name=pack.name||(lang==='en'?'Shared pack':'Geteiltes Pack');
+        const ok=window.confirm(
+          lang==='en'?`Import pack "${name}" (${pack.questions.length} questions) into your questions?`
+          :lang==='es'?`¿Importar el paquete "${name}" (${pack.questions.length} preguntas)?`
+          :`Fragen-Pack „${name}" (${pack.questions.length} Fragen) zu deinen Fragen hinzufügen?`);
+        if(ok){
+          const updates={};
+          pack.questions.forEach((x,idx)=>{
+            const qId=Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+            updates[`userQuestions/${myId}/${qId}`]={
+              q:x.q, a:x.a, unit:x.unit, hint:x.hint||'', emoji:x.emoji||'📝',
+              category:name, visibility:'private',
+              lang:pack.lang||lang, createdAt:Date.now(), authorId:myId,
+            };
+          });
+          return update(ref(db),updates);
+        }
+      }
+    }).catch(e=>console.error('pack import failed:',e)).finally(()=>{
+      // Param entfernen, damit Reload nicht erneut importiert
+      const u=new URL(location.href); u.searchParams.delete('pack');
+      window.history.replaceState({},'',u.toString());
+    });
+  },[authReady,myId]);
 
   // Auto-reconnect once myId is ready
   const autoJoinedRef = React.useRef(false);
@@ -5396,6 +5600,8 @@ function App(){
     const q=getQuestion(mode,selectedCats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
     setShowCountdown(true);
+    // Nur Standard-Kategorien in globale Statistik (private Packs ausschließen)
+    const stdCats=selectedCats.filter(c=>QUESTIONS_RAW[mode]&&QUESTIONS_RAW[mode][c]);
     // Track session start
     const platform=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)?'mobile':'desktop';
     const sessionRef=ref(db,`globalStats/sessions/${Date.now().toString(36)}`);
@@ -5404,14 +5610,15 @@ function App(){
       groupSize:(room?.order||[]).length,
       platform,
       tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown',
-      categories:selectedCats.slice(0,10),
-      catCount:selectedCats.length,
+      categories:stdCats.slice(0,10),
+      catCount:stdCats.length,
+      customPacks:selectedCats.length-stdCats.length,
     }).catch(()=>{});
 
     // Track individual category play counts
     const tz2 = Intl.DateTimeFormat().resolvedOptions().timeZone||'unknown';
     const region2 = tz2.split('/')[0]||'unknown';
-    selectedCats.forEach(cat=>{
+    stdCats.forEach(cat=>{
       const catKey=cat.replace(/[^a-zA-Z0-9_]/g,'_');
       const catRef=ref(db,`globalStats/categories/${catKey}`);
       get(catRef).then(snap=>{
@@ -5427,10 +5634,10 @@ function App(){
     });
 
     // Track category combinations (pairs) – which cats are played together
-    if(selectedCats.length>1){
-      for(let a=0;a<Math.min(selectedCats.length,6);a++){
-        for(let b=a+1;b<Math.min(selectedCats.length,6);b++){
-          const pair=[selectedCats[a],selectedCats[b]]
+    if(stdCats.length>1){
+      for(let a=0;a<Math.min(stdCats.length,6);a++){
+        for(let b=a+1;b<Math.min(stdCats.length,6);b++){
+          const pair=[stdCats[a],stdCats[b]]
             .map(c=>c.replace(/[^a-zA-Z0-9_]/g,'_'))
             .sort().join('__');
           const pairRef=ref(db,`globalStats/categoryPairs/${pair}`);
