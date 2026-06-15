@@ -1846,6 +1846,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%',fontWeight:700}}>
         📊 Admin Dashboard
       </button>}
+      {/* Temp debug – remove after mobile login fixed */}
+      {typeof sessionStorage!=='undefined'&&sessionStorage.getItem('em_redirect_result')&&
+        <p style={{fontSize:10,color:'#555',textAlign:'center',marginTop:4,
+          fontFamily:'monospace',wordBreak:'break-all'}}>
+          dbg: {sessionStorage.getItem('em_redirect_result')}
+          {' | uid:'}{typeof auth!=='undefined'&&auth?.currentUser?.uid?.slice(0,8)||'none'}
+          {' | anon:'}{typeof auth!=='undefined'&&String(auth?.currentUser?.isAnonymous)}
+        </p>}
     </div>
   </div>;
 }
@@ -3972,23 +3980,65 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
+  // Popup-first: result comes back in the same promise, so it does NOT rely on
+  // cross-domain (firebaseapp.com) third-party storage – which mobile browsers block.
+  // Redirect is kept only as a fallback if the popup is blocked.
   async function loginWith(provider) {
     console.log("loginWith called, auth:", !!auth, "currentUser:", auth?.currentUser?.uid);
     setBusy(true); setError(null);
     if(!auth){ setError("Auth nicht verfügbar"); setBusy(false); return; }
+    const currentUser = auth.currentUser;
+
+    const credFromError = (e) => {
+      try { return GoogleAuthProvider.credentialFromError(e) || OAuthProvider.credentialFromError(e); }
+      catch { return null; }
+    };
+
     try {
-      const currentUser = auth.currentUser;
-      // Always use redirect – more reliable than popup across all browsers/devices
+      let result;
       if(currentUser && currentUser.isAnonymous) {
-        await linkWithRedirect(currentUser, provider);
+        // Upgrade the anonymous account → Google/Apple
+        try {
+          result = await linkWithPopup(currentUser, provider);
+        } catch(e) {
+          // This provider account already belongs to an existing EstiMates user.
+          // Sign into that existing account instead (anon progress is dropped).
+          if(e.code === 'auth/credential-already-in-use') {
+            const cred = credFromError(e);
+            if(cred) { result = await signInWithCredential(auth, cred); }
+            else throw e;
+          } else throw e;
+        }
       } else {
-        await signInWithRedirect(auth, provider);
+        result = await signInWithPopup(auth, provider);
       }
-      // Page will redirect – result handled in getRedirectResult on return
+      if(result?.user) {
+        setBusy(false);
+        onSuccess && onSuccess(result.user);
+        onClose && onClose();
+      }
     } catch(e) {
       console.error("loginWith error:", e.code, e.message);
-      setError(`Anmeldung fehlgeschlagen: ${e.code||e.message}`);
-      setBusy(false);
+      // Popup blocked / unsupported / interrupted → fall back to redirect
+      const popupFailed = ['auth/popup-blocked',
+        'auth/operation-not-supported-in-environment']
+        .includes(e.code);
+      if(popupFailed) {
+        try {
+          if(currentUser && currentUser.isAnonymous) await linkWithRedirect(currentUser, provider);
+          else await signInWithRedirect(auth, provider);
+          return; // page navigates away; result handled by getRedirectResult on return
+        } catch(re) {
+          setError(`Anmeldung fehlgeschlagen: ${re.code||re.message}`);
+          setBusy(false);
+        }
+      } else if(e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        // user closed it on purpose – no error message
+        setBusy(false);
+      } else {
+        setError(`Anmeldung fehlgeschlagen: ${e.code||e.message}`);
+        setBusy(false);
+      }
     }
   }
 
@@ -4683,15 +4733,31 @@ function App(){
           setIsAnonymous(result.user.isAnonymous);
           setUserName(result.user.displayName||result.user.email||null);
           setShowLoginPrompt(false);
+          // Store login success indicator
+          sessionStorage.setItem('em_redirect_result', 'success:'+result.user.uid.slice(0,8));
+        } else {
+          sessionStorage.setItem('em_redirect_result', 'null_result');
         }
       }).catch(async e=>{
         console.log('Redirect result error:', e.code);
+        sessionStorage.setItem('em_redirect_result', 'error:'+e.code);
         if(e.code === 'auth/credential-already-in-use') {
+          // The Google/Apple account already belongs to an existing user.
+          // Reuse the credential from the error to sign into that account –
+          // do NOT signOut+redirect again (that drops the credential and loops).
           try {
-            await signOut(auth);
-            await signInWithRedirect(auth, googleProvider);
+            const cred = GoogleAuthProvider.credentialFromError(e) || OAuthProvider.credentialFromError(e);
+            if(cred){
+              const r = await signInWithCredential(auth, cred);
+              if(r?.user){
+                setMyId(r.user.uid);
+                setIsAnonymous(r.user.isAnonymous);
+                setUserName(r.user.displayName||r.user.email||null);
+                setShowLoginPrompt(false);
+              }
+            }
           } catch(err) {
-            console.error('fallback sign in failed:', err);
+            console.error('credential re-use sign in failed:', err);
           }
         }
       });
