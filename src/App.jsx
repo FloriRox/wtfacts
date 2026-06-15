@@ -831,7 +831,15 @@ function getQuestion(mode, selectedCats, usedIds){
       cats[cat].forEach((q,i)=>pool.push({...q,id:`${cat}::${i}`,cat}));
     });
   }
-  return pool[Math.floor(Math.random()*pool.length)];
+  const picked=pool[Math.floor(Math.random()*pool.length)];
+  if(!picked) return null;
+  // Firebase verwirft Writes mit undefined-Werten (z.B. eigene Fragen ohne hint)
+  // -> Objekt säubern, damit phase:"question" nicht abgelehnt/zurückgerollt wird
+  const clean={};
+  Object.keys(picked).forEach(k=>{ if(picked[k]!==undefined) clean[k]=picked[k]; });
+  if(clean.hint===undefined) clean.hint='';
+  if(clean.emoji===undefined) clean.emoji='📝';
+  return clean;
 }
 
 function calcRound(room){
@@ -1991,7 +1999,7 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
     customPackNames.forEach(name=>{
       if(selected.includes(name)){
         QUESTIONS[mode]=QUESTIONS[mode]||{};
-        QUESTIONS[mode][name]=customPacks[name].map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint,emoji:x.emoji}));
+        QUESTIONS[mode][name]=customPacks[name].map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
       }
     });
     onStart(selected);
@@ -2486,6 +2494,30 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <Btn t={t} onClick={submit} disabled={!val}
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
+          {/* Größenordnungs-Helfer – multipliziert die Eingabe */}
+          <div style={{display:"flex",gap:6,marginTop:8}}>
+            {[
+              {label:'×1.000',sub:'Tsd',m:1e3},
+              {label:'×1 Mio',sub:'Mio',m:1e6},
+              {label:'×1 Mrd',sub:'Mrd',m:1e9},
+            ].map(b=>(
+              <button key={b.sub} onClick={()=>{
+                const base=(val.trim()===''?1:parseFloat(val.replace(',','.')));
+                if(isNaN(base))return;
+                setVal(String(base*b.m));
+              }}
+                style={{flex:1,padding:'7px 4px',borderRadius:t.radius,
+                  background:t.surface,border:`1.5px solid ${t.border}`,
+                  color:t.muted,fontSize:12,fontWeight:700,cursor:'pointer',
+                  fontFamily:t.fontBody}}>
+                {b.label}
+              </button>
+            ))}
+          </div>
+          {isHost&&activePl.length>1&&<p style={{fontSize:11,color:t.muted,
+            textAlign:'center',margin:'8px 0 0'}}>
+            {doneCount} {lang==='en'?'of':lang==='es'?'de':'von'} {activePl.length} {lang==='en'?'submitted':lang==='es'?'enviado':'getippt'}
+          </p>}
           {/* KERS All-In Button */}
           <button onClick={()=>boostAvailable&&setAllIn(a=>!a)}
             disabled={!boostAvailable}
