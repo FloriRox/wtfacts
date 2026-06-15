@@ -4106,6 +4106,7 @@ function AdminDashboard({t, lang, onBack}){
   const[loading,setLoading]=useState(true);
   const[tab,setTab]=useState('overview'); // overview|accounts|ratings|feedback|community|bugs|categories|questions|regions
   const[qSort,setQSort]=useState('played'); // played|hard|easy|ambiguous
+  const[range,setRange]=useState('14d'); // 14d|30d|6m|1y|all – Zeitraum des Verlaufs-Charts
   const[commFilter,setCommFilter]=useState('pending'); // pending|approved|rejected|all
   const[editComm,setEditComm]=useState(null); // {id,q,a,unit}
   const[busyId,setBusyId]=useState(null);
@@ -4325,6 +4326,51 @@ function AdminDashboard({t, lang, onBack}){
   const inpStyle = {background:'#0d0805',color:t.text,border:`1px solid ${border}`,
     borderRadius:8,padding:'8px',fontSize:13,fontFamily:t.fontBody};
 
+  // ── #3 Zeitverlauf: Sessions in Buckets passend zum gewählten Zeitraum ──
+  const DAY=86400000;
+  const startOfDay=(d)=>{const x=new Date(d);x.setHours(0,0,0,0);return x.getTime();};
+  function buildSeries(sessions, range){
+    const now=Date.now();
+    let buckets=[]; let unit='day';
+    if(range==='14d'||range==='30d'){
+      unit='day';
+      const n=range==='14d'?14:30; const today=startOfDay(now);
+      for(let k=n-1;k>=0;k--){const t0=today-k*DAY; buckets.push({t0,t1:t0+DAY,count:0,label:new Date(t0)});}
+    } else if(range==='6m'){
+      unit='week';
+      const today=startOfDay(now);
+      for(let k=25;k>=0;k--){const t0=today-k*7*DAY; buckets.push({t0,t1:t0+7*DAY,count:0,label:new Date(t0)});}
+    } else if(range==='1y'){
+      unit='month';
+      const base=new Date(now); base.setDate(1); base.setHours(0,0,0,0);
+      for(let k=11;k>=0;k--){
+        const m=new Date(base.getFullYear(),base.getMonth()-k,1);
+        const m1=new Date(base.getFullYear(),base.getMonth()-k+1,1);
+        buckets.push({t0:m.getTime(),t1:m1.getTime(),count:0,label:m});
+      }
+    } else { // all – Monatsbuckets ab erster Session
+      unit='month';
+      if(!sessions.length) return {buckets:[],unit};
+      const minTs=sessions.reduce((m,s)=>Math.min(m,s.ts||now),now);
+      let cur=new Date(minTs); cur=new Date(cur.getFullYear(),cur.getMonth(),1);
+      const end=new Date(now);
+      while(cur<=end){
+        const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+        buckets.push({t0:cur.getTime(),t1:next.getTime(),count:0,label:new Date(cur)});
+        cur=next;
+      }
+    }
+    for(const s of sessions){
+      const ts=s.ts; if(ts==null) continue;
+      for(const b of buckets){ if(ts>=b.t0&&ts<b.t1){b.count++;break;} }
+    }
+    return {buckets,unit};
+  }
+  const fmtTick=(date,unit)=>{
+    if(unit==='month') return date.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
+    return date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  };
+
   return <div style={{...page,paddingBottom:40,animation:'fu .3s ease both'}}>
     {/* Header */}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
@@ -4383,25 +4429,64 @@ function AdminDashboard({t, lang, onBack}){
             sub={`${stats.newUsers7} neu · ${stats.returning} wiederkehrend`}/>
         </div>
         <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
-          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 12px'}}>
-            SESSIONS / TAG · LETZTE 14 TAGE
-          </p>
-          {(()=>{
-            const mx=Math.max(1,...stats.sparkDays.map(d=>d.count));
-            return <div style={{display:'flex',alignItems:'flex-end',gap:3,height:60}}>
-              {stats.sparkDays.map((d,idx)=>(
-                <div key={idx} title={new Date(d.day).toLocaleDateString('de-DE')+': '+d.count}
-                  style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'flex-end',height:'100%'}}>
-                  <div style={{height:`${Math.max(2,(d.count/mx)*100)}%`,
-                    background:idx>=7?accent:accent+'66',borderRadius:'3px 3px 0 0',transition:'height .3s'}}/>
-                </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+            flexWrap:'wrap',gap:8,marginBottom:12}}>
+            <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:0}}>
+              SESSIONS · VERLAUF
+            </p>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {[
+                {id:'14d',label:'14 T.'},
+                {id:'30d',label:'1 Mon.'},
+                {id:'6m',label:'6 Mon.'},
+                {id:'1y',label:'1 Jahr'},
+                {id:'all',label:'Total'},
+              ].map(r=>(
+                <button key={r.id} onClick={()=>setRange(r.id)}
+                  style={{padding:'4px 9px',borderRadius:100,fontSize:10,fontWeight:700,cursor:'pointer',
+                    border:`1.5px solid ${range===r.id?accent:border}`,
+                    background:range===r.id?accent+'22':'none',
+                    color:range===r.id?accent:muted,fontFamily:t.fontBody}}>
+                  {r.label}
+                </button>
               ))}
-            </div>;
-          })()}
-          <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
-            <span style={{fontSize:9,color:muted}}>vor 14 Tagen</span>
-            <span style={{fontSize:9,color:muted}}>heute</span>
+            </div>
           </div>
+          {(()=>{
+            const {buckets,unit}=buildSeries(stats.sessions||[],range);
+            if(!buckets.length) return <p style={{fontSize:12,color:muted,margin:0}}>Noch keine Daten.</p>;
+            const mx=Math.max(1,...buckets.map(b=>b.count));
+            const total=buckets.reduce((s,b)=>s+b.count,0);
+            const unitLbl=unit==='day'?'Tag':unit==='week'?'Woche':'Monat';
+            // bis zu 6 X-Achsen-Ticks gleichmäßig verteilt
+            const tickN=Math.min(6,buckets.length);
+            const tickIdx=new Set();
+            for(let k=0;k<tickN;k++) tickIdx.add(Math.round(k*(buckets.length-1)/Math.max(1,tickN-1)));
+            return <>
+              <p style={{fontSize:10,color:muted,margin:'0 0 8px'}}>
+                {total} Sessions · pro {unitLbl} · {buckets.length} Balken
+              </p>
+              <div style={{display:'flex',alignItems:'flex-end',gap:buckets.length>40?1:3,height:64}}>
+                {buckets.map((b,idx)=>(
+                  <div key={idx} title={fmtTick(b.label,unit)+': '+b.count}
+                    style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'flex-end',height:'100%'}}>
+                    <div style={{height:`${Math.max(2,(b.count/mx)*100)}%`,
+                      background:idx===buckets.length-1?accent:accent+'88',
+                      borderRadius:'2px 2px 0 0',transition:'height .3s'}}/>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'flex',marginTop:6}}>
+                {buckets.map((b,idx)=>(
+                  <div key={idx} style={{flex:1,textAlign:'center',overflow:'visible'}}>
+                    {tickIdx.has(idx)&&<span style={{fontSize:9,color:muted,whiteSpace:'nowrap'}}>
+                      {fmtTick(b.label,unit)}
+                    </span>}
+                  </div>
+                ))}
+              </div>
+            </>;
+          })()}
         </div>
 
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
@@ -4920,9 +5005,22 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel}){
     if(isNaN(num)){setError('Antwort muss eine Zahl sein.');return;}
     if(!unit.trim()){setError('Bitte eine Einheit angeben.');return;}
     setError('');setSaving(true);
-    await onSave({q:q.trim(),a:num,unit:unit.trim(),
-      hint:hint.trim(),emoji,lang});
-    setSaving(false);
+    try {
+      await onSave({q:q.trim(),a:num,unit:unit.trim(),
+        hint:hint.trim(),emoji,lang});
+      // bei Erfolg unmountet der Screen (onSave setzt editing=null) – kein setSaving nötig
+    } catch(e) {
+      console.error('save question failed:', e);
+      const denied = e?.code==='PERMISSION_DENIED' || /permission/i.test(e?.message||'');
+      setError(denied
+        ? (lang==='en'?'Saving failed: missing permission. Check the Firebase rules (userQuestions).'
+          :lang==='es'?'Error al guardar: faltan permisos. Revisa las reglas de Firebase (userQuestions).'
+          :'Speichern fehlgeschlagen: fehlende Berechtigung. Firebase-Rules prüfen (userQuestions).')
+        : (lang==='en'?'Saving failed. Please try again.'
+          :lang==='es'?'Error al guardar. Inténtalo de nuevo.'
+          :'Speichern fehlgeschlagen. Bitte erneut versuchen.'));
+      setSaving(false);
+    }
   }
 
   const labelStyle={fontSize:13,color:t.text,fontWeight:600,margin:'0 0 4px',display:'block'};
