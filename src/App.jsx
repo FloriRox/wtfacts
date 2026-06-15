@@ -1970,7 +1970,9 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked})).sort((a,b)=>a.name.localeCompare(b.name));
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
   const[customQuestions,setCustomQuestions]=useState([]);
+  const[communityQs,setCommunityQs]=useState([]);
   const CUSTOM_CAT = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
+  const COMMUNITY_CAT = lang==='es'?'🌍 Comunidad':'🌍 Community';
 
   useEffect(()=>{
     if(!myId) return;
@@ -1980,6 +1982,18 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       setCustomQuestions(list);
     }).catch(()=>{});
   },[myId]);
+
+  // Genehmigte Community-Fragen (sprachgefiltert) – für alle Hosts spielbar
+  useEffect(()=>{
+    get(ref(db,'communityQuestions')).then(snap=>{
+      const data=snap.val()||{};
+      const list=Object.entries(data)
+        .map(([id,q])=>({id:`comm_${id}`,...q}))
+        .filter(q=>q.status==='approved' && (q.lang||'de')===lang);
+      setCommunityQs(list);
+      if(list.length) setSelected(prev=>prev.includes(COMMUNITY_CAT)?prev:[...prev,COMMUNITY_CAT]);
+    }).catch(()=>{});
+  },[lang]);
   const[selected,setSelected]=useState(allCats);
   function toggle(c,locked){
     if(locked)return;
@@ -2002,6 +2016,11 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
         QUESTIONS[mode][name]=customPacks[name].map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
       }
     });
+    // genehmigte Community-Fragen injizieren
+    if(communityQs.length && selected.includes(COMMUNITY_CAT)){
+      QUESTIONS[mode]=QUESTIONS[mode]||{};
+      QUESTIONS[mode][COMMUNITY_CAT]=communityQs.map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
+    }
     onStart(selected);
   }
 
@@ -2055,6 +2074,27 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
           </span>
         </div>;
       })}
+
+      {/* Community (genehmigte Fragen) */}
+      {communityQs.length>0&&(()=>{
+        const sel=selected.includes(COMMUNITY_CAT);
+        return <div onClick={()=>toggleCustom(COMMUNITY_CAT)}
+          style={{display:"flex",alignItems:"center",gap:10,marginTop:6,
+            padding:"5px 10px",borderRadius:t.radius,cursor:"pointer",
+            background:sel?t.green+"18":t.surface,
+            border:`1.5px solid ${sel?t.green:t.border}`,transition:"all .15s"}}>
+          <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>
+            {sel?"✅":"⬜"}
+          </span>
+          <span style={{flex:1,fontSize:12,fontWeight:600,
+            color:sel?t.green:t.text}}>
+            {COMMUNITY_CAT}
+          </span>
+          <span style={{fontSize:11,color:t.muted,flexShrink:0}}>
+            {communityQs.length}
+          </span>
+        </div>;
+      })()}
 
       {/* Eigene Packs */}
       {customPackNames.length>0&&<>
@@ -2493,26 +2533,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
               style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
             <Btn t={t} onClick={submit} disabled={!val}
               style={{flexShrink:0}}>OK ✓</Btn>
-          </div>
-          {/* Größenordnungs-Helfer – multipliziert die Eingabe */}
-          <div style={{display:"flex",gap:6,marginTop:8}}>
-            {[
-              {label:'×1.000',sub:'Tsd',m:1e3},
-              {label:'×1 Mio',sub:'Mio',m:1e6},
-              {label:'×1 Mrd',sub:'Mrd',m:1e9},
-            ].map(b=>(
-              <button key={b.sub} onClick={()=>{
-                const base=(val.trim()===''?1:parseFloat(val.replace(',','.')));
-                if(isNaN(base))return;
-                setVal(String(base*b.m));
-              }}
-                style={{flex:1,padding:'7px 4px',borderRadius:t.radius,
-                  background:t.surface,border:`1.5px solid ${t.border}`,
-                  color:t.muted,fontSize:12,fontWeight:700,cursor:'pointer',
-                  fontFamily:t.fontBody}}>
-                {b.label}
-              </button>
-            ))}
           </div>
           {isHost&&activePl.length>1&&<p style={{fontSize:11,color:t.muted,
             textAlign:'center',margin:'8px 0 0'}}>
@@ -5006,6 +5026,38 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
     }catch(e){ if(e?.name!=='AbortError') console.error('share pack failed:',e); }
   }
 
+  async function importPack(){
+    const input=window.prompt(lang==='en'?'Paste the pack link or code:'
+      :lang==='es'?'Pega el enlace o código del paquete:':'Pack-Link oder Code einfügen:');
+    if(!input) return;
+    let packId=input.trim();
+    const m=packId.match(/[?&]pack=([^&\s]+)/);
+    if(m) packId=m[1];
+    try{
+      const snap=await get(ref(db,`sharedPacks/${packId}`));
+      const pack=snap.val();
+      if(!pack||!Array.isArray(pack.questions)||!pack.questions.length){
+        window.alert(lang==='en'?'Pack not found.':lang==='es'?'Paquete no encontrado.':'Pack nicht gefunden.');
+        return;
+      }
+      const name=pack.name||(lang==='en'?'Shared pack':'Geteiltes Pack');
+      if(!window.confirm(lang==='en'?`Import "${name}" (${pack.questions.length} questions)?`
+        :lang==='es'?`¿Importar "${name}" (${pack.questions.length})?`
+        :`„${name}" (${pack.questions.length} Fragen) importieren?`)) return;
+      const updates={};
+      pack.questions.forEach((x,idx)=>{
+        const qId=Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+        updates[`userQuestions/${myId}/${qId}`]={
+          q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝',
+          category:name,visibility:'private',lang:pack.lang||lang,createdAt:Date.now(),authorId:myId,
+        };
+      });
+      await update(ref(db),updates);
+      setShareMsg(name); setTimeout(()=>setShareMsg(''),2500);
+    }catch(e){ console.error('import failed:',e);
+      window.alert(lang==='en'?'Import failed.':lang==='es'?'Error al importar.':'Import fehlgeschlagen.'); }
+  }
+
   if(editing!==null){
     return <QuestionEditorScreen
       myId={myId} t={t} lang={lang}
@@ -5046,9 +5098,14 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       </h2>
     </div>
 
-    <Btn t={t} full onClick={()=>setEditing('new')} style={{marginBottom:16}}>
-      + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
-    </Btn>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <Btn t={t} onClick={()=>setEditing('new')} style={{flex:2}}>
+        + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
+      </Btn>
+      <Btn t={t} variant="secondary" onClick={importPack} style={{flex:1}}>
+        📥 {lang==='en'?'Import':lang==='es'?'Importar':'Importieren'}
+      </Btn>
+    </div>
 
     {shareMsg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,
       borderRadius:t.radius,padding:'10px 12px',marginBottom:12,textAlign:'center'}}>
