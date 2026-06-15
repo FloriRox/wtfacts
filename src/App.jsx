@@ -1640,7 +1640,19 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       const c=code.trim().toUpperCase();
       if(!c){setError(i.enterCode);return;}
       setBusy(true);
-      const room=await dbGet(c);
+      // Auf (anonyme) Anmeldung warten – sonst lehnen die Rules den Read ab (auth===null)
+      let waited=0;
+      while(!auth?.currentUser && waited<6000){ await new Promise(r=>setTimeout(r,150)); waited+=150; }
+      if(!auth?.currentUser){ setBusy(false); setError(i.roomNotFound); return; }
+      let room;
+      try {
+        room=await dbGet(c);
+      } catch(e){
+        console.error('join read failed:',e);
+        setBusy(false);
+        setError(i.roomNotFound);
+        return;
+      }
       setBusy(false);
       if(!room){setError(i.roomNotFound);return;}
       // Allow joining mid-game - player will catch up from current state
