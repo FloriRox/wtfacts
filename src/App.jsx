@@ -128,6 +128,57 @@ const KIDS = {
   radius:"20px", emoji:"🌈",
 };
 
+/* ─── BARRIEREFREIHEIT (global, persistent) ──────── */
+function loadA11y(){ try{ return JSON.parse(localStorage.getItem('em_a11y')||'{}')||{}; }catch(e){ return {}; } }
+var A11Y = loadA11y();
+function applyLargeText(){ try{ document.documentElement.style.zoom = A11Y.large ? '1.12' : ''; }catch(e){} }
+function setA11yPref(key,val){ A11Y={...A11Y,[key]:val}; try{ localStorage.setItem('em_a11y',JSON.stringify(A11Y)); }catch(e){} applyLargeText(); }
+var _a11yCache={};
+function applyA11y(base){
+  if(!A11Y || (!A11Y.cb && !A11Y.contrast)) return base;
+  var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0);
+  if(_a11yCache[key]) return _a11yCache[key];
+  var t={...base};
+  if(A11Y.cb){
+    // Rot/Grün-Schwäche: "richtig/nah" wird Blau statt Grün (klar von Rot unterscheidbar)
+    t.green = '#3b9dff';
+  }
+  if(A11Y.contrast){
+    if(base.id==='kids'){ t.bg='#ffffff'; t.text='#000000'; t.muted='#4a4036'; t.border='#1e1e1e'; }
+    else { t.bg='#000000'; t.surface='#16110d'; t.card='#1d1813'; t.text='#ffffff'; t.muted='#cabcae'; t.border='#7a6656'; }
+  }
+  _a11yCache[key]=t;
+  return t;
+}
+
+/* ─── BARRIEREFREIHEIT-MENÜ ──────────────────────── */
+function A11yMenu({t, lang, onA11y}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const items=[
+    {k:'cb', icon:'🎨', label:L('Rot/Grün-Schwäche','Red/green colorblind','Daltonismo rojo/verde')},
+    {k:'large', icon:'🔠', label:L('Große Schrift','Large text','Texto grande')},
+    {k:'contrast', icon:'◐', label:L('Hoher Kontrast','High contrast','Alto contraste')},
+  ];
+  return <div style={{width:'100%',display:'flex',flexDirection:'column',gap:8}}>
+    {items.map(it=>{
+      const on=!!A11Y[it.k];
+      return <button key={it.k} onClick={()=>onA11y&&onA11y(it.k,!on)}
+        style={{width:'100%',display:'flex',alignItems:'center',gap:10,
+          justifyContent:'flex-start',background:t.surface,
+          border:`1.5px solid ${on?t.gold:t.border}`,borderRadius:100,padding:'10px 20px',
+          color:t.text,fontSize:14,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+        <span style={{fontSize:16,width:22,textAlign:'center'}}>{it.icon}</span>
+        <span style={{flex:1,textAlign:'left'}}>{it.label}</span>
+        <span style={{width:38,height:22,borderRadius:11,background:on?t.gold:t.border,
+          position:'relative',transition:'background .15s',flexShrink:0,display:'inline-block'}}>
+          <span style={{position:'absolute',top:2,left:on?18:2,width:18,height:18,
+            borderRadius:'50%',background:'#fff',transition:'left .15s'}}/>
+        </span>
+      </button>;
+    })}
+  </div>;
+}
+
 /* ─── UI TRANSLATIONS ────────────────────────────── */
 const UI = {
   de: {
@@ -1619,7 +1670,7 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1632,7 +1683,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
-  const t=mode==="kids"?KIDS:ADULT;
+  const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
     border:`1px solid ${t.border}`,color:t.text,fontSize:14,fontWeight:600,
@@ -1738,6 +1789,13 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             <span style={{flex:1,textAlign:'left'}}>Admin Dashboard</span>
             <span style={{color:ADULT.accent}}>›</span>
           </button>}
+          {onA11y&&<div style={{width:'100%',marginTop:4}}>
+            <p style={{fontSize:11,color:ADULT.muted,fontWeight:700,letterSpacing:.8,
+              textAlign:'left',margin:'0 0 8px 4px'}}>
+              ♿ {lang==='en'?'ACCESSIBILITY':lang==='es'?'ACCESIBILIDAD':'BARRIEREFREIHEIT'}
+            </p>
+            <A11yMenu t={ADULT} lang={lang} onA11y={onA11y}/>
+          </div>}
           {isAnonymous
             ? <button onClick={onShowLogin} style={landingMenuBtn}>
                 <span style={{fontSize:17,width:22,textAlign:'center'}}>🔐</span>
@@ -1891,6 +1949,13 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <span style={{flex:1}}>Admin Dashboard</span>
         <span style={{color:t.accent,fontSize:18}}>›</span>
       </button>}
+
+      {onA11y&&<div style={{marginTop:4}}>
+        <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.8,margin:'0 0 8px 4px'}}>
+          ♿ {lang==='en'?'ACCESSIBILITY':lang==='es'?'ACCESIBILIDAD':'BARRIEREFREIHEIT'}
+        </p>
+        <A11yMenu t={t} lang={lang} onA11y={onA11y}/>
+      </div>}
     </div>
   </div>;
 }
@@ -3437,7 +3502,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
 
-  const beamerT={...t,border:'#2a1a0e',green:'#39d98a',gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
+  const beamerT={...t,border:'#2a1a0e',green:t.green,gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
 
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
@@ -4291,7 +4356,7 @@ export function DisplayApp() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState(false);
   const lang = localStorage.getItem('em_lang')||'de';
-  const t = ADULT;
+  const t = applyA11y(ADULT);
 
   useEffect(()=>{
     if(!roomCode){ setError(true); return; }
@@ -5900,8 +5965,11 @@ function App(){
   const unsubRef=useRef(null);
   const advanceGuessPhaseRef=useRef(false);
   const advanceBetPhaseRef=useRef(false);
-  const t=mode==="kids"?KIDS:ADULT;
+  const t=applyA11y(mode==="kids"?KIDS:ADULT);
   useEffect(()=>{inject(globalCSS(t));},[t]);
+  const[,setA11yTick]=useState(0);
+  useEffect(()=>{ applyLargeText(); },[]);
+  function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
 
   function listenRoom(c){
     if(unsubRef.current)unsubRef.current();
@@ -6356,7 +6424,7 @@ function App(){
       onDone={()=>setShowOnboarding(false)}/>}
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onAdmin={isPro?()=>setScreen('admin'):null}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
