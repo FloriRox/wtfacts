@@ -13,15 +13,15 @@ const firebaseConfig = {
   messagingSenderId: "504687472282",
   appId: "1:504687472282:web:d129a0ddb9b209f2c13923",
 };
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getDatabase(firebaseApp);
-const ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2','DpjTjx4Nk4RrivFmwBDsJvxOgj62'];
+var firebaseApp = initializeApp(firebaseConfig);
+var db = getDatabase(firebaseApp);
+var ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2','DpjTjx4Nk4RrivFmwBDsJvxOgj62'];
 var isAdmin = (uid) => ADMIN_UIDS.includes(uid);
-let auth;
+var auth;
 try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
-const googleProvider = new GoogleAuthProvider();
+var googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-const appleProvider = new OAuthProvider('apple.com');
+var appleProvider = new OAuthProvider('apple.com');
 var dbRef    = (c)    => ref(db, `rooms/${c}`);
 var dbSet    = (c, v) => set(dbRef(c), v);
 var dbPatch  = (c, v) => update(dbRef(c), v);
@@ -379,10 +379,10 @@ function buildQuestions(raw) {
   });
   return q;
 }
-const QUESTIONS_MAP = { de: buildQuestions(QUESTIONS_DE), en: buildQuestions(QUESTIONS_EN), es: buildQuestions(QUESTIONS_ES) };
-let QUESTIONS = QUESTIONS_MAP.de; // default, updated when lang changes
-const QUESTIONS_RAW_MAP = { de: QUESTIONS_DE, en: QUESTIONS_EN, es: QUESTIONS_ES };
-let QUESTIONS_RAW = QUESTIONS_DE; // for CategoryScreen
+var QUESTIONS_MAP = { de: buildQuestions(QUESTIONS_DE), en: buildQuestions(QUESTIONS_EN), es: buildQuestions(QUESTIONS_ES) };
+var QUESTIONS = QUESTIONS_MAP.de; // default, updated when lang changes
+var QUESTIONS_RAW_MAP = { de: QUESTIONS_DE, en: QUESTIONS_EN, es: QUESTIONS_ES };
+var QUESTIONS_RAW = QUESTIONS_DE; // for CategoryScreen
 
 /* ─── SHARING ────────────────────────────────────── */
 function roundRect(ctx, x, y, w, h, r){
@@ -714,7 +714,7 @@ function downloadCanvas(canvas) {
 }
 
 /* ─── SOUNDS ─────────────────────────────────────── */
-const SOUND_ENABLED_KEY="em_sound";
+var SOUND_ENABLED_KEY="em_sound";
 function isSoundOn(){ return localStorage.getItem(SOUND_ENABLED_KEY)!=="off"; }
 function toggleSound(){ localStorage.setItem(SOUND_ENABLED_KEY,isSoundOn()?"off":"on"); }
 
