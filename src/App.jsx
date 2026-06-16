@@ -1630,6 +1630,10 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
   const t=mode==="kids"?KIDS:ADULT;
+  const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
+    padding:'13px 16px',borderRadius:t.radius,background:t.surface,
+    border:`1px solid ${t.border}`,color:t.text,fontSize:14,fontWeight:600,
+    cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'};
   useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
 
   async function submit(){
@@ -1794,10 +1798,11 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
                     : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',
                         justifyContent:'center',fontSize:24,color:t.muted}}>👤</div>}
                 </div>
-                <div style={{display:'flex',flexDirection:'column',gap:6,flex:1}}>
+                <div style={{display:'flex',flexDirection:'column',gap:6,flex:1,alignItems:streamHome?'center':'stretch'}}>
                   <video ref={videoRefHome} autoPlay playsInline muted
-                    style={{display:streamHome?'block':'none',width:'100%',maxHeight:120,
-                      borderRadius:t.radius,objectFit:'cover'}}/>
+                    style={{display:streamHome?'block':'none',width:120,height:120,
+                      borderRadius:'50%',objectFit:'cover',
+                      border:`2px solid ${t.accent}`,transform:'scaleX(-1)'}}/>
                   {!streamHome
                     ? <button onClick={async()=>{
                         try{
@@ -1840,45 +1845,40 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
     </Card>
-    {/* Account */}
-    <div style={{marginTop:16,textAlign:'center'}}>
+    {/* Menü */}
+    <div style={{marginTop:20,display:'flex',flexDirection:'column',gap:8}}>
       {isAnonymous
-        ? <button onClick={onShowLogin}
-            style={{background:'none',border:`1px solid ${t.border}`,
-              borderRadius:t.radius,padding:'8px 20px',color:t.muted,
-              fontSize:13,cursor:'pointer',fontFamily:t.fontBody}}>
-            🔐 Anmelden / Statistiken speichern
+        ? <button onClick={onShowLogin} style={menuRow}>
+            <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>🔐</span>
+            <span style={{flex:1}}>{lang==='en'?'Sign in / save stats':lang==='es'?'Iniciar sesión / guardar':'Anmelden / Statistiken speichern'}</span>
+            <span style={{color:t.muted,fontSize:18}}>›</span>
           </button>
-        : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
-            <span style={{fontSize:13,color:t.muted}}>✅ {userName||'Angemeldet'}</span>
-            <button onClick={onSignOut}
-              style={{background:'none',border:'none',color:t.muted,
-                fontSize:12,cursor:'pointer',textDecoration:'underline',
-                fontFamily:t.fontBody}}>
-              Abmelden
+        : <div style={{...menuRow,cursor:'default'}}>
+            <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>✅</span>
+            <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{userName||(lang==='en'?'Signed in':lang==='es'?'Conectado':'Angemeldet')}</span>
+            <button onClick={onSignOut} style={{background:'none',border:'none',color:t.muted,
+              fontSize:12,cursor:'pointer',textDecoration:'underline',fontFamily:t.fontBody,flexShrink:0}}>
+              {lang==='en'?'Sign out':lang==='es'?'Salir':'Abmelden'}
             </button>
-          </div>
-      }
-      {onMyQuestions&&<button onClick={onMyQuestions}
-        style={{marginTop:12,background:'none',border:`1px solid ${t.border}`,
-          borderRadius:t.radius,padding:'8px 20px',color:t.muted,
-          fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%'}}>
-        📝 {lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}
+          </div>}
+
+      {onMyQuestions&&<button onClick={onMyQuestions} style={menuRow}>
+        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>📝</span>
+        <span style={{flex:1}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
+        <span style={{color:t.muted,fontSize:18}}>›</span>
       </button>}
-      {onAdmin&&<button onClick={onAdmin}
-        style={{marginTop:8,background:'none',border:`1px solid ${t.accent}44`,
-          borderRadius:t.radius,padding:'8px 20px',color:t.accent,
-          fontSize:13,cursor:'pointer',fontFamily:t.fontBody,width:'100%',fontWeight:700}}>
-        📊 Admin Dashboard
+
+      {onShowOnboarding&&<button onClick={onShowOnboarding} style={menuRow}>
+        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>❓</span>
+        <span style={{flex:1}}>{lang==='en'?'How to play':lang==='es'?'Cómo jugar':"So funktioniert's"}</span>
+        <span style={{color:t.muted,fontSize:18}}>›</span>
       </button>}
-      {/* Temp debug – remove after mobile login fixed */}
-      {typeof sessionStorage!=='undefined'&&sessionStorage.getItem('em_redirect_result')&&
-        <p style={{fontSize:10,color:'#555',textAlign:'center',marginTop:4,
-          fontFamily:'monospace',wordBreak:'break-all'}}>
-          dbg: {sessionStorage.getItem('em_redirect_result')}
-          {' | uid:'}{typeof auth!=='undefined'&&auth?.currentUser?.uid?.slice(0,8)||'none'}
-          {' | anon:'}{typeof auth!=='undefined'&&String(auth?.currentUser?.isAnonymous)}
-        </p>}
+
+      {onAdmin&&<button onClick={onAdmin} style={{...menuRow,borderColor:t.accent+'55',color:t.accent,fontWeight:700}}>
+        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>📊</span>
+        <span style={{flex:1}}>Admin Dashboard</span>
+        <span style={{color:t.accent,fontSize:18}}>›</span>
+      </button>}
     </div>
   </div>;
 }
@@ -5149,24 +5149,33 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
     reader.readAsText(file,'utf-8');
   }
   function downloadTemplate(){
-    const ex = lang==='en'
-      ? ['How many guests are here today?,80,guests,Count them!,🥂',
-         'In what year did we first meet?,2019,year,A special day,❤️']
-      : ['Wie viele Gäste sind heute hier?,80,Gäste,Zählt mal durch!,🥂',
-         'In welchem Jahr haben wir uns kennengelernt?,2019,Jahr,Ein besonderer Tag,❤️'];
-    const csv=[
-      lang==='en'?'# EstiMates – Custom Questions Template':'# EstiMates – Eigene Fragen Template',
-      lang==='en'?'# Rules: answer = number | unit = word/phrase | hint = optional | emoji = optional'
-                 :'# Regeln: antwort = Zahl | einheit = Wort/Phrase | hint = optional | emoji = optional',
-      lang==='en'?'# Max 50 questions | save as UTF-8 | decimals with a dot (e.g. 3.5)'
-                 :'# Max. 50 Fragen | als UTF-8 speichern | Dezimalzahlen mit Punkt (z.B. 3.5)',
-      lang==='en'?'question,answer,unit,hint,emoji':'frage,antwort,einheit,hint,emoji',
-      ...ex,
-    ].join('\n');
-    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}); // BOM -> Excel öffnet UTF-8 korrekt
+    const rows = lang==='en' ? [
+      ['question','answer','unit','hint','emoji'],
+      ['How many guests are here today?','80','guests','Count them!','🥂'],
+      ['In what year did we first meet?','2019','year','A special evening','❤️'],
+      ['How many countries have I visited?','12','countries','Europe and beyond','✈️'],
+      ['How many cups of coffee do I drink per week?','21','cups','Mondays are rough','☕'],
+      ['How many songs are on my phone?','740','songs','A long playlist','🎵'],
+      ['How many books did I read last year?','9','books','Cozy evenings','📚'],
+      ['How many steps do I walk on an average day?','7500','steps','Roughly','👟'],
+      ['How many plants are in my home?','14','plants','Slowly taking over','🪴'],
+    ] : [
+      ['frage','antwort','einheit','hint','emoji'],
+      ['Wie viele Gäste sind heute hier?','80','Gäste','Zählt mal durch!','🥂'],
+      ['In welchem Jahr haben wir uns kennengelernt?','2019','Jahr','Ein besonderer Abend','❤️'],
+      ['Wie viele Länder habe ich bereist?','12','Länder','Europa und mehr','✈️'],
+      ['Wie viele Tassen Kaffee trinke ich pro Woche?','21','Tassen','Montags besonders','☕'],
+      ['Wie viele Songs sind auf meinem Handy?','740','Songs','Eine lange Playlist','🎵'],
+      ['Wie viele Bücher habe ich letztes Jahr gelesen?','9','Bücher','Gemütliche Abende','📚'],
+      ['Wie viele Schritte gehe ich an einem Tag?','7500','Schritte','Ungefähr','👟'],
+      ['Wie viele Pflanzen stehen bei mir zuhause?','14','Pflanzen','Es werden mehr','🪴'],
+    ];
+    const esc=v=>{ v=String(v); return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    const csv=rows.map(r=>r.map(esc).join(',')).join('\r\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}); // BOM -> Excel zeigt Umlaute korrekt
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url; a.download='estimates_template.csv'; document.body.appendChild(a); a.click();
+    a.href=url; a.download='estimates_vorlage.csv'; document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
@@ -5230,6 +5239,13 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
         📋 {lang==='en'?'Template':lang==='es'?'Plantilla':'Vorlage'}
       </Btn>
     </div>
+    <p style={{fontSize:11,color:t.muted,margin:'-8px 0 16px',lineHeight:1.5}}>
+      {lang==='en'
+        ? 'Open the template in Excel/Sheets, fill the columns (answer = a number, decimals with a dot), save as CSV, then import. Max 50 questions.'
+        : lang==='es'
+        ? 'Abre la plantilla en Excel/Sheets, rellena las columnas (respuesta = número, decimales con punto), guarda como CSV e importa. Máx. 50 preguntas.'
+        : 'Vorlage in Excel/Sheets öffnen, Spalten ausfüllen (antwort = Zahl, Dezimal mit Punkt), als CSV speichern, dann importieren. Max. 50 Fragen.'}
+    </p>
 
     {shareMsg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,
       borderRadius:t.radius,padding:'10px 12px',marginBottom:12,textAlign:'center'}}>
