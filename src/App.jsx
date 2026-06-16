@@ -2259,7 +2259,6 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
 function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=false,onKick=null,onPause=null,onToggleDebug=null,onToggleSound=null,onEnd=null,onLeave=null}){
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
-  const[conf,setConf]=useState(70);
   const[allIn,setAllIn]=useState(false);
   // KERS All-In: stored in Firebase per player for reliability
   const[timeLeft,setTimeLeft]=useState(null);
@@ -2329,7 +2328,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
       await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
     }
     onGuess(n, allIn);
-    update(ref(db,`rooms/${code}/confidence`),{[myId]:conf}).catch(()=>{});
     if(allIn){
       const newCharge = myBoostCharge - 50;
       update(ref(db,`rooms/${code}/boostCharge`),{[myId]: Math.max(0, newCharge)});
@@ -2565,20 +2563,6 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <Btn t={t} onClick={submit} disabled={!val}
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
-          {/* Confidence-Slider */}
-          <div style={{marginTop:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-              <span style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:.5}}>
-                {lang==='en'?'How sure are you?':lang==='es'?'¿Qué tan seguro?':'Wie sicher bist du?'}
-              </span>
-              <span style={{fontSize:12,fontWeight:800,color:conf>=80?t.green:conf<=35?t.danger:t.gold}}>
-                {conf}% {conf>=85?'😎':conf>=55?'🤔':conf<=25?'🙈':'😬'}
-              </span>
-            </div>
-            <input type="range" min="0" max="100" step="5" value={conf}
-              onChange={e=>setConf(parseInt(e.target.value))}
-              style={{width:'100%',accentColor:t.accent,cursor:'pointer'}}/>
-          </div>
           {isHost&&activePl.length>1&&<p style={{fontSize:11,color:t.muted,
             textAlign:'center',margin:'8px 0 0'}}>
             {doneCount} {lang==='en'?'of':lang==='es'?'de':'von'} {activePl.length} {lang==='en'?'submitted':lang==='es'?'enviado':'getippt'}
@@ -2742,7 +2726,7 @@ function CountUp({value, unit, t, dur=1100, style}){
   return <span style={style}>{fmtNum(shown)}{unit?` ${unit}`:''}</span>;
 }
 
-function wtfComment(ranked, q, lang, conf){
+function wtfComment(ranked, q, lang){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   if(!ranked||!ranked.length) return L('Niemand hat getippt – mutig! 🙈','Nobody guessed – bold! 🙈','¡Nadie adivinó! 🙈');
   const ans=q.a;
@@ -2750,23 +2734,20 @@ function wtfComment(ranked, q, lang, conf){
   if(exact.length){ const n=exact.map(r=>r.name).join(' & ');
     return L(`Punktlandung von ${n}! 🎯`,`Bullseye by ${n}! 🎯`,`¡${n} clavó! 🎯`); }
   const closest=ranked[0];
+  const farthest=ranked[ranked.length-1];
   const gs=ranked.map(r=>r.guess);
   const minG=Math.min(...gs), maxG=Math.max(...gs);
-  const relClose = ans!==0 ? closest.diff/Math.abs(ans) : closest.diff;
-  // Selbstüberschätzung: wer am sichersten war und ordentlich daneben lag
-  if(conf){
-    const withConf=ranked.filter(r=>conf[r.id]!=null);
-    if(withConf.length){
-      const sure=withConf.reduce((a,b)=>(conf[b.id]>conf[a.id]?b:a));
-      const rel=ans!==0?sure.diff/Math.abs(ans):sure.diff;
-      if(conf[sure.id]>=80 && rel>0.5 && sure.id!==closest.id)
-        return L(`${sure.name} war ${conf[sure.id]}% sicher – und lag ordentlich daneben 😬`,
-                 `${sure.name} was ${conf[sure.id]}% sure – and way off 😬`,
-                 `${sure.name} estaba ${conf[sure.id]}% seguro – y muy lejos 😬`);
-    }
+  const relClose=ans!==0?closest.diff/Math.abs(ans):closest.diff;
+  // Übermut: wer am weitesten daneben lag UND den extremsten Tipp hatte
+  if(ranked.length>=3 && farthest.id!==closest.id){
+    const extremeFar=Math.abs(farthest.guess-ans)/Math.max(1,Math.abs(ans));
+    if(extremeFar>0.8)
+      return L(`${farthest.name} hat es mit ${fmtNum(farthest.guess)} etwas übertrieben 😅`,
+               `${farthest.name} went a bit wild with ${fmtNum(farthest.guess)} 😅`,
+               `${farthest.name} se pasó con ${fmtNum(farthest.guess)} 😅`);
   }
   if(relClose<=0.02) return L(`${closest.name} war hauchdünn dran! 🔥`,`${closest.name} was razor-close! 🔥`,`¡${closest.name} casi! 🔥`);
-  if((maxG-minG)>Math.abs(ans||1)*4 && ranked.length>=3)
+  if((maxG-minG)>Math.abs(ans||1)*4&&ranked.length>=3)
     return L(`Von ${fmtNum(minG)} bis ${fmtNum(maxG)} – da wurde wild geraten 😅`,`From ${fmtNum(minG)} to ${fmtNum(maxG)} – wild guesses 😅`,`De ${fmtNum(minG)} a ${fmtNum(maxG)} 😅`);
   if(relClose>1) return L('Niemand war auch nur in der Nähe… 💀','Nobody was even close… 💀','Nadie estuvo cerca… 💀');
   if(relClose<=0.1) return L(`${closest.name} richtig nah dran! 👏`,`${closest.name} got really close! 👏`,`¡${closest.name} muy cerca! 👏`);
@@ -2943,16 +2924,15 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
       <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}><CountUp value={q.a} unit={q.unit} t={t}/></div>
       <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
       <RevealStrip ranked={ranked} answer={q.a} unit={q.unit} t={t}/>
-      <p style={{fontSize:15,fontWeight:700,color:t.text,margin:"0 auto",maxWidth:400,lineHeight:1.4,animation:"fu .4s .5s ease both"}}>{wtfComment(ranked,q,lang,room.confidence)}</p>
+      <p style={{fontSize:15,fontWeight:700,color:t.text,margin:"0 auto",maxWidth:400,lineHeight:1.4,animation:"fu .4s .5s ease both"}}>{wtfComment(ranked,q,lang)}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null,cf=(room.confidence||{})[p.id];return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
               color:i===0?t.gold:i===1?"#c0c0c0":i===2?"#cd7f32":"#6e5e54",
               flexShrink:0}}>{i+1}.</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
 </span>}</span><span style={{fontFamily:t.fontMono,fontSize:13,color:win||exact?t.accent:t.text}}>{fmtNum(p.guess)} {q.unit}</span><span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:44,textAlign:"right"}}>Δ{fmtNum(p.diff)}</span>
-            {cf!=null&&<span title={lang==='en'?'confidence':'Sicherheit'} style={{fontSize:10,fontWeight:700,color:cf>=80?t.green:cf<=35?t.danger:t.muted,minWidth:30,textAlign:"right"}}>{cf}%</span>}
             <Pill t={t} color={pts>0?(exact?t.green:t.gold):pts<0?t.danger:t.muted}>
               {pts>0?'+':''}{pts}P
             </Pill></div>;})}
