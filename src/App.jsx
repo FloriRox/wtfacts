@@ -324,7 +324,7 @@ const UI = {
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
-    dailyChallenge:"📅 Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
+    dailyChallenge:"📅 Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",leaveGame:"Salir del juego",leaveConfirm:"¿Salir del juego?",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -1281,7 +1281,7 @@ function DailyChallengeScreen({t, lang, onBack}) {
         <div style={{fontSize:48,marginBottom:8}}>{result.exact?'🎯':pct>80?'🔥':pct>50?'👍':'😅'}</div>
         <p style={{fontSize:14,color:t.muted,marginBottom:4}}>{q.q}</p>
         <p style={{fontSize:28,fontWeight:800,color:t.gold,margin:'8px 0'}}>{fmtNum(result.answer)} <span style={{fontSize:14}}>{q.unit}</span></p>
-        <p style={{fontSize:14,color:t.muted}}>Dein Tipp: <strong style={{color:t.text}}>{fmtNum(result.guess)}</strong> · ±<strong style={{color:result.exact?t.green:t.accent}}>{fmtNum(result.diff)}</strong></p>
+        <p style={{fontSize:14,color:t.muted}}>{lang==='en'?'Your guess':lang==='es'?'Tu tirada':'Dein Tipp'}: <strong style={{color:t.text}}>{fmtNum(result.guess)}</strong> · ±<strong style={{color:result.exact?t.green:t.accent}}>{fmtNum(result.diff)}</strong></p>
       </Card>
       {rank!==null&&<Card t={t} style={{marginBottom:16,textAlign:'center',background:t.gold+'18',border:`1.5px solid ${t.gold}44`}}>
         <p style={{fontSize:18,fontWeight:700,color:t.gold,margin:0}}>{i.dailyRank(rank)}</p>
@@ -1289,7 +1289,7 @@ function DailyChallengeScreen({t, lang, onBack}) {
       {phase==='done'&&<Card t={t} style={{marginBottom:16,textAlign:'center'}}>
         <p style={{color:t.muted,fontSize:14,margin:0}}>{i.dailyDone}</p>
       </Card>}
-      <Btn t={t} full variant="secondary" onClick={onBack}>← Zurück</Btn>
+      <Btn t={t} full variant="secondary" onClick={onBack}>{i.back}</Btn>
     </>}
   </div>;
 }
@@ -1760,7 +1760,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   }
 
   return <div style={{...page,background:t.bg,animation:"fu .3s ease both"}}>
-    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>← Zurück</Btn>
+    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>{i.back}</Btn>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
@@ -1898,14 +1898,18 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
 function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang}){
   const i=UI[lang]||UI.de;
-  const[withJokers,setWithJokers]=useState(false);
-  const[enabled,setEnabled]=useState(Object.keys(JOKER_DEFS));
-  const[speedMode,setSpeedMode]=useState(false);
-  const[timerSecs,setTimerSecs]=useState(30);
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem('em_lastSetup')||'null')}catch(e){return null}})();
+  const[withJokers,setWithJokers]=useState(saved?!!saved.withJokers:false);
+  const[enabled,setEnabled]=useState(saved&&Array.isArray(saved.enabled)&&saved.enabled.length?saved.enabled:Object.keys(JOKER_DEFS));
+  const[speedMode,setSpeedMode]=useState(saved?!!saved.speedMode:false);
+  const[timerSecs,setTimerSecs]=useState(saved?.timerSecs||30);
   const[debugModeLocal,setDebugModeLocal]=useState(debugModeInit!==undefined?!!debugModeInit:false);
-  const[withBets,setWithBets]=useState(false);
-  const[betModes,setBetModes]=useState(["best","worst"]);
-  const[withSteckbrief,setWithSteckbrief]=useState(false);
+  const[withBets,setWithBets]=useState(saved?!!saved.withBets:false);
+  const[betModes,setBetModes]=useState(saved&&Array.isArray(saved.betModes)?saved.betModes:["best","worst"]);
+  const[withSteckbrief,setWithSteckbrief]=useState(saved?!!saved.withSteckbrief:false);
+  function persistSetup(){
+    try{localStorage.setItem('em_lastSetup',JSON.stringify({withJokers,enabled,speedMode,timerSecs,withBets,betModes,withSteckbrief}));}catch(e){}
+  }
   function toggle(id){setEnabled(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);}
 
   // Reusable toggle row component
@@ -1987,7 +1991,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 
 
     <div style={{marginTop:8}}>
-      <Btn t={t} full onClick={()=>onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief)}>
+      <Btn t={t} full onClick={()=>{persistSetup();onDone(withJokers?enabled:[],speedMode,timerSecs,withBets,betModes,withSteckbrief);}}>
         {i.continueBtn}
       </Btn>
     </div>
@@ -2023,7 +2027,16 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       if(list.length) setSelected(prev=>prev.includes(COMMUNITY_CAT)?prev:[...prev,COMMUNITY_CAT]);
     }).catch(()=>{});
   },[lang]);
-  const[selected,setSelected]=useState(allCats);
+  const[selected,setSelected]=useState(()=>{
+    try{
+      const sv=JSON.parse(localStorage.getItem('em_lastCats')||'null');
+      if(Array.isArray(sv)&&sv.length){
+        const valid=sv.filter(c=>allCats.includes(c));
+        if(valid.length) return valid;
+      }
+    }catch(e){}
+    return allCats;
+  });
   function toggle(c,locked){
     if(locked)return;
     setSelected(prev=>prev.includes(c)?prev.filter(x=>x!==c):[...prev,c]);
@@ -2050,6 +2063,7 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       QUESTIONS[mode]=QUESTIONS[mode]||{};
       QUESTIONS[mode][COMMUNITY_CAT]=communityQs.map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
     }
+    try{localStorage.setItem('em_lastCats',JSON.stringify(selected));}catch(e){}
     onStart(selected);
   }
 
@@ -2164,18 +2178,25 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       borderTop:`1px solid ${t.border}`,backdropFilter:"blur(8px)",zIndex:50}}>
       <Btn t={t} full disabled={selected.length===0}
         onClick={startGame}>
-        {selected.length===0?"Wähle eine Kategorie":
-         `Starten mit ${selected.length} ${selected.length===1?"Kategorie":i.categories} →`}
+        {selected.length===0?(lang==='en'?"Pick a category":lang==='es'?"Elige una categoría":"Wähle eine Kategorie"):
+         (lang==='en'?`Start with ${selected.length} ${selected.length===1?"category":"categories"} →`:
+          lang==='es'?`Empezar con ${selected.length} ${selected.length===1?"categoría":"categorías"} →`:
+          `Starten mit ${selected.length} ${selected.length===1?"Kategorie":i.categories} →`)}
       </Btn>
     </div>
   </div>;
 }
 
 /* ─── LOBBY ───────────────────────────────────────── */
-function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=null}){
+function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=null,onQuickStart=null}){
   const i=UI[lang]||UI.de;
   const[copied,setCopied]=useState(false);
   const isHost=room.hostId===myId;
+  const hasSavedSetup=(()=>{try{
+    const s=JSON.parse(localStorage.getItem('em_lastSetup')||'null');
+    const c=JSON.parse(localStorage.getItem('em_lastCats')||'null');
+    return !!s && Array.isArray(c) && c.length>0;
+  }catch(e){return false;}})();
   const pl=(room.order||[]).map(id=>room.players?.[id]).filter(Boolean);
   const link=inviteUrl(code);
   function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); }
@@ -2209,7 +2230,16 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
 
     {/* ── Weiter Button ── */}
     {isHost
-      ?<Btn t={t} onClick={onGoJokerSetup} full style={{marginTop:8}}>{i.continueBtn}</Btn>
+      ?<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:8}}>
+        <Btn t={t} onClick={onGoJokerSetup} full>{i.continueBtn}</Btn>
+        {hasSavedSetup&&onQuickStart&&<button onClick={onQuickStart}
+          style={{padding:'11px',borderRadius:t.radius,background:t.gold+'18',
+            border:`1.5px solid ${t.gold}66`,color:t.gold,fontSize:15,fontWeight:800,
+            cursor:'pointer',fontFamily:t.fontBody,display:'flex',alignItems:'center',
+            justifyContent:'center',gap:8}}>
+          ⚡ {lang==='en'?'Quick start (last setup)':lang==='es'?'Inicio rápido (último ajuste)':'Schnellstart (letztes Setup)'}
+        </button>}
+      </div>
       :<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
         <p style={{textAlign:"center",color:t.muted,fontSize:13,margin:0,
           animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>
@@ -2398,7 +2428,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             </div>
             {/* Controls */}
             <div>
-              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 6px'}}>🎮 STEUERUNG</p>
+              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 6px'}}>🎮 {lang==='en'?'CONTROLS':lang==='es'?'CONTROLES':'STEUERUNG'}</p>
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {speedMode&&<button onClick={()=>{
                   // Toggle timer pause via Firebase
@@ -2409,30 +2439,30 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
                   border:`1.5px solid ${room.timerPaused?t.gold:t.border}`,
                   color:room.timerPaused?t.gold:t.text,
                   fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  {room.timerPaused?'▶ Timer fortsetzen':'II Timer pausieren'}
+                  {room.timerPaused?(lang==='en'?'▶ Resume timer':lang==='es'?'▶ Reanudar':'▶ Timer fortsetzen'):(lang==='en'?'II Pause timer':lang==='es'?'II Pausar':'II Timer pausieren')}
                 </button>}
                 <button onClick={()=>onSkip&&onSkip()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  ⏭ Skippen
+                  ⏭ {lang==='en'?'Skip':lang==='es'?'Saltar':'Skippen'}
                 </button>
                 <button onClick={()=>onPause&&onPause()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  II Spiel pausieren
+                  II {lang==='en'?'Pause game':lang==='es'?'Pausar juego':'Spiel pausieren'}
                 </button>
                 <button onClick={()=>{toggleSound();onToggleSound&&onToggleSound();}}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  {isSoundOn()?'🔊':'🔇'} Sound
+                  {isSoundOn()?'🔊':'🔇'} {lang==='en'?'Sound':lang==='es'?'Sonido':'Sound'}
                 </button>
 
-                <button onClick={()=>window.confirm('Spiel beenden?')&&onEnd&&onEnd()}
+                <button onClick={()=>window.confirm(lang==='en'?'End game?':lang==='es'?'¿Terminar juego?':'Spiel beenden?')&&onEnd&&onEnd()}
                   style={{padding:'7px 12px',borderRadius:t.radius,background:'none',border:`1.5px solid ${t.danger}44`,color:t.danger,fontSize:13,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-                  🛑 Beenden
+                  🛑 {lang==='en'?'End':lang==='es'?'Terminar':'Beenden'}
                 </button>
               </div>
             </div>
             {/* Players – unified host control */}
             <div>
-              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 8px'}}>👥 SPIELER</p>
+              <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'0 0 8px'}}>👥 {lang==='en'?'PLAYERS':lang==='es'?'JUGADORES':'SPIELER'}</p>
               {(room.order||[]).map(pid=>{
                 const p=room.players?.[pid]; if(!p) return null;
                 const isAfk=!!(room.afkPlayers||{})[pid];
@@ -4037,6 +4067,30 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
   const sabotageKingId=pl.reduce((best,p)=>(sabotageStats[p.id]||0)>(sabotageStats[best]||0)?p.id:best,pl[0]?.id);
   const sabotageKing=pl.find(p=>p.id===sabotageKingId&&(sabotageStats[p.id]||0)>0);
 
+  // Wildester Tipp – größter einzelner Ausreißer
+  let wildest=null;
+  history.forEach(r=>{
+    if(!r.guesses||r.answer==null)return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g==null||g===-999999)return;
+      const rel=Math.abs(g-r.answer)/Math.max(1,Math.abs(r.answer));
+      if(!wildest||rel>wildest.rel) wildest={pid,rel,g,ans:r.answer};
+    });
+  });
+  const wildestPlayer=wildest&&pl.find(p=>p.id===wildest.pid);
+
+  // Optimist – tippt am häufigsten über der Antwort
+  const overCount={};
+  history.forEach(r=>{
+    if(!r.guesses||r.answer==null)return;
+    Object.entries(r.guesses).forEach(([pid,g])=>{
+      if(g==null||g===-999999)return;
+      if(g>r.answer) overCount[pid]=(overCount[pid]||0)+1;
+    });
+  });
+  const optimistId=pl.reduce((best,p)=>(overCount[p.id]||0)>(overCount[best]||0)?p.id:best,pl[0]?.id);
+  const optimist=pl.find(p=>p.id===optimistId);
+
   const statCards=[
     betKing&&{icon:"🎲",label:i.betKing,name:betKing.name,sub:`${i.betSub(betWins[betKingId],betTotal[betKingId])} (${betKingRate}%)`,color:t.gold},
     bestPlayer&&sorted.length>1&&{icon:"🎯",label:i.bestGuesser,name:bestPlayer.name,sub:`${i.avgDeviation}: ${fmtNum(bestAvg)}`,color:t.green},
@@ -4044,6 +4098,8 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
     exactKing&&(exactHits[exactKingId]||0)>0&&{icon:"💥",label:i.exactHits,name:exactKing.name,sub:i.exactCount(exactHits[exactKingId]),color:t.accent},
     jokerKing&&(jokerTotals[jokerKingId]||0)>0&&{icon:"🃏",label:i.jokerKing,name:jokerKing.name,sub:i.jokerPlayed(jokerTotals[jokerKingId]),color:t.gold},
     sabotageKing&&{icon:"💣",label:i.sabotageKing,name:sabotageKing.name,sub:i.sabotageCount(sabotageStats[sabotageKingId]),color:t.danger},
+    wildestPlayer&&totalRounds>=1&&wildest.rel>1&&{icon:"🌪",label:(lang==='en'?'Wildest guess':lang==='es'?'Tiro más loco':'Wildester Tipp'),name:wildestPlayer.name,sub:`${fmtNum(wildest.g)} (${lang==='en'?'answer':lang==='es'?'respuesta':'Antwort'} ${fmtNum(wildest.ans)})`,color:t.accent},
+    optimist&&sorted.length>1&&(overCount[optimistId]||0)>=2&&{icon:"📈",label:(lang==='en'?'The optimist':lang==='es'?'El optimista':'Der Optimist'),name:optimist.name,sub:(lang==='en'?`${overCount[optimistId]}× too high`:lang==='es'?`${overCount[optimistId]}× demasiado alto`:`${overCount[optimistId]}× zu hoch`),color:t.gold},
   ].filter(Boolean);
 
   return <div style={{...page,textAlign:"center",paddingTop:36}}>
@@ -5464,10 +5520,10 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
               {q.plays>0&&<span style={{fontSize:10,color:t.muted}}>🎮 {q.plays}x</span>}
               {q.visibility==='submit'
                 ? (q.status==='approved'
-                    ? <span style={{fontSize:10,color:t.green,fontWeight:700}}>✓ {lang==='en'?'Approved':'Genehmigt'}</span>
+                    ? <span style={{fontSize:10,color:t.green,fontWeight:700}}>✓ {lang==='en'?'Approved':lang==='es'?'Aprobada':'Genehmigt'}</span>
                     : q.status==='rejected'
-                    ? <span style={{fontSize:10,color:t.danger,fontWeight:700}}>✕ {lang==='en'?'Rejected':'Abgelehnt'}</span>
-                    : <span style={{fontSize:10,color:t.gold,fontWeight:700}}>🌍 {lang==='en'?'In review':'In Prüfung'}</span>)
+                    ? <span style={{fontSize:10,color:t.danger,fontWeight:700}}>✕ {lang==='en'?'Rejected':lang==='es'?'Rechazada':'Abgelehnt'}</span>
+                    : <span style={{fontSize:10,color:t.gold,fontWeight:700}}>🌍 {lang==='en'?'In review':lang==='es'?'En revisión':'In Prüfung'}</span>)
                 : <span style={{fontSize:10,color:t.muted}}>🔒 {lang==='en'?'Private':lang==='es'?'Privada':'Privat'}</span>}
             </div>
           </Card>)}
@@ -5495,10 +5551,10 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
   const packSuggestions=[...new Set([DEFAULT_PACK,...existingPacks])].filter(Boolean);
 
   async function save(){
-    if(!q.trim()){setError('Bitte eine Frage eingeben.');return;}
+    if(!q.trim()){setError(lang==='en'?'Please enter a question.':lang==='es'?'Introduce una pregunta.':'Bitte eine Frage eingeben.');return;}
     const num=parseFloat(a.replace(',','.'));
-    if(isNaN(num)){setError('Antwort muss eine Zahl sein.');return;}
-    if(!unit.trim()){setError('Bitte eine Einheit angeben.');return;}
+    if(isNaN(num)){setError(lang==='en'?'Answer must be a number.':lang==='es'?'La respuesta debe ser un número.':'Antwort muss eine Zahl sein.');return;}
+    if(!unit.trim()){setError(lang==='en'?'Please enter a unit.':lang==='es'?'Introduce una unidad.':'Bitte eine Einheit angeben.');return;}
     setError('');setSaving(true);
     try {
       await onSave({q:q.trim(),a:num,unit:unit.trim(),
@@ -6029,6 +6085,23 @@ function App(){
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},boostLastQIdx:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
+  // Schnellstart: letztes Setup + letzte Kategorien anwenden und direkt loslegen
+  async function handleQuickStart(){
+    let setup=null, cats=null;
+    try{ setup=JSON.parse(localStorage.getItem('em_lastSetup')||'null'); }catch(e){}
+    try{ cats=JSON.parse(localStorage.getItem('em_lastCats')||'null'); }catch(e){}
+    // Nur Standard-Kategorien, die im aktuellen Modus existieren (custom/community werden hier nicht injiziert)
+    const validCats=Array.isArray(cats)?cats.filter(c=>QUESTIONS[mode]&&QUESTIONS[mode][c]):[];
+    if(!setup||!validCats.length){ await handleGoJokerSetup(); return; }
+    await handleJokerSetupDone(
+      setup.withJokers?(Array.isArray(setup.enabled)?setup.enabled:[]):[],
+      !!setup.speedMode, setup.timerSecs||30,
+      setup.withBets!==false, Array.isArray(setup.betModes)?setup.betModes:["best","worst"],
+      !!setup.withSteckbrief
+    );
+    await handleStartWithCats(validCats);
+  }
+
   async function handleGuess(val, isAllIn=false){
     const updates = {[`rooms/${code}/guesses/${myId}`]: val};
     if(isAllIn) updates[`rooms/${code}/allIn/${myId}`] = true;
@@ -6170,6 +6243,23 @@ function App(){
     await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{},doubleJokers:{}});
   }
 
+  // Host-Tastaturkürzel (Laptop/Beamer): Leertaste = weiter (Auflösung), P = Timer-Pause
+  useEffect(()=>{
+    function onKey(e){
+      if(!isHostRef.current||!code) return;
+      const tag=(e.target&&e.target.tagName)||'';
+      if(tag==='INPUT'||tag==='TEXTAREA'||(e.target&&e.target.isContentEditable)) return;
+      const ph=room?.phase;
+      if(e.code==='Space'||e.key===' '){
+        if(ph==='results'){ e.preventDefault(); handleNext(); }
+      } else if(e.key==='p'||e.key==='P'){
+        if(ph==='question'){ e.preventDefault(); const paused=!!(room?.timerPaused); update(ref(db,`rooms/${code}`),{timerPaused:paused?null:true}); }
+      }
+    }
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[room,code]);
+
   async function handleKick(playerId){
     if(!room||room.hostId!==myId) return;
     const playerName=room.players?.[playerId]?.name||'?';
@@ -6270,7 +6360,7 @@ function App(){
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
-      <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>Verbinde mit Raum...</p>
+      <p style={{color:t.muted,fontSize:14,animation:'pulse 1.5s ease infinite'}}>{lang==='en'?'Connecting to room...':lang==='es'?'Conectando a la sala...':'Verbinde mit Raum...'}</p>
     </div>}
     {/* ── Kicked overlay – shown on any screen ── */}
     {room&&(room.kicked||{})[myId]&&
@@ -6278,10 +6368,10 @@ function App(){
         display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,textAlign:'center'}}>
         <div style={{fontSize:56}}>🚪</div>
         <p style={{fontWeight:700,fontSize:18}}>{(UI[lang]||UI.de).kicked}</p>
-        <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>← Zurück</Btn>
+        <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>{(UI[lang]||UI.de).back}</Btn>
       </div>}
     {screen==='lobby'&&room&&(room.kicked||{})[myId]&&null}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null} onQuickStart={isHostRef.current?handleQuickStart:null}/>}
     {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId}/>}
