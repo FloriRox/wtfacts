@@ -3381,6 +3381,47 @@ function TippHistogram({room, t, lang, gold}) {
   </div>;
 }
 
+function BeamerCountUp({value, gold, fontTitle}){
+  const[disp,setDisp]=React.useState(0);
+  React.useEffect(()=>{
+    const to=Number(value)||0; let raf,start=null;
+    const step=(ts)=>{ if(start==null)start=ts; const p=Math.min(1,(ts-start)/1200);
+      setDisp(to*(1-Math.pow(1-p,3))); if(p<1)raf=requestAnimationFrame(step); else setDisp(to); };
+    raf=requestAnimationFrame(step); return()=>cancelAnimationFrame(raf);
+  },[value]);
+  return <span style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold,fontFamily:fontTitle}}>{fmtNum(Math.round(disp))}</span>;
+}
+function BeamerRevealStrip({ranked, answer, gold}){
+  if(!ranked||!ranked.length) return null;
+  const gs=ranked.map(r=>r.guess);
+  const lo=Math.min(answer,...gs),hi=Math.max(answer,...gs);
+  const pad=((hi-lo)||Math.abs(answer)||1)*0.1;
+  const a=lo-pad,b=hi+pad,span=(b-a)||1;
+  const pos=v=>Math.max(0,Math.min(100,((v-a)/span)*100));
+  const minDiff=ranked[0].diff;
+  return <div style={{position:'relative',height:80,margin:'4px 2px 10px'}}>
+    <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:'#2a1a0e'}}/>
+    <div style={{position:'absolute',top:30,left:`calc(8px + (100% - 16px) * ${pos(answer)/100})`,
+      width:2,height:28,background:'#39d98a',zIndex:1,transform:'translateX(-1px)'}}>
+      <div style={{position:'absolute',top:-14,left:'50%',transform:'translateX(-50%)',
+        fontSize:10,color:'#39d98a',fontWeight:800}}>🎯</div>
+    </div>
+    {ranked.map((r,idx)=>{
+      const close=r.diff===minDiff;
+      return <div key={r.id} style={{position:'absolute',top:34,
+        left:`calc(8px + (100% - 16px) * ${pos(r.guess)/100})`,
+        zIndex:close?3:2,animation:`revealSlide .55s ${0.15+idx*0.09}s ease both`}}>
+        <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:'#3a2a1e',
+          border:`2px solid ${close?gold:'#6e5e54'}`,display:'flex',alignItems:'center',
+          justifyContent:'center',fontSize:11,fontWeight:800,color:close?'#0f0a06':'#f2ece6',
+          ...(close?{animation:'pulseGold 1.3s ease-in-out infinite'}:{})}}>
+          {(r.name||'?')[0].toUpperCase()}
+        </div>
+      </div>;
+    })}
+  </div>;
+}
+
 function DisplayScreen({room, code, t, lang, onKick=null}) {
   const i = UI[lang]||UI.de;
   const q = room?.q;
@@ -3409,48 +3450,6 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const gold = t.gold; const accent = t.accent;
 
   const beamerT={...t,border:'#2a1a0e',green:'#39d98a',gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
-
-  // Lokale Beamer-Varianten von CountUp + RevealStrip (vermeiden Cross-Chunk-TDZ)
-  function BeamerCountUp({value, gold, fontTitle}){
-    const[disp,setDisp]=React.useState(0);
-    React.useEffect(()=>{
-      const to=Number(value)||0; let raf,start=null;
-      const step=(ts)=>{ if(start==null)start=ts; const p=Math.min(1,(ts-start)/1200);
-        setDisp(to*(1-Math.pow(1-p,3))); if(p<1)raf=requestAnimationFrame(step); else setDisp(to); };
-      raf=requestAnimationFrame(step); return()=>cancelAnimationFrame(raf);
-    },[value]);
-    return <span style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold,fontFamily}}>{fmtNum(Math.round(disp))}</span>;
-  }
-  function BeamerRevealStrip({ranked,answer,gold}){
-    if(!ranked||!ranked.length) return null;
-    const gs=ranked.map(r=>r.guess);
-    const lo=Math.min(answer,...gs),hi=Math.max(answer,...gs);
-    const pad=((hi-lo)||Math.abs(answer)||1)*0.1;
-    const a=lo-pad,b=hi+pad,span=(b-a)||1;
-    const pos=v=>Math.max(0,Math.min(100,((v-a)/span)*100));
-    const minDiff=ranked[0].diff;
-    return <div style={{position:'relative',height:80,margin:'4px 2px 10px'}}>
-      <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:'#2a1a0e'}}/>
-      <div style={{position:'absolute',top:30,left:`calc(8px + (100% - 16px) * ${pos(answer)/100})`,
-        width:2,height:28,background:'#39d98a',zIndex:1,transform:'translateX(-1px)'}}>
-        <div style={{position:'absolute',top:-14,left:'50%',transform:'translateX(-50%)',
-          fontSize:10,color:'#39d98a',fontWeight:800}}>🎯</div>
-      </div>
-      {ranked.map((r,idx)=>{
-        const close=r.diff===minDiff;
-        return <div key={r.id} style={{position:'absolute',top:34,
-          left:`calc(8px + (100% - 16px) * ${pos(r.guess)/100})`,
-          zIndex:close?3:2,animation:`revealSlide .55s ${0.15+idx*0.09}s ease both`}}>
-          <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:'#3a2a1e',
-            border:`2px solid ${close?gold:'#6e5e54'}`,display:'flex',alignItems:'center',
-            justifyContent:'center',fontSize:11,fontWeight:800,color:close?'#0f0a06':'#f2ece6',
-            ...(close?{animation:'pulseGold 1.3s ease-in-out infinite'}:{})}}>
-            {(r.name||'?')[0].toUpperCase()}
-          </div>
-        </div>;
-      })}
-    </div>;
-  }
 
   // Live-Reaktionen für Beamer
   const[beamerFloats,setBeamerFloats]=React.useState([]);
