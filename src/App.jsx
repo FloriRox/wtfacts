@@ -3408,7 +3408,27 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
 
-  // Ranked for results
+  // Live-Reaktionen für Beamer
+  const[beamerFloats,setBeamerFloats]=useState([]);
+  const beamerSeenRef=React.useRef(new Set());
+  useEffect(()=>{
+    if(!code) return;
+    const mountTs=Date.now();
+    const rref=ref(db,`rooms/${code}/reactions`);
+    const unsub=onValue(rref,snap=>{
+      const data=snap.val()||{};
+      Object.entries(data).forEach(([k,v])=>{
+        if(beamerSeenRef.current.has(k)) return;
+        beamerSeenRef.current.add(k);
+        if(!v||(v.ts||0)<mountTs-2000) return;
+        const id=k+'_b';
+        const x=6+Math.random()*86;
+        setBeamerFloats(f=>[...f,{id,emoji:v.emoji,x}]);
+        setTimeout(()=>setBeamerFloats(f=>f.filter(r=>r.id!==id)),2500);
+      });
+    });
+    return()=>unsub();
+  },[code]);
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
     .sort((a,b)=>a.diff-b.diff) : [];
@@ -3686,13 +3706,11 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
           {/* Reaktionen schweben über dem Beamer */}
           <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9998,overflow:'hidden'}}>
-            {(room.reactions?Object.values(room.reactions):[])
-              .filter(r=>r&&r.ts&&Date.now()-r.ts<3000)
-              .map((r,k)=><div key={k} style={{position:'absolute',
-                bottom:80+Math.random()*120,left:`${10+Math.random()*80}%`,
-                fontSize:42,animation:'floatUp 2.4s ease-out forwards',pointerEvents:'none'}}>
-                {r.emoji}
-              </div>)}
+            {beamerFloats.map(f=><div key={f.id} style={{position:'absolute',
+              bottom:80,left:`${f.x}%`,
+              fontSize:42,animation:'floatUp 2.4s ease-out forwards',pointerEvents:'none'}}>
+              {f.emoji}
+            </div>)}
           </div>
 
           {/* Full results table */}
