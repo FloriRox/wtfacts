@@ -16,17 +16,17 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const ADMIN_UIDS = ['ENjkAgrSN5OF4f9OdRuWJDs7qqM2','DpjTjx4Nk4RrivFmwBDsJvxOgj62'];
-const isAdmin = (uid) => ADMIN_UIDS.includes(uid);
+var isAdmin = (uid) => ADMIN_UIDS.includes(uid);
 let auth;
 try { auth = getAuth(firebaseApp); } catch(e) { console.error("Auth init failed:", e); }
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 const appleProvider = new OAuthProvider('apple.com');
-const dbRef    = (c)    => ref(db, `rooms/${c}`);
-const dbSet    = (c, v) => set(dbRef(c), v);
-const dbPatch  = (c, v) => update(dbRef(c), v);
-const dbGet    = (c)    => get(dbRef(c)).then(s => s.val());
-const dbListen = (c,fn) => onValue(dbRef(c), s => fn(s.val()));
+var dbRef    = (c)    => ref(db, `rooms/${c}`);
+var dbSet    = (c, v) => set(dbRef(c), v);
+var dbPatch  = (c, v) => update(dbRef(c), v);
+var dbGet    = (c)    => get(dbRef(c)).then(s => s.val());
+var dbListen = (c,fn) => onValue(dbRef(c), s => fn(s.val()));
 
 /* ─── GLOBAL STATS ───────────────────────────────── */
 function hashString(str){
@@ -772,7 +772,7 @@ function playSound(type){
 }
 
 /* ─── HELPERS ─────────────────────────────────────── */
-const genCode  = () => Math.random().toString(36).slice(2,7).toUpperCase();
+var genCode  = () => Math.random().toString(36).slice(2,7).toUpperCase();
 function fmtNum(n) {
   if(n==null) return "?";
   const num=Number(n);
@@ -780,12 +780,12 @@ function fmtNum(n) {
   if(Number.isInteger(num)) return num.toLocaleString("de-DE");
   return num.toLocaleString("de-DE",{maximumFractionDigits:2});
 }
-const inviteUrl = (c) => `${location.origin}${location.pathname}?room=${c}`;
+var inviteUrl = (c) => `${location.origin}${location.pathname}?room=${c}`;
 function avatarColor(name,t){
   const h=[...(name||"?")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
   return t.id==="kids"?`hsl(${h},60%,55%)`:`hsl(${h},40%,32%)`;
 }
-const inject=(css)=>{
+var inject=(css)=>{
   let el=document.getElementById("em-style");
   if(!el){el=document.createElement("style");el.id="em-style";document.head.appendChild(el);}
   el.textContent=css;
@@ -948,9 +948,9 @@ function launchConfetti(){
 }
 
 /* ─── PRIMITIVES ──────────────────────────────────── */
-const row  = {display:"flex",alignItems:"center",gap:10};
-const col  = {display:"flex",flexDirection:"column",gap:12};
-const page = {minHeight:"100vh",padding:"24px 16px",maxWidth:520,margin:"0 auto"};
+var row  = {display:"flex",alignItems:"center",gap:10};
+var col  = {display:"flex",flexDirection:"column",gap:12};
+var page = {minHeight:"100vh",padding:"24px 16px",maxWidth:520,margin:"0 auto"};
 
 function Spinner({t}){return <div style={{width:28,height:28,border:`3px solid ${t.border}`,borderTopColor:t.accent,borderRadius:"50%",animation:"spin .7s linear infinite",margin:"0 auto"}}/>;}
 function Btn({children,onClick,variant="primary",disabled,t,full,style:sx={}}){
@@ -1298,8 +1298,8 @@ function DailyChallengeScreen({t, lang, onBack}) {
 
 
 /* ─── ONBOARDING ────────────────────────────────── */
-const SLIDE_COLORS = (t) => [t.accent, t.gold, '#39d98a', t.gold];
-const ONBOARDING_SLIDES = (i, t) =>
+var SLIDE_COLORS = (t) => [t.accent, t.gold, '#39d98a', t.gold];
+var ONBOARDING_SLIDES = (i, t) =>
   (i.onboarding||[]).map((s,idx) => ({...s, color: SLIDE_COLORS(t)[idx]||t.gold}));
 
 const DEMO_QUESTIONS_I18N = {
@@ -1319,7 +1319,7 @@ const DEMO_QUESTIONS_I18N = {
     {q:'¿Cuántos kilómetros hay entre la Tierra y la Luna?', a:384400, unit:'km', hint:'A unos 1,3 segundos luz de distancia.', emoji:'🌙'},
   ],
 };
-const DEMO_QUESTIONS = (lang) => DEMO_QUESTIONS_I18N[lang]||DEMO_QUESTIONS_I18N.de;
+var DEMO_QUESTIONS = (lang) => DEMO_QUESTIONS_I18N[lang]||DEMO_QUESTIONS_I18N.de;
 
 function OnboardingScreen({t, lang, onDone}) {
   const i = UI[lang]||UI.de;
