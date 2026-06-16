@@ -5010,6 +5010,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
   const[loading,setLoading]=useState(true);
   const[editing,setEditing]=useState(null); // null=list, 'new'=new, {id,...}=edit
   const[shareMsg,setShareMsg]=useState('');
+  const fileRef=React.useRef(null);
 
   useEffect(()=>{
     if(!myId) return;
@@ -5075,6 +5076,101 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       window.alert(lang==='en'?'Import failed.':lang==='es'?'Error al importar.':'Import fehlgeschlagen.'); }
   }
 
+  // ── CSV / Excel-Import ───────────────────────────────
+  function parseCSVLine(line, delim){
+    const out=[]; let cur=''; let inQ=false;
+    for(let k=0;k<line.length;k++){
+      const ch=line[k];
+      if(inQ){
+        if(ch==='"'){ if(line[k+1]==='"'){cur+='"';k++;} else inQ=false; }
+        else cur+=ch;
+      }else{
+        if(ch==='"') inQ=true;
+        else if(ch===delim){ out.push(cur); cur=''; }
+        else cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=>s.trim());
+  }
+  function parseCSV(text){
+    text=String(text||'').replace(/^\uFEFF/,''); // BOM entfernen
+    const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='' && !l.trim().startsWith('#'));
+    if(!lines.length) return [];
+    // Trennzeichen erkennen (deutsches Excel nutzt oft ;)
+    const head=lines[0];
+    const delim=(head.split(';').length>head.split(',').length)?';':',';
+    const header=parseCSVLine(head, delim).map(h=>h.toLowerCase());
+    const col=(...names)=>{ for(const n of names){ const idx=header.indexOf(n); if(idx>=0) return idx; } return -1; };
+    const iF=col('frage','question'), iA=col('antwort','answer'), iE=col('einheit','unit'),
+          iH=col('hint','tipp','hinweis'), iEm=col('emoji');
+    if(iF<0||iA<0||iE<0) return []; // Pflichtspalten fehlen
+    const rows=[];
+    for(let k=1;k<lines.length;k++){
+      const c=parseCSVLine(lines[k], delim);
+      const q=(c[iF]||'').trim();
+      const a=parseFloat((c[iA]||'').replace(',','.'));
+      const unit=(c[iE]||'').trim();
+      if(!q||isNaN(a)||!unit) continue;
+      rows.push({q,a,unit,hint:iH>=0?(c[iH]||'').trim():'',emoji:(iEm>=0&&(c[iEm]||'').trim())||'📝'});
+    }
+    return rows;
+  }
+  function onCSVFile(e){
+    const file=e.target.files&&e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      try{
+        const rows=parseCSV(reader.result);
+        if(!rows.length){
+          window.alert(lang==='en'?'No valid rows found. Check columns: frage/question, antwort/answer, einheit/unit.'
+            :'Keine gültigen Zeilen gefunden. Spalten prüfen: frage, antwort, einheit (hint/emoji optional).');
+          return;
+        }
+        const capped=rows.slice(0,50);
+        const defName=file.name.replace(/\.(csv|txt|xlsx?|tsv)$/i,'');
+        const name=(window.prompt(lang==='en'?'Pack name:':lang==='es'?'Nombre del paquete:':'Pack-Name:', defName)||defName).trim()||defName;
+        const updates={};
+        capped.forEach((x,idx)=>{
+          const qId=Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+          updates[`userQuestions/${myId}/${qId}`]={
+            q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝',
+            category:name,visibility:'private',lang,createdAt:Date.now(),authorId:myId,
+          };
+        });
+        await update(ref(db),updates);
+        const more=rows.length>50?` (${lang==='en'?'first 50 of':'erste 50 von'} ${rows.length})`:'';
+        setShareMsg(`${capped.length} → ${name}${more}`); setTimeout(()=>setShareMsg(''),3000);
+      }catch(err){ console.error('csv import failed:',err);
+        window.alert(lang==='en'?'CSV import failed.':'CSV-Import fehlgeschlagen.'); }
+      finally{ e.target.value=''; }
+    };
+    reader.readAsText(file,'utf-8');
+  }
+  function downloadTemplate(){
+    const ex = lang==='en'
+      ? ['How many guests are here today?,80,guests,Count them!,🥂',
+         'In what year did we first meet?,2019,year,A special day,❤️']
+      : ['Wie viele Gäste sind heute hier?,80,Gäste,Zählt mal durch!,🥂',
+         'In welchem Jahr haben wir uns kennengelernt?,2019,Jahr,Ein besonderer Tag,❤️'];
+    const csv=[
+      lang==='en'?'# EstiMates – Custom Questions Template':'# EstiMates – Eigene Fragen Template',
+      lang==='en'?'# Rules: answer = number | unit = word/phrase | hint = optional | emoji = optional'
+                 :'# Regeln: antwort = Zahl | einheit = Wort/Phrase | hint = optional | emoji = optional',
+      lang==='en'?'# Max 50 questions | save as UTF-8 | decimals with a dot (e.g. 3.5)'
+                 :'# Max. 50 Fragen | als UTF-8 speichern | Dezimalzahlen mit Punkt (z.B. 3.5)',
+      lang==='en'?'question,answer,unit,hint,emoji':'frage,antwort,einheit,hint,emoji',
+      ...ex,
+    ].join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}); // BOM -> Excel öffnet UTF-8 korrekt
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='estimates_template.csv'; document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+
   if(editing!==null){
     return <QuestionEditorScreen
       myId={myId} t={t} lang={lang}
@@ -5115,12 +5211,23 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       </h2>
     </div>
 
-    <div style={{display:'flex',gap:8,marginBottom:16}}>
+    <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv"
+      onChange={onCSVFile} style={{display:'none'}}/>
+
+    <div style={{display:'flex',gap:8,marginBottom:8}}>
       <Btn t={t} onClick={()=>setEditing('new')} style={{flex:2}}>
         + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
       </Btn>
       <Btn t={t} variant="secondary" onClick={importPack} style={{flex:1}}>
-        📥 {lang==='en'?'Import':lang==='es'?'Importar':'Importieren'}
+        🔗 {lang==='en'?'Link':lang==='es'?'Enlace':'Link'}
+      </Btn>
+    </div>
+    <div style={{display:'flex',gap:8,marginBottom:16}}>
+      <Btn t={t} variant="secondary" onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1}}>
+        📄 {lang==='en'?'Import CSV':lang==='es'?'Importar CSV':'CSV importieren'}
+      </Btn>
+      <Btn t={t} variant="secondary" onClick={downloadTemplate} style={{flex:1}}>
+        📋 {lang==='en'?'Template':lang==='es'?'Plantilla':'Vorlage'}
       </Btn>
     </div>
 
