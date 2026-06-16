@@ -3325,7 +3325,7 @@ function TippHistogram({room, t, lang, gold}) {
           {roundBins[i].length>0&&<div style={{
             position:'absolute',bottom:0,left:'10%',right:'10%',
             height:`${Math.max(rH,6)}%`,
-            background:isAnswerBin?'#39d98a':gold+'cc',
+            background:isAnswerBin?'#39d98a':t.gold+'cc',
             borderRadius:'3px 3px 0 0',
             transition:'height .6s ease',
           }}>
@@ -3367,7 +3367,7 @@ function TippHistogram({room, t, lang, gold}) {
           <div style={{width:10,height:8,background:'#2a1a0e',borderRadius:2}}/> Historisch
         </span>}
         <span style={{fontSize:9,color:gold,display:'flex',alignItems:'center',gap:3}}>
-          <div style={{width:10,height:8,background:gold+'cc',borderRadius:2}}/> Diese Runde
+          <div style={{width:10,height:8,background:t.gold+'cc',borderRadius:2}}/> Diese Runde
         </span>
         <span style={{fontSize:9,color:'#39d98a',display:'flex',alignItems:'center',gap:3}}>
           <div style={{width:2,height:10,background:'#39d98a'}}/> Antwort
@@ -4445,6 +4445,7 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
 
 /* ─── ADMIN DASHBOARD ──────────────────────────────────── */
 function AdminDashboard({t, lang, onBack}){
+  const gold=t.gold, accent=t.accent, green=t.green||'#39d98a', border=t.border;
   const[stats,setStats]=useState(null);
   const[loading,setLoading]=useState(true);
   const[tab,setTab]=useState('overview'); // overview|accounts|ratings|feedback|community|bugs|categories|questions|regions
@@ -4758,7 +4759,7 @@ function AdminDashboard({t, lang, onBack}){
       {tab==='overview'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
           <StatCard label="SESSIONS TOTAL" value={stats.totalSessions} color={accent}/>
-          <StatCard label="AVG GRUPPE" value={stats.avgGroupSize+'P'} color={gold}/>
+          <StatCard label="AVG GRUPPE" value={stats.avgGroupSize+'P'} color={t.gold}/>
           <StatCard label="BEWERTUNGEN" value={stats.totalRatings} color={green}/>
         </div>
 
@@ -4766,7 +4767,7 @@ function AdminDashboard({t, lang, onBack}){
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
           <StatCard label="SESSIONS 7 TAGE" value={stats.last7} color={accent}
             sub={stats.delta7!=null?`${stats.delta7>=0?'▲':'▼'} ${Math.abs(stats.delta7)}% vs. Vorwoche`:'keine Vorwoche'}/>
-          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={gold}
+          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={t.gold}
             sub={`${stats.registered} registriert · ${stats.anonUsers} anon`}/>
           <StatCard label="AKTIV 7 TAGE" value={stats.active7} color={green}
             sub={`${stats.newUsers7} neu · ${stats.returning} wiederkehrend`}/>
@@ -4833,7 +4834,7 @@ function AdminDashboard({t, lang, onBack}){
         </div>
 
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={gold}
+          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={t.gold}
             sub={`Host: ${stats.avgHost}★ · Guest: ${stats.avgGuest}★`}/>
           <StatCard label="NPS SCORE"
             value={stats.nps!=null?stats.nps:'–'}
@@ -4857,7 +4858,7 @@ function AdminDashboard({t, lang, onBack}){
           </p>
           {Object.entries(stats.byGroupSize).sort((a,b)=>Number(a[0])-Number(b[0])).map(([k,v])=>(
             <Bar key={k} label={k+'P'} value={v}
-              max={Math.max(...Object.values(stats.byGroupSize))} color={gold}/>
+              max={Math.max(...Object.values(stats.byGroupSize))} color={t.gold}/>
           ))}
         </div>
       </div>}
@@ -4865,7 +4866,7 @@ function AdminDashboard({t, lang, onBack}){
       {/* ── BEWERTUNGEN ── */}
       {tab==='ratings'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={gold}/>
+          <StatCard label="AVG STERNE" value={stats.avgStars+'★'} color={t.gold}/>
           <StatCard label="NPS" value={stats.nps!=null?stats.nps:'–'}
             color={stats.nps>=50?green:stats.nps>=0?gold:accent}/>
         </div>
@@ -4890,7 +4891,7 @@ function AdminDashboard({t, lang, onBack}){
               <p style={{fontSize:20,fontWeight:900,color:green,margin:0}}>{stats.promoters}</p>
               <p style={{fontSize:10,color:muted,margin:0}}>Promotoren (9-10)</p>
             </div>
-            <div style={{flex:1,background:gold+'22',borderRadius:8,padding:'8px',textAlign:'center'}}>
+            <div style={{flex:1,background:t.gold+'22',borderRadius:8,padding:'8px',textAlign:'center'}}>
               <p style={{fontSize:20,fontWeight:900,color:gold,margin:0}}>{stats.npsRatings.filter(r=>r.nps>=7&&r.nps<=8).length}</p>
               <p style={{fontSize:10,color:muted,margin:0}}>Passive (7-8)</p>
             </div>
@@ -4912,7 +4913,7 @@ function AdminDashboard({t, lang, onBack}){
             HOST vs. GAST
           </p>
           <div style={{display:'flex',gap:10}}>
-            <StatCard label="HOST AVG" value={stats.avgHost+'★'} color={gold}/>
+            <StatCard label="HOST AVG" value={stats.avgHost+'★'} color={t.gold}/>
             <StatCard label="GAST AVG" value={stats.avgGuest+'★'} color={accent}/>
           </div>
         </div>
@@ -4935,7 +4936,7 @@ function AdminDashboard({t, lang, onBack}){
           </p>
           {Object.entries(stats.byRegion).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
             <Bar key={k} label={k} value={v}
-              max={Math.max(...Object.values(stats.byRegion))} color={gold}/>
+              max={Math.max(...Object.values(stats.byRegion))} color={t.gold}/>
           ))}
         </div>
       </div>}
@@ -4957,7 +4958,7 @@ function AdminDashboard({t, lang, onBack}){
           </p>
           {stats.pairs.map(p=>(
             <Bar key={p.pair} label={p.pair} value={p.count||0}
-              max={stats.pairs[0]?.count||1} color={gold}/>
+              max={stats.pairs[0]?.count||1} color={t.gold}/>
           ))}
         </div>
       </div>}
@@ -5010,7 +5011,7 @@ function AdminDashboard({t, lang, onBack}){
       {tab==='community'&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
         <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
           {[
-            {id:'pending',label:`Offen (${stats.communityPending.length})`,c:gold},
+            {id:'pending',label:`Offen (${stats.communityPending.length})`,c:t.gold},
             {id:'approved',label:`Frei (${stats.communityApproved.length})`,c:green},
             {id:'rejected',label:`Abgelehnt (${stats.communityRejected.length})`,c:accent},
             {id:'all',label:`Alle (${stats.community.length})`,c:muted},
@@ -5034,13 +5035,13 @@ function AdminDashboard({t, lang, onBack}){
             <p style={{color:muted,fontSize:13,margin:0}}>Keine Fragen in dieser Ansicht.</p></div>;
           return list.map(q=>{
             const st=q.status||'pending';
-            const stColor=st==='approved'?green:st==='rejected'?accent:gold;
+            const stColor=st==='approved'?green:st==='rejected'?accent:t.gold;
             const busy=busyId===q.id;
             const date=q.createdAt?new Date(q.createdAt).toLocaleDateString('de-DE',
               {day:'2-digit',month:'2-digit',year:'numeric'}):'–';
             if(editComm&&editComm.id===q.id){
               return <div key={q.id} style={{background:surface,borderRadius:10,padding:'12px 14px',
-                border:`1px solid ${gold}55`}}>
+                border:`1px solid ${t.gold}55`}}>
                 <textarea value={editComm.q} onChange={e=>setEditComm({...editComm,q:e.target.value})}
                   rows={2} style={{...inpStyle,width:'100%',boxSizing:'border-box',resize:'vertical'}}/>
                 <div style={{display:'flex',gap:8,marginTop:8}}>
@@ -5060,7 +5061,7 @@ function AdminDashboard({t, lang, onBack}){
               </div>;
             }
             return <div key={q.id} style={{background:surface,borderRadius:10,padding:'12px 14px',
-              border:`1px solid ${st==='pending'?gold+'44':border}`,opacity:busy?.5:1}}>
+              border:`1px solid ${st==='pending'?t.gold+'44':border}`,opacity:busy?.5:1}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                 <span style={{fontSize:10,fontWeight:700,color:stColor,background:stColor+'22',
                   padding:'2px 8px',borderRadius:100,textTransform:'uppercase'}}>{st}</span>
@@ -5076,7 +5077,7 @@ function AdminDashboard({t, lang, onBack}){
               <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:10}}>
                 {st!=='approved'&&<button onClick={()=>setCommStatus(q.id,'approved')} disabled={busy} style={actBtn(green)}>✓ Freigeben</button>}
                 {st!=='rejected'&&<button onClick={()=>setCommStatus(q.id,'rejected')} disabled={busy} style={actBtn(accent)}>✕ Ablehnen</button>}
-                <button onClick={()=>setEditComm({id:q.id,q:q.q||'',a:q.a!=null?String(q.a):'',unit:q.unit||''})} disabled={busy} style={actBtn(gold)}>✎ Bearbeiten</button>
+                <button onClick={()=>setEditComm({id:q.id,q:q.q||'',a:q.a!=null?String(q.a):'',unit:q.unit||''})} disabled={busy} style={actBtn(t.gold)}>✎ Bearbeiten</button>
                 <button onClick={()=>delComm(q.id)} disabled={busy} style={actBtn(muted)}>🗑</button>
               </div>
             </div>;
@@ -5115,7 +5116,7 @@ function AdminDashboard({t, lang, onBack}){
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               <button onClick={()=>setBugStatus(b.id,open?'resolved':'open')} disabled={busy}
-                style={actBtn(open?green:gold)}>{open?'✓ Erledigt':'↩ Wieder öffnen'}</button>
+                style={actBtn(open?green:t.gold)}>{open?'✓ Erledigt':'↩ Wieder öffnen'}</button>
               <button onClick={()=>delBug(b.id)} disabled={busy} style={actBtn(muted)}>🗑</button>
             </div>
           </div>;
@@ -5125,7 +5126,7 @@ function AdminDashboard({t, lang, onBack}){
       {/* ── #5 ACCOUNTS ── */}
       {tab==='accounts'&&<div style={{display:'flex',flexDirection:'column',gap:16}}>
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={gold}/>
+          <StatCard label="ACCOUNTS" value={stats.totalUsers} color={t.gold}/>
           <StatCard label="REGISTRIERT" value={stats.registered} color={green}
             sub={stats.totalUsers?Math.round(stats.registered/stats.totalUsers*100)+'%':'–'}/>
           <StatCard label="ANONYM" value={stats.anonUsers} color={muted}/>
@@ -5133,7 +5134,7 @@ function AdminDashboard({t, lang, onBack}){
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
           <StatCard label="AKTIV 7T" value={stats.active7} color={accent}/>
           <StatCard label="NEU 7T" value={stats.newUsers7} color={green}/>
-          <StatCard label="WIEDERKEHREND" value={stats.returning} color={gold}
+          <StatCard label="WIEDERKEHREND" value={stats.returning} color={t.gold}
             sub={stats.totalUsers?Math.round(stats.returning/stats.totalUsers*100)+'%':'–'}/>
         </div>
         <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
@@ -5142,7 +5143,7 @@ function AdminDashboard({t, lang, onBack}){
           </p>
           {Object.entries(stats.usersByLang).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
             <Bar key={k} label={k.toUpperCase()} value={v}
-              max={Math.max(1,...Object.values(stats.usersByLang))} color={gold}/>
+              max={Math.max(1,...Object.values(stats.usersByLang))} color={t.gold}/>
           ))}
           {!Object.keys(stats.usersByLang).length&&<p style={{fontSize:12,color:muted,margin:0}}>
             Noch keine Account-Daten.</p>}
@@ -5164,7 +5165,7 @@ function AdminDashboard({t, lang, onBack}){
             <button key={s.id} onClick={()=>setQSort(s.id)}
               style={{padding:'5px 12px',borderRadius:100,fontSize:11,fontWeight:700,
                 cursor:'pointer',border:`1.5px solid ${qSort===s.id?gold:border}`,
-                background:qSort===s.id?gold+'22':'none',
+                background:qSort===s.id?t.gold+'22':'none',
                 color:qSort===s.id?gold:muted,fontFamily:t.fontBody}}>
               {s.label}
             </button>
@@ -5205,7 +5206,7 @@ function AdminDashboard({t, lang, onBack}){
                       fontWeight:qSort==='ambiguous'?700:400}}>
                       σ {q.stdDev!=null?q.stdDev:'–'}{cv!=null?` (cv ${cv.toFixed(2)})`:''}
                     </span>
-                    <span style={{fontSize:11,color:gold}}>
+                    <span style={{fontSize:11,color:t.gold}}>
                       {q.count||0}x
                     </span>
                     {q.difficulty!=null&&<span style={{fontSize:11,fontWeight:700,
