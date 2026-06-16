@@ -814,7 +814,7 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes confettifall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}
 @keyframes revealSlide{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @keyframes pulseGold{0%,100%{box-shadow:0 0 0 2px #f5c542,0 0 8px 0 rgba(245,197,66,.45)}50%{box-shadow:0 0 0 2px #f5c542,0 0 16px 4px rgba(245,197,66,.85)}}
-@keyframes floatUp{0%{opacity:0;transform:translateY(0) scale(.5)}15%{opacity:1;transform:translateY(-8px) scale(1.1)}100%{opacity:0;transform:translateY(-90px) scale(1)}}
+
 `;}
 
 function getQuestion(mode, selectedCats, usedIds){
@@ -2875,40 +2875,8 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
 
   // myNewJoker declared above in useEffect
 
-  // ── Live-Reaktionen ──────────────────────────────
-  const myName=room.players?.[myId]?.name||'?';
-  const[floats,setFloats]=useState([]);
-  const seenRef=React.useRef(null);
-  useEffect(()=>{
-    if(!code) return;
-    if(seenRef.current==null) seenRef.current=new Set();
-    const mountTs=Date.now();
-    const rref=ref(db,`rooms/${code}/reactions`);
-    const unsub=onValue(rref,snap=>{
-      const data=snap.val()||{};
-      Object.entries(data).forEach(([k,v])=>{
-        if(seenRef.current.has(k)) return;
-        seenRef.current.add(k);
-        if(!v||(v.ts||0)<mountTs-2000) return;
-        const id=k+'_'+Math.random();
-        setFloats(f=>[...f,{id,emoji:v.emoji,x:6+Math.random()*86}]);
-        setTimeout(()=>setFloats(f=>f.filter(x=>x.id!==id)),2500);
-      });
-    });
-    return()=>unsub();
-  },[code]);
-  function sendReaction(emoji){
-    if(!code) return;
-    const key=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-    update(ref(db,`rooms/${code}/reactions`),{[key]:{emoji,name:myName,ts:Date.now()}}).catch(()=>{});
-  }
-
   return <div style={page}>
-    {/* schwebende Reaktionen */}
-    <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9998,overflow:'hidden'}}>
-      {floats.map(f=><div key={f.id} style={{position:'absolute',bottom:96,left:`${f.x}%`,
-        fontSize:34,animation:'floatUp 2.4s ease-out forwards'}}>{f.emoji}</div>)}
-    </div>
+
     <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
       <div style={{fontSize:28,marginBottom:6,lineHeight:1,
         fontFamily:"'Twemoji Mozilla','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>
@@ -2975,16 +2943,6 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
-    <div style={{display:'flex',gap:8,justifyContent:'center',margin:'2px 0 14px',flexWrap:'wrap'}}>
-      {['😂','🤯','😱','👏','🔥','💀'].map(e=>
-        <button key={e} onClick={()=>sendReaction(e)}
-          style={{fontSize:23,background:t.surface,border:`1.5px solid ${t.border}`,
-            borderRadius:t.radius,padding:'6px 12px',cursor:'pointer',lineHeight:1,
-            transition:'transform .08s'}}
-          onPointerDown={ev=>ev.currentTarget.style.transform='scale(.82)'}
-          onPointerUp={ev=>ev.currentTarget.style.transform='scale(1)'}
-          onPointerLeave={ev=>ev.currentTarget.style.transform='scale(1)'}>{e}</button>)}
-    </div>
     {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center'}}><p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>{onLeave&&<button onClick={onLeave} style={{padding:'6px 14px',borderRadius:t.radius,background:'transparent',border:`1px solid ${t.danger}33`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>🚪 {i.leaveGame||'Verlassen'}</button>}</div>}
   </div>;
 }
@@ -3451,27 +3409,6 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
   const beamerT={...t,border:'#2a1a0e',green:'#39d98a',gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
 
-  // Live-Reaktionen für Beamer
-  const[beamerFloats,setBeamerFloats]=React.useState([]);
-  const beamerSeenRef=React.useRef(new Set());
-  React.useEffect(()=>{
-    if(!code) return;
-    const mountTs=Date.now();
-    const rref=ref(db,`rooms/${code}/reactions`);
-    const unsub=onValue(rref,snap=>{
-      const data=snap.val()||{};
-      Object.entries(data).forEach(([k,v])=>{
-        if(beamerSeenRef.current.has(k)) return;
-        beamerSeenRef.current.add(k);
-        if(!v||(v.ts||0)<mountTs-2000) return;
-        const id=k+'_b';
-        const x=6+Math.random()*86;
-        setBeamerFloats(f=>[...f,{id,emoji:v.emoji,x}]);
-        setTimeout(()=>setBeamerFloats(f=>f.filter(r=>r.id!==id)),2500);
-      });
-    });
-    return()=>unsub();
-  },[code]);
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
     .sort((a,b)=>a.diff-b.diff) : [];
@@ -3743,15 +3680,6 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
           {/* Histogram */}
           <TippHistogram room={room} t={{surface:'#1a120a',border:'#2a1a0e',radius:12,muted:'#6e5e54',text:'#f2ece6'}} lang={lang} gold={gold}/>
-
-          {/* Reaktionen schweben über dem Beamer */}
-          <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9998,overflow:'hidden'}}>
-            {beamerFloats.map(f=><div key={f.id} style={{position:'absolute',
-              bottom:80,left:`${f.x}%`,
-              fontSize:42,animation:'floatUp 2.4s ease-out forwards',pointerEvents:'none'}}>
-              {f.emoji}
-            </div>)}
-          </div>
 
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
@@ -6098,7 +6026,7 @@ function App(){
         }
       }
     }
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},boostLastQIdx:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{},confidence:{},reactions:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},boostCharge:{},boostLocked:{},boostLastQIdx:{},qIdx:0,selectedCats,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,sabotaged:{},newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,doubleJokers:{}});
   }
 
   async function handleGuess(val, isAllIn=false){
@@ -6239,7 +6167,7 @@ function App(){
     const cats=r.selectedCats||selectedCatsRef.current||Object.keys(QUESTIONS[mode]);
     const q=getQuestion(mode,cats,usedIdsRef.current);
     if(q)usedIdsRef.current.push(q.id);
-    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{},doubleJokers:{},confidence:{},reactions:{}});
+    await dbPatch(code,{phase:"question",q,guesses:{},bets:{},roundScores:{},allIn:{},qIdx:(r.qIdx||0)+1,usedJokerThisRound:null,hintVisible:false,hintFor:null,extraHint:null,extraHintColor:null,extraHintFor:null,skipVotes:{},skipImmediate:false,skipBy:null,newJokersThisRound:{},changeAllowed:null,advancing:false,jokersDistributedForRound:-1,sabotaged:{},doubleJokers:{}});
   }
 
   async function handleKick(playerId){
@@ -6288,7 +6216,7 @@ function App(){
     if(q)usedIdsRef.current.push(q.id);
     await dbPatch(code,{
       phase:"question",q,
-      guesses:{},bets:{},roundScores:{},confidence:{},reactions:{},
+      guesses:{},bets:{},roundScores:{},
       qIdx:(r.qIdx||0)+1,
       usedJokerThisRound:null,jokerUsedBy:null,
       hintVisible:false,hintFor:null,
