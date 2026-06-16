@@ -4445,7 +4445,12 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
 
 /* ─── ADMIN DASHBOARD ──────────────────────────────────── */
 function AdminDashboard({t, lang, onBack}){
-  const gold=t.gold, accent=t.accent, green=t.green||'#39d98a', border=t.border;
+  const gold=t.gold||'#ff8c2a';
+  const green=t.green||'#39d98a';
+  const accent=t.accent||'#e8360a';
+  const muted=t.muted||'#6e5e54';
+  const surface=t.surface||'#1a120a';
+  const border=t.border||'#2a1a0e';
   const[stats,setStats]=useState(null);
   const[loading,setLoading]=useState(true);
   const[tab,setTab]=useState('overview'); // overview|accounts|ratings|feedback|community|bugs|categories|questions|regions
@@ -4635,13 +4640,6 @@ function AdminDashboard({t, lang, onBack}){
       .concat(Object.values(QUESTIONS_RAW?.kids||{}).flatMap(c=>c.questions||[]));
     return allQs.find(x=>x.id===id);
   };
-
-  const gold='#ffd700';
-  const green='#39d98a';
-  const accent='#e8360a';
-  const muted='#6e5e54';
-  const surface='#1a120a';
-  const border='#2a1a0e';
 
   const StatCard = ({label,value,sub,color})=>(
     <div style={{background:surface,borderRadius:12,padding:'14px 16px',
