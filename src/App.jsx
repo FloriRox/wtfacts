@@ -1673,6 +1673,10 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
 
   if(tab==="landing"){
     const li=UI[lang]||UI.de;
+    const landingMenuBtn={width:'100%',display:'flex',alignItems:'center',gap:10,
+      justifyContent:'flex-start',background:ADULT.surface,
+      border:`1.5px solid ${ADULT.border}`,borderRadius:100,padding:'11px 22px',
+      color:'#f2ece6',fontSize:14,cursor:'pointer',fontFamily:ADULT.fontBody,fontWeight:600};
     inject(globalCSS(ADULT));
     const pills={
       de:["4.800+ Fragen","Echtzeit","Joker"],
@@ -1718,27 +1722,32 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
           {(pills[lang]||pills.de).map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
         </div>
-        {/* Account button on landing */}
-        <div style={{marginTop:24,textAlign:'center'}}>
+        {/* Menü auf Landing */}
+        <div style={{marginTop:28,display:'flex',flexDirection:'column',gap:10,
+          alignItems:'center',width:'100%',maxWidth:300,marginLeft:'auto',marginRight:'auto'}}>
+          {onMyQuestions&&<button onClick={onMyQuestions} style={landingMenuBtn}>
+            <span style={{fontSize:17,width:22,textAlign:'center'}}>📝</span>
+            <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
+            <span style={{color:ADULT.muted}}>›</span>
+          </button>}
+          {onAdmin&&<button onClick={onAdmin} style={{...landingMenuBtn,borderColor:ADULT.accent+'66',color:ADULT.accent,fontWeight:700}}>
+            <span style={{fontSize:17,width:22,textAlign:'center'}}>📊</span>
+            <span style={{flex:1,textAlign:'left'}}>Admin Dashboard</span>
+            <span style={{color:ADULT.accent}}>›</span>
+          </button>}
           {isAnonymous
-            ? <button onClick={onShowLogin}
-                style={{background:ADULT.surface,
-                  border:`1.5px solid ${ADULT.muted}`,
-                  borderRadius:100,
-                  padding:'8px 24px',
-                  color:'#f2ece6',
-                  fontSize:14,cursor:'pointer',
-                  fontFamily:ADULT.fontBody,
-                  fontWeight:600}}>
-                🔐 Anmelden
+            ? <button onClick={onShowLogin} style={landingMenuBtn}>
+                <span style={{fontSize:17,width:22,textAlign:'center'}}>🔐</span>
+                <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Sign in / save stats':lang==='es'?'Iniciar sesión / guardar':'Anmelden / Statistiken speichern'}</span>
+                <span style={{color:ADULT.muted}}>›</span>
               </button>
-            : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
-                <span style={{fontSize:13,color:ADULT.muted}}>✅ {userName||'Angemeldet'}</span>
+            : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginTop:2}}>
+                <span style={{fontSize:13,color:ADULT.muted}}>✅ {userName||(lang==='en'?'Signed in':'Angemeldet')}</span>
                 <button onClick={onSignOut}
                   style={{background:'none',border:'none',color:ADULT.muted,
                     fontSize:12,cursor:'pointer',textDecoration:'underline',
                     fontFamily:ADULT.fontBody}}>
-                  Abmelden
+                  {lang==='en'?'Sign out':lang==='es'?'Salir':'Abmelden'}
                 </button>
               </div>
           }
