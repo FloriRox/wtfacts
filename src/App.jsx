@@ -3041,6 +3041,9 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
     const prev = prevRoom.current;
     const newEvents = [];
     const now = Date.now();
+    const curG=room.guesses||{}, prevG=prev.guesses||{};
+    const answer=room.q?.a;
+    const isReveal = room.phase==='results'||room.phase==='reveal';
 
     // Joker used – ROT (bedrohlich/aggressiv)
     const curJokers = room.jokers||{}, prevJokers = prev.jokers||{};
@@ -3113,9 +3116,6 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
         }
       });
     }
-    const curG=room.guesses||{}, prevG=prev.guesses||{};
-    const answer=room.q?.a;
-    const isReveal = room.phase==='results'||room.phase==='reveal';
     if(isReveal){
       pl.forEach(p=>{
         if(curG[p.id]!=null&&answer!=null)
