@@ -3410,10 +3410,52 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
   const beamerT={...t,border:'#2a1a0e',green:'#39d98a',gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
 
+  // Lokale Beamer-Varianten von CountUp + RevealStrip (vermeiden Cross-Chunk-TDZ)
+  function BeamerCountUp({value, gold, fontTitle}){
+    const[disp,setDisp]=React.useState(0);
+    React.useEffect(()=>{
+      const to=Number(value)||0; let raf,start=null;
+      const step=(ts)=>{ if(start==null)start=ts; const p=Math.min(1,(ts-start)/1200);
+        setDisp(to*(1-Math.pow(1-p,3))); if(p<1)raf=requestAnimationFrame(step); else setDisp(to); };
+      raf=requestAnimationFrame(step); return()=>cancelAnimationFrame(raf);
+    },[value]);
+    return <span style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold,fontFamily}}>{fmtNum(Math.round(disp))}</span>;
+  }
+  function BeamerRevealStrip({ranked,answer,gold}){
+    if(!ranked||!ranked.length) return null;
+    const gs=ranked.map(r=>r.guess);
+    const lo=Math.min(answer,...gs),hi=Math.max(answer,...gs);
+    const pad=((hi-lo)||Math.abs(answer)||1)*0.1;
+    const a=lo-pad,b=hi+pad,span=(b-a)||1;
+    const pos=v=>Math.max(0,Math.min(100,((v-a)/span)*100));
+    const minDiff=ranked[0].diff;
+    return <div style={{position:'relative',height:80,margin:'4px 2px 10px'}}>
+      <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:'#2a1a0e'}}/>
+      <div style={{position:'absolute',top:30,left:`calc(8px + (100% - 16px) * ${pos(answer)/100})`,
+        width:2,height:28,background:'#39d98a',zIndex:1,transform:'translateX(-1px)'}}>
+        <div style={{position:'absolute',top:-14,left:'50%',transform:'translateX(-50%)',
+          fontSize:10,color:'#39d98a',fontWeight:800}}>🎯</div>
+      </div>
+      {ranked.map((r,idx)=>{
+        const close=r.diff===minDiff;
+        return <div key={r.id} style={{position:'absolute',top:34,
+          left:`calc(8px + (100% - 16px) * ${pos(r.guess)/100})`,
+          zIndex:close?3:2,animation:`revealSlide .55s ${0.15+idx*0.09}s ease both`}}>
+          <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:'#3a2a1e',
+            border:`2px solid ${close?gold:'#6e5e54'}`,display:'flex',alignItems:'center',
+            justifyContent:'center',fontSize:11,fontWeight:800,color:close?'#0f0a06':'#f2ece6',
+            ...(close?{animation:'pulseGold 1.3s ease-in-out infinite'}:{})}}>
+            {(r.name||'?')[0].toUpperCase()}
+          </div>
+        </div>;
+      })}
+    </div>;
+  }
+
   // Live-Reaktionen für Beamer
-  const[beamerFloats,setBeamerFloats]=useState([]);
+  const[beamerFloats,setBeamerFloats]=React.useState([]);
   const beamerSeenRef=React.useRef(new Set());
-  useEffect(()=>{
+  React.useEffect(()=>{
     if(!code) return;
     const mountTs=Date.now();
     const rref=ref(db,`rooms/${code}/reactions`);
@@ -3674,14 +3716,14 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
         {/* RESULTS / REVEAL */}
         {(phase==='results'||phase==='reveal')&&q&&<>
-          {/* Question + Answer (Count-up) + Hint */}
+          {/* Question + Answer + Hint */}
           <div style={{background:gold+'22',borderRadius:12,padding:'14px 20px',
             border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
             <p style={{fontSize:13,color:'#c8b8a8',margin:'0 0 8px',lineHeight:1.4}}>{q.q}</p>
             <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 4px'}}>{i.dispAnswer}</p>
             <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:q.hint?10:0}}>
-              <CountUp value={q.a} t={t} dur={1200}
-                style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold,fontFamily:t.fontTitle}}/>
+              {/* Inline Count-up für Beamer */}
+              <BeamerCountUp value={q.a} gold={gold} fontTitle={t.fontTitle}/>
               <span style={{fontSize:16,color:'#6e5e54'}}>{q.unit}</span>
             </div>
             {q.hint&&<div style={{background:'#1a120a',borderRadius:8,padding:'8px 12px',
@@ -3692,7 +3734,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           </div>
 
           {/* Avatar-Zahlenstrahl */}
-          <RevealStrip ranked={ranked} answer={q.a} unit={q.unit} t={beamerT}/>
+          <BeamerRevealStrip ranked={ranked} answer={q.a} gold={gold}/>
 
           {/* WTF-Kommentar */}
           <p style={{fontSize:15,fontWeight:700,color:'#f2ece6',margin:'0 0 6px',
