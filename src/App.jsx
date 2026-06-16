@@ -773,13 +773,13 @@ function playSound(type){
 
 /* ─── HELPERS ─────────────────────────────────────── */
 const genCode  = () => Math.random().toString(36).slice(2,7).toUpperCase();
-const fmtNum   = (n) => {
+function fmtNum(n) {
   if(n==null) return "?";
   const num=Number(n);
   if(Number.isInteger(num)&&num>=1000&&num<=2200) return String(num);
   if(Number.isInteger(num)) return num.toLocaleString("de-DE");
   return num.toLocaleString("de-DE",{maximumFractionDigits:2});
-};
+}
 const inviteUrl = (c) => `${location.origin}${location.pathname}?room=${c}`;
 function avatarColor(name,t){
   const h=[...(name||"?")].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
@@ -3408,6 +3408,8 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
 
+  const beamerT={...t,border:'#2a1a0e',green:'#39d98a',gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
+
   // Live-Reaktionen für Beamer
   const[beamerFloats,setBeamerFloats]=useState([]);
   const beamerSeenRef=React.useRef(new Set());
@@ -3690,10 +3692,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           </div>
 
           {/* Avatar-Zahlenstrahl */}
-          <RevealStrip ranked={ranked} answer={q.a} unit={q.unit} t={{
-            ...t, border:'#2a1a0e', green:'#39d98a', gold,
-            surface:'#1a120a', text:'#f2ece6', muted:'#6e5e54',
-          }}/>
+          <RevealStrip ranked={ranked} answer={q.a} unit={q.unit} t={beamerT}/>
 
           {/* WTF-Kommentar */}
           <p style={{fontSize:15,fontWeight:700,color:'#f2ece6',margin:'0 0 6px',
@@ -3718,13 +3717,12 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
             {ranked.map((p,idx)=>{
               const isClosest=closestIds.includes(p.id);
               const roundPts=rs[p.id]||0;
+              const rowAnim=isClosest&&p.diff!==0?'pulseGold 1.4s ease-in-out infinite':`slideUp .4s ease ${idx*0.08}s both`;
               return <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
                 background:p.diff===0?'#39d98a22':isClosest?gold+'18':'#1a120a',
                 border:`1px solid ${p.diff===0?'#39d98a':isClosest?gold+'66':'#2a1a0e'}`,
                 borderRadius:10,padding:'10px 14px',
-                animation:`slideUp .4s ease ${idx*0.08}s both`,
-                ...(isClosest&&p.diff!==0?{animation:'pulseGold 1.4s ease-in-out infinite'}:{})}}>
-                <span style={{fontSize:14,width:26,flexShrink:0,fontWeight:800,
+                animation:rowAnim}}>                <span style={{fontSize:14,width:26,flexShrink:0,fontWeight:800,
                   fontFamily:'monospace',
                   color:idx===0?gold:idx===1?'#c0c0c0':idx===2?'#cd7f32':'#6e5e54'}}>
                   {idx+1}.
