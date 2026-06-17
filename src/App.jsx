@@ -1683,12 +1683,13 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
+  const[a11yOpen,setA11yOpen]=useState(false);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
     border:`1px solid ${t.border}`,color:t.text,fontSize:14,fontWeight:600,
     cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'};
-  useEffect(()=>{inject(globalCSS(tab==="landing"?ADULT:t));},[t,tab]);
+  useEffect(()=>{inject(globalCSS(tab==="landing"?applyA11y(ADULT):t));},[t,tab]);
 
   async function submit(){
     if(!name.trim()){setError(i.enterName);return;}
@@ -1727,54 +1728,75 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
 
   if(tab==="landing"){
     const li=UI[lang]||UI.de;
+    const lt=applyA11y(ADULT);
     const landingMenuBtn={width:'100%',display:'flex',alignItems:'center',gap:10,
-      justifyContent:'flex-start',background:ADULT.surface,
-      border:`1.5px solid ${ADULT.border}`,borderRadius:100,padding:'11px 22px',
-      color:'#f2ece6',fontSize:14,cursor:'pointer',fontFamily:ADULT.fontBody,fontWeight:600};
-    inject(globalCSS(ADULT));
+      justifyContent:'flex-start',background:lt.surface,
+      border:`1.5px solid ${lt.border}`,borderRadius:100,padding:'11px 22px',
+      color:lt.text,fontSize:14,cursor:'pointer',fontFamily:ADULT.fontBody,fontWeight:600};
+    inject(globalCSS(lt));
     const pills={
       de:["4.800+ Fragen","Echtzeit","Joker"],
       en:["4,800+ Questions","Real-time","Jokers"],
       es:["4.800+ Preguntas","Tiempo real","Comodines"],
     };
-    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:ADULT.bg,position:"relative",overflow:"hidden"}}>
+    return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        {/* Language selector - compact top row with Demo button */}
+        {/* Top row: Sprache · Account · Demo */}
         <div style={{display:"flex",justifyContent:"space-between",
-          alignItems:"center",marginBottom:32,width:"100%",maxWidth:400}}>
+          alignItems:"center",gap:8,marginBottom:32,width:"100%",maxWidth:400,marginLeft:'auto',marginRight:'auto'}}>
           <select value={lang} onChange={e=>onSetLang(e.target.value)}
-            style={{padding:"8px 14px",
-              background:ADULT.surface,
-              border:`1.5px solid ${ADULT.border}`,
-              borderRadius:100,color:"#f2ece6",
-              fontWeight:700,fontSize:14,cursor:"pointer",
+            style={{padding:"8px 12px",
+              background:lt.surface,
+              border:`1.5px solid ${lt.border}`,
+              borderRadius:100,color:lt.text,
+              fontWeight:700,fontSize:13,cursor:"pointer",
               fontFamily:ADULT.fontBody,
               appearance:"none",
-              paddingRight:32,
+              paddingRight:28,flexShrink:0,
               backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e5e54' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
               backgroundRepeat:"no-repeat",
-              backgroundPosition:"right 12px center"}}>
-            <option value="de">🇩🇪 Deutsch</option>
-            <option value="en">🇬🇧 English</option>
-            <option value="es">🇪🇸 Español</option>
+              backgroundPosition:"right 10px center"}}>
+            <option value="de">🇩🇪 DE</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="es">🇪🇸 ES</option>
           </select>
+          {/* Account – mittig */}
+          <div style={{flex:1,display:'flex',justifyContent:'center',minWidth:0}}>
+            {isAnonymous
+              ? <button onClick={onShowLogin}
+                  style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',
+                    padding:'8px 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
+                    borderRadius:100,color:lt.text,fontSize:13,cursor:'pointer',
+                    fontFamily:ADULT.fontBody,fontWeight:600,overflow:'hidden'}}>
+                  🔐 <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lang==='en'?'Sign in':lang==='es'?'Entrar':'Anmelden'}</span>
+                </button>
+              : <div style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',
+                  padding:'8px 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
+                  borderRadius:100,overflow:'hidden'}}>
+                  <span style={{fontSize:13,color:lt.text,fontWeight:600,overflow:'hidden',
+                    textOverflow:'ellipsis',whiteSpace:'nowrap'}}>✅ {userName||(lang==='en'?'Signed in':lang==='es'?'Conectado':'Angemeldet')}</span>
+                  <button onClick={onSignOut} title={lang==='en'?'Sign out':lang==='es'?'Salir':'Abmelden'}
+                    style={{background:'none',border:'none',color:lt.muted,fontSize:14,
+                      cursor:'pointer',flexShrink:0,padding:0,lineHeight:1}}>↩</button>
+                </div>}
+          </div>
           {onShowOnboarding&&<button onClick={onShowOnboarding}
             title={i.demoLabel||"Demo"}
-            style={{padding:"8px 16px",background:"none",
-              border:`1.5px solid ${ADULT.muted}55`,
-              borderRadius:100,color:"#f2ece6",fontSize:13,
+            style={{padding:"8px 14px",background:"none",
+              border:`1.5px solid ${lt.muted}55`,
+              borderRadius:100,color:lt.text,fontSize:13,flexShrink:0,
               cursor:"pointer",fontFamily:ADULT.fontBody,fontWeight:600}}>
             {i.demoLabel||"Demo"}
           </button>}
         </div>
-        <Logo t={ADULT} size="lg"/>
+        <Logo t={lt} size="lg"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
-          <Btn t={ADULT} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
-          <Btn t={ADULT} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
+          <Btn t={lt} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
+          <Btn t={lt} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
-          {(pills[lang]||pills.de).map(x=><Pill key={x} t={ADULT} color={ADULT.muted}>{x}</Pill>)}
+          {(pills[lang]||pills.de).map(x=><Pill key={x} t={lt} color={lt.muted}>{x}</Pill>)}
         </div>
         {/* Menü auf Landing */}
         <div style={{marginTop:28,display:'flex',flexDirection:'column',gap:10,
@@ -1782,7 +1804,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           {onMyQuestions&&<button onClick={onMyQuestions} style={landingMenuBtn}>
             <span style={{fontSize:17,width:22,textAlign:'center'}}>📝</span>
             <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
-            <span style={{color:ADULT.muted}}>›</span>
+            <span style={{color:lt.muted}}>›</span>
           </button>}
           {onAdmin&&<button onClick={onAdmin} style={{...landingMenuBtn,borderColor:ADULT.accent+'66',color:ADULT.accent,fontWeight:700}}>
             <span style={{fontSize:17,width:22,textAlign:'center'}}>📊</span>
@@ -1790,35 +1812,20 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             <span style={{color:ADULT.accent}}>›</span>
           </button>}
           {onA11y&&<div style={{width:'100%',marginTop:4}}>
-            <p style={{fontSize:11,color:ADULT.muted,fontWeight:700,letterSpacing:.8,
-              textAlign:'left',margin:'0 0 8px 4px'}}>
-              ♿ {lang==='en'?'ACCESSIBILITY':lang==='es'?'ACCESIBILIDAD':'BARRIEREFREIHEIT'}
-            </p>
-            <A11yMenu t={ADULT} lang={lang} onA11y={onA11y}/>
+            <button onClick={()=>setA11yOpen(o=>!o)} style={{...landingMenuBtn,fontWeight:700}}>
+              <span style={{fontSize:17,width:22,textAlign:'center'}}>♿</span>
+              <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}</span>
+              <span style={{color:lt.muted,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
+            </button>
+            {a11yOpen&&<div style={{marginTop:8}}><A11yMenu t={lt} lang={lang} onA11y={onA11y}/></div>}
           </div>}
-          {isAnonymous
-            ? <button onClick={onShowLogin} style={landingMenuBtn}>
-                <span style={{fontSize:17,width:22,textAlign:'center'}}>🔐</span>
-                <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Sign in / save stats':lang==='es'?'Iniciar sesión / guardar':'Anmelden / Statistiken speichern'}</span>
-                <span style={{color:ADULT.muted}}>›</span>
-              </button>
-            : <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginTop:2}}>
-                <span style={{fontSize:13,color:ADULT.muted}}>✅ {userName||(lang==='en'?'Signed in':'Angemeldet')}</span>
-                <button onClick={onSignOut}
-                  style={{background:'none',border:'none',color:ADULT.muted,
-                    fontSize:12,cursor:'pointer',textDecoration:'underline',
-                    fontFamily:ADULT.fontBody}}>
-                  {lang==='en'?'Sign out':lang==='es'?'Salir':'Abmelden'}
-                </button>
-              </div>
-          }
         </div>
       </div>
     </div>;
   }
 
   return <div style={{...page,background:t.bg,animation:"fu .3s ease both"}}>
-    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(ADULT));}} style={{marginBottom:18,padding:"8px 0"}}>{i.back}</Btn>
+    <Btn t={t} variant="ghost" onClick={()=>{setTab("landing");inject(globalCSS(applyA11y(ADULT)));}} style={{marginBottom:18,padding:"8px 0"}}>{i.back}</Btn>
     <Logo t={t} size="sm"/>
     <div style={{marginTop:22}}/>
     {tab==="host"&&<Card t={t} style={{marginBottom:12}}>
@@ -1951,10 +1958,12 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       </button>}
 
       {onA11y&&<div style={{marginTop:4}}>
-        <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.8,margin:'0 0 8px 4px'}}>
-          ♿ {lang==='en'?'ACCESSIBILITY':lang==='es'?'ACCESIBILIDAD':'BARRIEREFREIHEIT'}
-        </p>
-        <A11yMenu t={t} lang={lang} onA11y={onA11y}/>
+        <button onClick={()=>setA11yOpen(o=>!o)} style={menuRow}>
+          <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>♿</span>
+          <span style={{flex:1}}>{lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}</span>
+          <span style={{color:t.muted,fontSize:18,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
+        </button>
+        {a11yOpen&&<div style={{marginTop:8}}><A11yMenu t={t} lang={lang} onA11y={onA11y}/></div>}
       </div>}
     </div>
   </div>;
