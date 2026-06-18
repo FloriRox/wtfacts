@@ -5676,35 +5676,49 @@ function TeamScreen({myId, t, lang, onBack}){
   const[err,setErr]=useState('');
   const[openTeamPacks,setOpenTeamPacks]=useState({});
   const[qEdit,setQEdit]=useState(null); // {teamId,packId,qId|null,q,a,unit,hint,emoji}
+  const[pendingMap,setPendingMap]=useState({}); // teamId -> {name} (eigene ausstehende Anfragen)
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
 
   const roleLabel=r=>r==='owner'?L('Inhaber','Owner','Propietario'):r==='viewer'?L('Betrachter','Viewer','Lector'):L('Editor','Editor','Editor');
 
-  function reload(){ /* Live-Listener unten hält die Teams aktuell – kein manuelles Neuladen nötig */ }
+  function reload(){ /* Live-Listener unten hält alles aktuell */ }
   useEffect(()=>{
     if(!myId){ setLoading(false); return; }
-    const teamUnsubs={};
-    const utUnsub=onValue(ref(db,`userTeams/${myId}`),snap=>{
-      const ids=Object.keys(snap.val()||{});
-      // Listener für entfernte Teams abbauen
-      Object.keys(teamUnsubs).forEach(id=>{ if(!ids.includes(id)){ teamUnsubs[id](); delete teamUnsubs[id];
-        setTeamsMap(prev=>{const n={...prev};delete n[id];return n;}); } });
-      // Live-Listener pro Team
-      ids.forEach(id=>{
-        if(teamUnsubs[id]) return;
-        teamUnsubs[id]=onValue(ref(db,`teams/${id}`),s=>{
+    const subs={}; // id -> {type:'member'|'pending', unsub}
+    function ensureSub(id,type){
+      if(subs[id]&&subs[id].type===type) return;
+      if(subs[id]){ subs[id].unsub(); delete subs[id]; }
+      if(type==='member'){
+        const u=onValue(ref(db,`teams/${id}`),s=>{
           const val=s.val();
-          setTeamsMap(prev=>{
-            const next={...prev};
-            if(val&&val.ownerId) next[id]={id,...val};
-            else { delete next[id]; remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); }
-            return next;
-          });
-        },()=>{ setTeamsMap(prev=>{const n={...prev};delete n[id];return n;}); }); // Lesen verweigert → raus
-      });
+          if(val&&val.ownerId&&val.members&&val.members[myId]) setTeamsMap(p=>({...p,[id]:{id,...val}}));
+          else { setTeamsMap(p=>{const n={...p};delete n[id];return n;}); remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); }
+        },()=>{ setTeamsMap(p=>{const n={...p};delete n[id];return n;}); remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); });
+        subs[id]={type,unsub:u};
+      } else {
+        // ausstehend: eigene Anfrage beobachten → verschwindet sie, wurde bestätigt oder abgelehnt
+        const u=onValue(ref(db,`teams/${id}/joinRequests/${myId}`),s=>{
+          if(s.exists()) return; // noch in Prüfung
+          get(ref(db,`teams/${id}`)).then(ts=>{
+            const val=ts.val();
+            if(val&&val.members&&val.members[myId]) update(ref(db,`userTeams/${myId}`),{[id]:true}).catch(()=>{}); // bestätigt → Mitglied
+            else { remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); setPendingMap(p=>{const n={...p};delete n[id];return n;}); } // abgelehnt
+          }).catch(()=>{ remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); setPendingMap(p=>{const n={...p};delete n[id];return n;}); });
+        },()=>{});
+        subs[id]={type,unsub:u};
+      }
+    }
+    const utUnsub=onValue(ref(db,`userTeams/${myId}`),snap=>{
+      const raw=snap.val()||{};
+      const ids=Object.keys(raw);
+      const pending={};
+      ids.forEach(id=>{ const v=raw[id]; if(v&&typeof v==='object'&&v.status==='pending') pending[id]={name:v.name||'Team'}; });
+      setPendingMap(pending);
+      Object.keys(subs).forEach(id=>{ if(!ids.includes(id)){ subs[id].unsub(); delete subs[id]; setTeamsMap(p=>{const n={...p};delete n[id];return n;}); } });
+      ids.forEach(id=>ensureSub(id, pending[id]?'pending':'member'));
       setLoading(false);
     },()=>setLoading(false));
-    return ()=>{ utUnsub(); Object.values(teamUnsubs).forEach(fn=>fn()); };
+    return ()=>{ utUnsub(); Object.values(subs).forEach(s=>s.unsub()); };
   },[myId]);
 
   function genTeamCode(){
@@ -5723,7 +5737,7 @@ function TeamScreen({myId, t, lang, onBack}){
       const updates={};
       updates[`teams/${teamId}`]={name:name.trim(),code,ownerId:myId,createdAt:Date.now(),
         members:{[myId]:{role:'owner',name:myName,joinedAt:Date.now()}}};
-      updates[`teamCodes/${code}`]=teamId;
+      updates[`teamCodes/${code}`]={teamId,name:name.trim()};
       updates[`userTeams/${myId}/${teamId}`]=true;
       await update(ref(db),updates);
       setName(''); await reload(); flash(L('Team erstellt','Team created','Equipo creado'));
@@ -5731,22 +5745,49 @@ function TeamScreen({myId, t, lang, onBack}){
     setBusy(false);
   }
 
-  async function joinTeam(){
+  async function requestJoin(){
     const code=joinCode.trim().toUpperCase();
     if(code.length<4){ setErr(L('Bitte einen gültigen Team-Code eingeben.','Please enter a valid team code.','Introduce un código válido.')); return; }
     setErr(''); setBusy(true);
     try{
       const snap=await get(ref(db,`teamCodes/${code}`));
-      const teamId=snap.val();
+      const v=snap.val();
+      const teamId=(v&&typeof v==='object')?v.teamId:v;
+      const tName=(v&&typeof v==='object')?(v.name||'Team'):'Team';
       if(!teamId){ setErr(L('Team nicht gefunden.','Team not found.','Equipo no encontrado.')); setBusy(false); return; }
-      if(teams.some(x=>x.id===teamId)){ setErr(L('Du bist bereits in diesem Team.','You are already in this team.','Ya estás en este equipo.')); setBusy(false); return; }
+      if(teamsMap[teamId]){ setErr(L('Du bist bereits in diesem Team.','You are already in this team.','Ya estás en este equipo.')); setBusy(false); return; }
+      if(pendingMap[teamId]){ setErr(L('Anfrage läuft bereits.','Request already pending.','Solicitud ya pendiente.')); setBusy(false); return; }
       const updates={};
-      updates[`teams/${teamId}/members/${myId}`]={role:'editor',name:myName,joinedAt:Date.now()};
-      updates[`userTeams/${myId}/${teamId}`]=true;
+      updates[`teams/${teamId}/joinRequests/${myId}`]={name:myName,requestedAt:Date.now()};
+      updates[`userTeams/${myId}/${teamId}`]={status:'pending',name:tName};
       await update(ref(db),updates);
-      setJoinCode(''); await reload(); flash(L('Team beigetreten','Joined team','Te has unido'));
-    }catch(e){ console.error('join team failed:',e); setErr(L('Beitreten fehlgeschlagen.','Joining failed.','Error al unirse.')); }
+      setJoinCode(''); flash(L('Anfrage gesendet – warte auf Bestätigung','Request sent – waiting for approval','Solicitud enviada – esperando aprobación'));
+    }catch(e){ console.error('request join failed:',e); setErr(L('Anfrage fehlgeschlagen.','Request failed.','Error en la solicitud.')); }
     setBusy(false);
+  }
+
+  async function withdrawRequest(teamId){
+    try{
+      const updates={};
+      updates[`teams/${teamId}/joinRequests/${myId}`]=null;
+      updates[`userTeams/${myId}/${teamId}`]=null;
+      await update(ref(db),updates);
+      setPendingMap(p=>{const n={...p};delete n[teamId];return n;});
+    }catch(e){ console.error('withdraw failed:',e); }
+  }
+
+  async function approveRequest(team,uid,reqName){
+    try{
+      const updates={};
+      updates[`teams/${team.id}/members/${uid}`]={role:'viewer',name:reqName||'—',joinedAt:Date.now()};
+      updates[`teams/${team.id}/joinRequests/${uid}`]=null;
+      await update(ref(db),updates);
+    }catch(e){ console.error('approve failed:',e); }
+  }
+  async function denyRequest(team,uid){
+    if(!window.confirm(L('Anfrage ablehnen?','Deny request?','¿Rechazar solicitud?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/joinRequests/${uid}`)); }
+    catch(e){ console.error('deny failed:',e); }
   }
 
   async function leaveTeam(team){
@@ -5858,14 +5899,15 @@ function TeamScreen({myId, t, lang, onBack}){
         <input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
           placeholder={L('Team-Code','Team code','Código')} maxLength={6}
           style={{...inputStyle,flex:1,textTransform:'uppercase',letterSpacing:2,fontWeight:700}}/>
-        <Btn t={t} variant="secondary" onClick={joinTeam} disabled={busy}>{L('Beitreten','Join','Unirse')}</Btn>
+        <Btn t={t} variant="secondary" onClick={requestJoin} disabled={busy}>{L('Anfragen','Request','Solicitar')}</Btn>
       </div>
+      <p style={{fontSize:10,color:t.muted,margin:0}}>{L('Der Inhaber muss deine Anfrage bestätigen.','The owner must approve your request.','El propietario debe aprobar tu solicitud.')}</p>
       {err&&<p style={{color:t.danger,fontSize:12,margin:0}}>{err}</p>}
     </Card>
 
     {loading&&<div style={{textAlign:'center',padding:20}}><Spinner t={t}/></div>}
 
-    {!loading&&teams.length===0&&<Card t={t} style={{textAlign:'center',padding:28}}>
+    {!loading&&teams.length===0&&Object.keys(pendingMap).length===0&&<Card t={t} style={{textAlign:'center',padding:28}}>
       <div style={{fontSize:38,marginBottom:10}}>👥</div>
       <p style={{color:t.muted,fontSize:14,margin:0}}>
         {L('Noch in keinem Team. Erstelle eins oder tritt mit einem Code bei.',
@@ -5877,8 +5919,10 @@ function TeamScreen({myId, t, lang, onBack}){
     {teams.map(team=>{
       const myRole=team.members?.[myId]?.role;
       const isOwner=team.ownerId===myId;
+      const roleRank={owner:0,editor:1,viewer:2};
       const members=Object.entries(team.members||{}).map(([uid,m])=>({uid,...m}))
-        .sort((a,b)=>(a.role==='owner'?-1:b.role==='owner'?1:0)||(a.joinedAt||0)-(b.joinedAt||0));
+        .sort((a,b)=>((roleRank[a.role]==null?9:roleRank[a.role])-(roleRank[b.role]==null?9:roleRank[b.role]))
+          || String(a.name||'').localeCompare(String(b.name||'')));
       return <Card key={team.id} t={t} style={{marginBottom:12}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:8}}>
           <div style={{minWidth:0}}>
@@ -5920,6 +5964,31 @@ function TeamScreen({myId, t, lang, onBack}){
             </div>
           ))}
         </div>
+
+        {/* Beitrittsanfragen (nur Inhaber) */}
+        {isOwner&&team.joinRequests&&Object.keys(team.joinRequests).length>0&&
+          <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
+            <p style={{fontSize:12,fontWeight:800,color:t.gold,margin:'0 0 8px'}}>
+              🙋 {L('Beitrittsanfragen','Join requests','Solicitudes')} ({Object.keys(team.joinRequests).length})
+            </p>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {Object.entries(team.joinRequests).map(([uid,req])=>(
+                <div key={uid} style={{display:'flex',alignItems:'center',gap:8,
+                  background:t.gold+'10',border:`1px solid ${t.gold}44`,borderRadius:t.radius,padding:'7px 10px'}}>
+                  <Avatar name={req.name} t={t} size={26}/>
+                  <span style={{flex:1,fontSize:13,color:t.text,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{req.name||'—'}</span>
+                  <button onClick={()=>approveRequest(team,uid,req.name)}
+                    style={{background:t.green+'22',border:`1px solid ${t.green}66`,borderRadius:100,
+                      color:t.green,fontSize:11,fontWeight:800,cursor:'pointer',padding:'5px 11px',fontFamily:t.fontBody,flexShrink:0}}>
+                    ✓ {L('Annehmen','Approve','Aceptar')}
+                  </button>
+                  <button onClick={()=>denyRequest(team,uid)}
+                    style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,
+                      color:t.danger,fontSize:11,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>}
 
         {/* Geteilte Packs (live, gemeinsame Daten) */}
         <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
@@ -5999,6 +6068,26 @@ function TeamScreen({myId, t, lang, onBack}){
         </div>
       </Card>;
     })}
+
+    {/* Eigene ausstehende Beitrittsanfragen */}
+    {Object.entries(pendingMap).map(([tid,p])=>(
+      <Card key={'pending_'+tid} t={t} style={{marginBottom:12,borderStyle:'dashed'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:22}}>⏳</span>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:15,fontWeight:800,color:t.text,margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</p>
+            <p style={{fontSize:11,color:t.muted,margin:'2px 0 0'}}>
+              {L('Anfrage gesendet – wartet auf Bestätigung','Request sent – awaiting approval','Solicitud enviada – esperando aprobación')}
+            </p>
+          </div>
+          <button onClick={()=>withdrawRequest(tid)}
+            style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,color:t.danger,
+              fontSize:11,fontWeight:700,cursor:'pointer',padding:'5px 11px',fontFamily:t.fontBody,flexShrink:0}}>
+            {L('Zurückziehen','Withdraw','Retirar')}
+          </button>
+        </div>
+      </Card>
+    ))}
 
     {/* Team-Frage bearbeiten/hinzufügen (live, gemeinsame Daten) */}
     {qEdit&&<div onClick={()=>setQEdit(null)}
