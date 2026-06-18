@@ -2057,6 +2057,23 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       if(list.length) setSelected(prev=>prev.includes(COMMUNITY_CAT)?prev:[...prev,COMMUNITY_CAT]);
     }).catch(()=>{});
   },[lang]);
+  // Team-Packs (live geteilte Daten) als spielbare Kategorien laden
+  const[teamPackList,setTeamPackList]=useState([]);
+  useEffect(()=>{
+    if(!myId) return;
+    get(ref(db,`userTeams/${myId}`)).then(async snap=>{
+      const ids=Object.keys(snap.val()||{});
+      const res=await Promise.all(ids.map(id=>get(ref(db,`teams/${id}`)).then(s=>s.val()).catch(()=>null)));
+      const list=[];
+      res.forEach(val=>{ if(!val||!val.packs) return;
+        Object.values(val.packs).forEach(pk=>{
+          const qs=Object.values(pk.questions||{});
+          if(qs.length) list.push({key:'👥 '+pk.name, name:pk.name, teamName:val.name, questions:qs});
+        });
+      });
+      setTeamPackList(list);
+    }).catch(()=>{});
+  },[myId]);
   const[selected,setSelected]=useState(()=>{
     try{
       const sv=JSON.parse(localStorage.getItem('em_lastCats')||'null');
@@ -2093,6 +2110,13 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
       QUESTIONS[mode]=QUESTIONS[mode]||{};
       QUESTIONS[mode][COMMUNITY_CAT]=communityQs.map(x=>({id:x.id,q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
     }
+    // geteilte Team-Packs injizieren (live, gemeinsame Daten)
+    teamPackList.forEach(tp=>{
+      if(selected.includes(tp.key)){
+        QUESTIONS[mode]=QUESTIONS[mode]||{};
+        QUESTIONS[mode][tp.key]=tp.questions.map((x,i)=>({id:'team_'+i+'_'+Math.random().toString(36).slice(2,6),q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝'}));
+      }
+    });
     try{localStorage.setItem('em_lastCats',JSON.stringify(selected));}catch(e){}
     onStart(selected);
   }
@@ -2195,6 +2219,36 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
             </span>
             <span style={{fontSize:11,color:t.muted,flexShrink:0}}>
               {customPacks[name].length}
+            </span>
+          </div>;
+        })}
+      </>}
+
+      {teamPackList.length>0&&<>
+        <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,
+          margin:"10px 0 2px",paddingLeft:2}}>
+          {lang==='en'?'TEAM PACKS':lang==='es'?'PAQUETES DE EQUIPO':'TEAM-PACKS'}
+        </p>
+        {teamPackList.map(tp=>{
+          const sel=selected.includes(tp.key);
+          return <div key={tp.key} onClick={()=>toggleCustom(tp.key)}
+            style={{display:"flex",alignItems:"center",gap:10,
+              padding:"5px 10px",borderRadius:t.radius,cursor:"pointer",
+              background:sel?t.gold+"18":t.surface,
+              border:`1.5px solid ${sel?t.gold:t.border}`,transition:"all .15s"}}>
+            <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>
+              {sel?"✅":"⬜"}
+            </span>
+            <span style={{flex:1,fontSize:12,fontWeight:600,
+              color:sel?t.gold:t.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {tp.name}
+            </span>
+            <span style={{fontSize:9,color:t.muted,flexShrink:0,
+              border:`1px solid ${t.border}`,borderRadius:100,padding:"1px 6px"}}>
+              👥 {tp.teamName}
+            </span>
+            <span style={{fontSize:11,color:t.muted,flexShrink:0}}>
+              {tp.questions.length}
             </span>
           </div>;
         })}
@@ -5595,34 +5649,46 @@ var OCCASION_TEMPLATES = {
 /* ─── TEAM / BUSINESS-ACCOUNT (Slice A: Mitglieder & Rollen) ── */
 function TeamScreen({myId, t, lang, onBack}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
-  const[teams,setTeams]=useState([]);
+  const[teamsMap,setTeamsMap]=useState({});
+  const teams=Object.values(teamsMap).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
   const[loading,setLoading]=useState(true);
   const[busy,setBusy]=useState(false);
   const[name,setName]=useState('');
   const[joinCode,setJoinCode]=useState('');
   const[msg,setMsg]=useState('');
   const[err,setErr]=useState('');
+  const[openTeamPacks,setOpenTeamPacks]=useState({});
+  const[qEdit,setQEdit]=useState(null); // {teamId,packId,qId|null,q,a,unit,hint,emoji}
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
 
   const roleLabel=r=>r==='owner'?L('Inhaber','Owner','Propietario'):r==='viewer'?L('Betrachter','Viewer','Lector'):L('Editor','Editor','Editor');
 
-  async function reload(){
-    if(!myId){setLoading(false);return;}
-    try{
-      const snap=await get(ref(db,`userTeams/${myId}`));
+  function reload(){ /* Live-Listener unten hält die Teams aktuell – kein manuelles Neuladen nötig */ }
+  useEffect(()=>{
+    if(!myId){ setLoading(false); return; }
+    const teamUnsubs={};
+    const utUnsub=onValue(ref(db,`userTeams/${myId}`),snap=>{
       const ids=Object.keys(snap.val()||{});
-      const res=await Promise.all(ids.map(id=>get(ref(db,`teams/${id}`)).then(s=>({id,val:s.val()})).catch(()=>({id,val:null}))));
-      const valid=[];
-      for(const {id,val} of res){
-        if(val&&val.ownerId) valid.push({id,...val});
-        else remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); // verwaisten Eintrag heilen
-      }
-      valid.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-      setTeams(valid);
-    }catch(e){ console.error('load teams failed:',e); }
-    setLoading(false);
-  }
-  useEffect(()=>{ reload(); },[myId]);
+      // Listener für entfernte Teams abbauen
+      Object.keys(teamUnsubs).forEach(id=>{ if(!ids.includes(id)){ teamUnsubs[id](); delete teamUnsubs[id];
+        setTeamsMap(prev=>{const n={...prev};delete n[id];return n;}); } });
+      // Live-Listener pro Team
+      ids.forEach(id=>{
+        if(teamUnsubs[id]) return;
+        teamUnsubs[id]=onValue(ref(db,`teams/${id}`),s=>{
+          const val=s.val();
+          setTeamsMap(prev=>{
+            const next={...prev};
+            if(val&&val.ownerId) next[id]={id,...val};
+            else { delete next[id]; remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); }
+            return next;
+          });
+        },()=>{ setTeamsMap(prev=>{const n={...prev};delete n[id];return n;}); }); // Lesen verweigert → raus
+      });
+      setLoading(false);
+    },()=>setLoading(false));
+    return ()=>{ utUnsub(); Object.values(teamUnsubs).forEach(fn=>fn()); };
+  },[myId]);
 
   function genTeamCode(){
     const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -5702,24 +5768,40 @@ function TeamScreen({myId, t, lang, onBack}){
     try{ navigator.clipboard.writeText(code); flash(L('Code kopiert','Code copied','Código copiado')+': '+code); }catch(e){}
   }
 
-  // Geteiltes Team-Pack in „Meine Fragen" übernehmen (→ im Spiel als Kategorie nutzbar)
-  async function pullPack(pk){
-    const qs=Object.values(pk.questions||{});
-    if(!qs.length) return;
+  // ── Team-Packs LIVE bearbeiten (gemeinsame Daten, keine Kopien) ──
+  async function createTeamPack(team){
+    const nm=window.prompt(L('Name des neuen Packs:','Name of the new pack:','Nombre del nuevo paquete:'));
+    if(!nm||!nm.trim()) return;
     try{
-      const updates={};
-      qs.forEach((q,i)=>{ const qId=Date.now().toString(36)+i.toString(36)+Math.random().toString(36).slice(2,4);
-        updates[`userQuestions/${myId}/${qId}`]={q:q.q,a:q.a,unit:q.unit,hint:q.hint||'',
-          emoji:q.emoji||'📝',category:pk.name,visibility:'private',lang:q.lang||lang,
-          createdAt:Date.now(),authorId:myId}; });
-      await update(ref(db),updates);
-      flash(L('In „Meine Fragen" übernommen','Added to "My questions"','Añadido a "Mis preguntas"')+': '+pk.name);
-    }catch(e){ console.error('pull pack failed:',e); }
+      const packId='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      await update(ref(db,`teams/${team.id}/packs/${packId}`),
+        {name:nm.trim(),createdAt:Date.now(),createdBy:myId,createdByName:myName,questions:{}});
+      setOpenTeamPacks(o=>({...o,[packId]:true}));
+    }catch(e){ console.error('create team pack failed:',e); }
   }
   async function deleteTeamPack(team,pid){
-    if(!window.confirm(L('Dieses geteilte Pack löschen?','Delete this shared pack?','¿Borrar este paquete compartido?'))) return;
-    try{ await remove(ref(db,`teams/${team.id}/packs/${pid}`)); await reload(); }
+    if(!window.confirm(L('Dieses geteilte Pack für ALLE löschen?','Delete this shared pack for EVERYONE?','¿Borrar este paquete para TODOS?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/packs/${pid}`)); }
     catch(e){ console.error('delete team pack failed:',e); }
+  }
+  async function saveTeamQ(){
+    if(!qEdit) return;
+    if(!qEdit.q.trim()){ setErr(L('Bitte eine Frage eingeben.','Please enter a question.','Introduce una pregunta.')); return; }
+    const num=parseFloat(String(qEdit.a).replace(',','.'));
+    if(isNaN(num)){ setErr(L('Antwort muss eine Zahl sein.','Answer must be a number.','La respuesta debe ser un número.')); return; }
+    if(!qEdit.unit.trim()){ setErr(L('Bitte eine Einheit angeben.','Please enter a unit.','Introduce una unidad.')); return; }
+    setErr('');
+    try{
+      const qId=qEdit.qId||('q'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+      await update(ref(db,`teams/${qEdit.teamId}/packs/${qEdit.packId}/questions/${qId}`),
+        {q:qEdit.q.trim(),a:num,unit:qEdit.unit.trim(),hint:(qEdit.hint||'').trim(),emoji:qEdit.emoji||'📝',lang});
+      setQEdit(null);
+    }catch(e){ console.error('save team question failed:',e); setErr(L('Speichern fehlgeschlagen.','Saving failed.','Error al guardar.')); }
+  }
+  async function deleteTeamQ(team,pid,qId){
+    if(!window.confirm(L('Diese Frage für alle löschen?','Delete this question for everyone?','¿Borrar esta pregunta para todos?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/packs/${pid}/questions/${qId}`)); }
+    catch(e){ console.error('delete team question failed:',e); }
   }
 
   const inputStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
@@ -5822,29 +5904,62 @@ function TeamScreen({myId, t, lang, onBack}){
           ))}
         </div>
 
-        {/* Geteilte Packs */}
+        {/* Geteilte Packs (live, gemeinsame Daten) */}
         <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
-          <p style={{fontSize:12,fontWeight:800,color:t.text,margin:'0 0 8px'}}>
-            📦 {L('Geteilte Packs','Shared packs','Paquetes compartidos')} ({Object.keys(team.packs||{}).length})
-          </p>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+            <p style={{fontSize:12,fontWeight:800,color:t.text,margin:0}}>
+              📦 {L('Geteilte Packs','Shared packs','Paquetes compartidos')} ({Object.keys(team.packs||{}).length})
+            </p>
+            {myRole!=='viewer'&&<button onClick={()=>createTeamPack(team)}
+              style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,color:t.accent,
+                fontSize:11,fontWeight:700,cursor:'pointer',padding:'4px 10px',fontFamily:t.fontBody}}>
+              ➕ {L('Neues Pack','New pack','Nuevo paquete')}
+            </button>}
+          </div>
           {Object.keys(team.packs||{}).length===0&&<p style={{fontSize:11,color:t.muted,margin:0}}>
-            {L('Noch keine Packs geteilt – teile eins aus „Meine Fragen".','No packs shared yet – share one from "My questions".','Aún sin paquetes – comparte uno desde "Mis preguntas".')}
+            {L('Noch keine Packs. Lege eins an oder teile eins aus „Meine Fragen".','No packs yet. Create one or share from "My questions".','Aún sin paquetes. Crea uno o comparte desde "Mis preguntas".')}
           </p>}
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {Object.entries(team.packs||{}).map(([pid,pk])=>{
-              const cnt=Object.keys(pk.questions||{}).length;
-              return <div key={pid} style={{display:'flex',alignItems:'center',gap:8,background:t.surface,
-                border:`1px solid ${t.border}`,borderRadius:t.radius,padding:'8px 10px'}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontSize:13,fontWeight:700,color:t.text,margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pk.name}</p>
-                  <p style={{fontSize:10,color:t.muted,margin:'1px 0 0'}}>{cnt} {L('Fragen','questions','preguntas')}{pk.createdByName?` · ${pk.createdByName}`:''}</p>
+              const qList=Object.entries(pk.questions||{}).map(([qid,q])=>({qid,...q}));
+              const pOpen=!!openTeamPacks[pid];
+              return <div key={pid} style={{background:t.surface,border:`1px solid ${t.border}`,borderRadius:t.radius,overflow:'hidden'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px'}}>
+                  <button onClick={()=>setOpenTeamPacks(o=>({...o,[pid]:!o[pid]}))}
+                    style={{flex:1,display:'flex',alignItems:'center',gap:8,background:'none',border:'none',
+                      cursor:'pointer',fontFamily:t.fontBody,textAlign:'left',padding:0,minWidth:0}}>
+                    <span style={{color:t.muted,fontSize:14,transform:pOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
+                    <span style={{flex:1,minWidth:0}}>
+                      <span style={{display:'block',fontSize:13,fontWeight:700,color:t.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pk.name}</span>
+                      <span style={{display:'block',fontSize:10,color:t.muted}}>{qList.length} {L('Fragen','questions','preguntas')}{pk.createdByName?` · ${pk.createdByName}`:''}</span>
+                    </span>
+                  </button>
+                  {myRole!=='viewer'&&<button onClick={()=>deleteTeamPack(team,pid)} title={L('Pack löschen','Delete pack','Borrar paquete')}
+                    style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,color:t.danger,fontSize:13,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>🗑</button>}
                 </div>
-                <button onClick={()=>pullPack(pk)} title={L('In meine Fragen übernehmen','Add to my questions','Añadir a mis preguntas')}
-                  style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,color:t.accent,
-                    fontSize:13,cursor:'pointer',padding:'5px 9px',flexShrink:0}}>📥</button>
-                {myRole!=='viewer'&&<button onClick={()=>deleteTeamPack(team,pid)} title={L('Pack löschen','Delete pack','Borrar paquete')}
-                  style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,color:t.danger,
-                    fontSize:13,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>🗑</button>}
+                {pOpen&&<div style={{padding:'0 10px 10px',display:'flex',flexDirection:'column',gap:6}}>
+                  {qList.map(q=>(
+                    <div key={q.qid} style={{display:'flex',alignItems:'flex-start',gap:8,background:t.bg,borderRadius:t.radius,padding:'8px 10px'}}>
+                      <span style={{fontSize:18,flexShrink:0}}>{q.emoji||'📝'}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <p style={{fontSize:12,fontWeight:600,color:t.text,margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.q}</p>
+                        <p style={{fontSize:11,color:t.accent,fontWeight:700,margin:0}}>{q.a} {q.unit}</p>
+                      </div>
+                      {myRole!=='viewer'&&<div style={{display:'flex',gap:4,flexShrink:0}}>
+                        <button onClick={()=>{setErr('');setQEdit({teamId:team.id,packId:pid,qId:q.qid,q:q.q,a:String(q.a),unit:q.unit,hint:q.hint||'',emoji:q.emoji||'📝'});}}
+                          style={{background:'none',border:`1px solid ${t.border}`,borderRadius:t.radius,color:t.text,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>✏</button>
+                        <button onClick={()=>deleteTeamQ(team,pid,q.qid)}
+                          style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:t.radius,color:t.danger,fontSize:11,cursor:'pointer',padding:'3px 8px'}}>✕</button>
+                      </div>}
+                    </div>
+                  ))}
+                  {qList.length===0&&<p style={{fontSize:11,color:t.muted,margin:0}}>{L('Noch keine Fragen.','No questions yet.','Aún sin preguntas.')}</p>}
+                  {myRole!=='viewer'&&<button onClick={()=>{setErr('');setQEdit({teamId:team.id,packId:pid,qId:null,q:'',a:'',unit:'',hint:'',emoji:'📝'});}}
+                    style={{alignSelf:'flex-start',background:'none',border:`1px dashed ${t.border}`,borderRadius:t.radius,color:t.muted,fontSize:12,fontWeight:700,cursor:'pointer',padding:'6px 11px',fontFamily:t.fontBody}}>
+                    ➕ {L('Frage hinzufügen','Add question','Añadir pregunta')}
+                  </button>}
+                  {myRole==='viewer'&&<p style={{fontSize:10,color:t.muted,margin:0,fontStyle:'italic'}}>{L('Nur-Lesen (Betrachter)','Read-only (viewer)','Solo lectura (lector)')}</p>}
+                </div>}
               </div>;
             })}
           </div>
@@ -5867,6 +5982,47 @@ function TeamScreen({myId, t, lang, onBack}){
         </div>
       </Card>;
     })}
+
+    {/* Team-Frage bearbeiten/hinzufügen (live, gemeinsame Daten) */}
+    {qEdit&&<div onClick={()=>setQEdit(null)}
+      style={{position:'fixed',inset:0,zIndex:620,background:'rgba(0,0,0,0.72)',
+        display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
+        border:`1.5px solid ${t.border}`,maxWidth:400,width:'100%',maxHeight:'88vh',overflowY:'auto',
+        padding:'20px',animation:'fu .25s ease both'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+          <h3 style={{fontFamily:t.fontTitle,fontSize:19,margin:0,color:t.text}}>
+            {qEdit.qId?L('Frage bearbeiten','Edit question','Editar pregunta'):L('Neue Frage','New question','Nueva pregunta')}
+          </h3>
+          <button onClick={()=>setQEdit(null)} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <input value={qEdit.q} onChange={e=>setQEdit(s=>({...s,q:e.target.value}))}
+            placeholder={L('Frage','Question','Pregunta')} style={inputStyle}/>
+          <div style={{display:'flex',gap:8}}>
+            <input value={qEdit.a} onChange={e=>setQEdit(s=>({...s,a:e.target.value}))}
+              placeholder={L('Antwort (Zahl)','Answer (number)','Respuesta (número)')} inputMode="decimal" style={{...inputStyle,flex:1}}/>
+            <input value={qEdit.unit} onChange={e=>setQEdit(s=>({...s,unit:e.target.value}))}
+              placeholder={L('Einheit','Unit','Unidad')} style={{...inputStyle,flex:1}}/>
+          </div>
+          <input value={qEdit.hint} onChange={e=>setQEdit(s=>({...s,hint:e.target.value}))}
+            placeholder={L('Hinweis (optional)','Hint (optional)','Pista (opcional)')} style={inputStyle}/>
+          <div style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:2}}>
+            {['📝','🎯','🔢','💡','🌍','🏆','🎲','⭐','🍔','🎵','🚀','💰'].map(em=>(
+              <button key={em} onClick={()=>setQEdit(s=>({...s,emoji:em}))}
+                style={{fontSize:18,padding:'5px 7px',borderRadius:t.radius,cursor:'pointer',flexShrink:0,
+                  background:qEdit.emoji===em?t.accent+'22':'none',
+                  border:`1.5px solid ${qEdit.emoji===em?t.accent:t.border}`}}>{em}</button>
+            ))}
+          </div>
+          {err&&<p style={{color:t.danger,fontSize:12,margin:0}}>{err}</p>}
+          <div style={{display:'flex',gap:8}}>
+            <Btn t={t} variant="secondary" onClick={()=>setQEdit(null)} style={{flex:1}}>{L('Abbrechen','Cancel','Cancelar')}</Btn>
+            <Btn t={t} onClick={saveTeamQ} style={{flex:1}}>{L('Speichern','Save','Guardar')}</Btn>
+          </div>
+        </div>
+      </div>
+    </div>}
   </div>;
 }
 
