@@ -1922,50 +1922,6 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <Btn t={t} onClick={submit} disabled={busy} full>{busy?i.searching:tab==="host"?`${t.emoji} ${i.createRoom}`:i.join+" →"}</Btn>
       </div>
     </Card>
-    {/* Menü */}
-    <div style={{marginTop:20,display:'flex',flexDirection:'column',gap:8}}>
-      {isAnonymous
-        ? <button onClick={onShowLogin} style={menuRow}>
-            <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>🔐</span>
-            <span style={{flex:1}}>{lang==='en'?'Sign in / save stats':lang==='es'?'Iniciar sesión / guardar':'Anmelden / Statistiken speichern'}</span>
-            <span style={{color:t.muted,fontSize:18}}>›</span>
-          </button>
-        : <div style={{...menuRow,cursor:'default'}}>
-            <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>✅</span>
-            <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{userName||(lang==='en'?'Signed in':lang==='es'?'Conectado':'Angemeldet')}</span>
-            <button onClick={onSignOut} style={{background:'none',border:'none',color:t.muted,
-              fontSize:12,cursor:'pointer',textDecoration:'underline',fontFamily:t.fontBody,flexShrink:0}}>
-              {lang==='en'?'Sign out':lang==='es'?'Salir':'Abmelden'}
-            </button>
-          </div>}
-
-      {onMyQuestions&&<button onClick={onMyQuestions} style={menuRow}>
-        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>📝</span>
-        <span style={{flex:1}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
-        <span style={{color:t.muted,fontSize:18}}>›</span>
-      </button>}
-
-      {onShowOnboarding&&<button onClick={onShowOnboarding} style={menuRow}>
-        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>❓</span>
-        <span style={{flex:1}}>{lang==='en'?'How to play':lang==='es'?'Cómo jugar':"So funktioniert's"}</span>
-        <span style={{color:t.muted,fontSize:18}}>›</span>
-      </button>}
-
-      {onAdmin&&<button onClick={onAdmin} style={{...menuRow,borderColor:t.accent+'55',color:t.accent,fontWeight:700}}>
-        <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>📊</span>
-        <span style={{flex:1}}>Admin Dashboard</span>
-        <span style={{color:t.accent,fontSize:18}}>›</span>
-      </button>}
-
-      {onA11y&&<div style={{marginTop:4}}>
-        <button onClick={()=>setA11yOpen(o=>!o)} style={menuRow}>
-          <span style={{fontSize:18,width:24,textAlign:'center',flexShrink:0}}>♿</span>
-          <span style={{flex:1}}>{lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}</span>
-          <span style={{color:t.muted,fontSize:18,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
-        </button>
-        {a11yOpen&&<div style={{marginTop:8}}><A11yMenu t={t} lang={lang} onA11y={onA11y}/></div>}
-      </div>}
-    </div>
   </div>;
 }
 
@@ -5952,6 +5908,7 @@ function App(){
   const[myId,setMyId]=useState(null);
   const[authReady,setAuthReady]=useState(false);
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
+  const[showA11y,setShowA11y]=useState(false);
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[showSteckbrief,setShowSteckbrief]=useState(false);
   const[gamePaused,setGamePaused]=useState(false);
@@ -6608,6 +6565,32 @@ function App(){
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} code={code} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
+
+    {/* #8 Barrierefreiheit auch im Spiel erreichbar */}
+    {screen!=="home"&&screen!=="admin"&&screen!=="myQuestions"&&<>
+      <button onClick={()=>setShowA11y(true)}
+        title={lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}
+        style={{position:'fixed',left:14,bottom:14,zIndex:480,width:42,height:42,
+          borderRadius:'50%',background:t.surface,border:`1.5px solid ${t.border}`,
+          color:t.text,fontSize:20,cursor:'pointer',boxShadow:'0 2px 10px rgba(0,0,0,.35)',
+          display:'flex',alignItems:'center',justifyContent:'center',opacity:.85}}>♿</button>
+      {showA11y&&<div onClick={()=>setShowA11y(false)}
+        style={{position:'fixed',inset:0,zIndex:620,background:'rgba(0,0,0,0.72)',
+          display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
+          border:`1.5px solid ${t.border}`,maxWidth:360,width:'100%',padding:'20px',
+          animation:'fu .25s ease both'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <h3 style={{fontFamily:t.fontTitle,fontSize:20,margin:0,color:t.text}}>
+              ♿ {lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}
+            </h3>
+            <button onClick={()=>setShowA11y(false)} style={{background:'none',border:'none',
+              color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+          </div>
+          <A11yMenu t={t} lang={lang} onA11y={handleA11y}/>
+        </div>
+      </div>}
+    </>}
 
   </ErrorBoundary>;
 }
