@@ -5702,6 +5702,26 @@ function TeamScreen({myId, t, lang, onBack}){
     try{ navigator.clipboard.writeText(code); flash(L('Code kopiert','Code copied','Código copiado')+': '+code); }catch(e){}
   }
 
+  // Geteiltes Team-Pack in „Meine Fragen" übernehmen (→ im Spiel als Kategorie nutzbar)
+  async function pullPack(pk){
+    const qs=Object.values(pk.questions||{});
+    if(!qs.length) return;
+    try{
+      const updates={};
+      qs.forEach((q,i)=>{ const qId=Date.now().toString(36)+i.toString(36)+Math.random().toString(36).slice(2,4);
+        updates[`userQuestions/${myId}/${qId}`]={q:q.q,a:q.a,unit:q.unit,hint:q.hint||'',
+          emoji:q.emoji||'📝',category:pk.name,visibility:'private',lang:q.lang||lang,
+          createdAt:Date.now(),authorId:myId}; });
+      await update(ref(db),updates);
+      flash(L('In „Meine Fragen" übernommen','Added to "My questions"','Añadido a "Mis preguntas"')+': '+pk.name);
+    }catch(e){ console.error('pull pack failed:',e); }
+  }
+  async function deleteTeamPack(team,pid){
+    if(!window.confirm(L('Dieses geteilte Pack löschen?','Delete this shared pack?','¿Borrar este paquete compartido?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/packs/${pid}`)); await reload(); }
+    catch(e){ console.error('delete team pack failed:',e); }
+  }
+
   const inputStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
     borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
     fontFamily:t.fontBody,boxSizing:'border-box'};
@@ -5802,6 +5822,34 @@ function TeamScreen({myId, t, lang, onBack}){
           ))}
         </div>
 
+        {/* Geteilte Packs */}
+        <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
+          <p style={{fontSize:12,fontWeight:800,color:t.text,margin:'0 0 8px'}}>
+            📦 {L('Geteilte Packs','Shared packs','Paquetes compartidos')} ({Object.keys(team.packs||{}).length})
+          </p>
+          {Object.keys(team.packs||{}).length===0&&<p style={{fontSize:11,color:t.muted,margin:0}}>
+            {L('Noch keine Packs geteilt – teile eins aus „Meine Fragen".','No packs shared yet – share one from "My questions".','Aún sin paquetes – comparte uno desde "Mis preguntas".')}
+          </p>}
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {Object.entries(team.packs||{}).map(([pid,pk])=>{
+              const cnt=Object.keys(pk.questions||{}).length;
+              return <div key={pid} style={{display:'flex',alignItems:'center',gap:8,background:t.surface,
+                border:`1px solid ${t.border}`,borderRadius:t.radius,padding:'8px 10px'}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontSize:13,fontWeight:700,color:t.text,margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pk.name}</p>
+                  <p style={{fontSize:10,color:t.muted,margin:'1px 0 0'}}>{cnt} {L('Fragen','questions','preguntas')}{pk.createdByName?` · ${pk.createdByName}`:''}</p>
+                </div>
+                <button onClick={()=>pullPack(pk)} title={L('In meine Fragen übernehmen','Add to my questions','Añadir a mis preguntas')}
+                  style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,color:t.accent,
+                    fontSize:13,cursor:'pointer',padding:'5px 9px',flexShrink:0}}>📥</button>
+                {myRole!=='viewer'&&<button onClick={()=>deleteTeamPack(team,pid)} title={L('Pack löschen','Delete pack','Borrar paquete')}
+                  style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,color:t.danger,
+                    fontSize:13,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>🗑</button>}
+              </div>;
+            })}
+          </div>
+        </div>
+
         <div style={{display:'flex',gap:8,marginTop:12}}>
           {isOwner
             ? <button onClick={()=>deleteTeam(team)}
@@ -5832,6 +5880,17 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   const[shareMsg,setShareMsg]=useState('');
   const[openPacks,setOpenPacks]=useState({});
   const[showOccasions,setShowOccasions]=useState(false);
+  const[myTeams,setMyTeams]=useState([]);
+  const[pushTarget,setPushTarget]=useState(null); // {name, questions}
+  const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
+  useEffect(()=>{
+    if(!myId) return;
+    get(ref(db,`userTeams/${myId}`)).then(async snap=>{
+      const ids=Object.keys(snap.val()||{});
+      const res=await Promise.all(ids.map(id=>get(ref(db,`teams/${id}`)).then(s=>({id,val:s.val()})).catch(()=>({id,val:null}))));
+      setMyTeams(res.filter(x=>x.val&&x.val.ownerId).map(x=>({id:x.id,name:x.val.name,role:x.val.members?.[myId]?.role})));
+    }).catch(()=>{});
+  },[myId]);
   const fileRef=React.useRef(null);
 
   useEffect(()=>{
@@ -6027,6 +6086,28 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
       setShareMsg(`${tpl.questions.length} → ${packName}`); setTimeout(()=>setShareMsg(''),3500);
     }catch(e){ console.error('load occasion failed:',e);
       window.alert(lang==='en'?'Loading failed.':lang==='es'?'Error al cargar.':'Laden fehlgeschlagen.'); }
+  }
+
+  // Pack ins Team teilen (Slice B)
+  async function pushPackToTeam(teamId, pack){
+    const qs=pack.questions||[];
+    if(!qs.length) return;
+    try{
+      const packId='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      const qObj={};
+      qs.forEach((q,i)=>{ const qId='q'+i.toString(36)+Math.random().toString(36).slice(2,5);
+        qObj[qId]={q:q.q,a:q.a,unit:q.unit,hint:q.hint||'',emoji:q.emoji||'📝',lang:q.lang||lang}; });
+      await update(ref(db,`teams/${teamId}/packs/${packId}`),
+        {name:pack.name,createdAt:Date.now(),createdBy:myId,createdByName:myName,questions:qObj});
+      setPushTarget(null);
+      setShareMsg((lang==='en'?'Shared to team: ':lang==='es'?'Compartido al equipo: ':'Ins Team geteilt: ')+pack.name); setTimeout(()=>setShareMsg(''),3000);
+    }catch(e){ console.error('push pack failed:',e);
+      window.alert(lang==='en'?'Sharing failed.':lang==='es'?'Error al compartir.':'Teilen fehlgeschlagen.'); }
+  }
+  function openPushPicker(packName){
+    if(!myTeams.length){ window.alert(lang==='en'?'Create or join a team first (button "Team").':lang==='es'?'Crea o únete a un equipo primero (botón "Equipo").':'Erst ein Team erstellen oder beitreten (Button „Team").'); return; }
+    if(!myTeams.some(tm=>tm.role!=='viewer')){ window.alert(lang==='en'?'You only have viewer rights in your team(s).':lang==='es'?'Solo tienes permisos de lector en tu(s) equipo(s).':'In deinen Teams hast du nur Betrachter-Rechte.'); return; }
+    setPushTarget({name:packName,questions:packs[packName]});
   }
 
   // Ganzes Pack löschen
@@ -6258,9 +6339,46 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
                 : <span style={{fontSize:10,color:t.muted}}>🔒 {lang==='en'?'Private':lang==='es'?'Privada':'Privat'}</span>}
             </div>
           </Card>)}
+          {onTeam&&<button onClick={()=>openPushPicker(packName)}
+            style={{alignSelf:'flex-start',background:'none',border:`1px dashed ${t.border}`,
+              borderRadius:t.radius,color:t.muted,fontSize:12,fontWeight:700,cursor:'pointer',
+              padding:'7px 12px',fontFamily:t.fontBody}}>
+            👥 {lang==='en'?'Share to team':lang==='es'?'Compartir al equipo':'Ins Team teilen'}
+          </button>}
         </div>}
       </div>;
     })}
+
+    {/* Team-Picker zum Teilen eines Packs */}
+    {pushTarget&&<div onClick={()=>setPushTarget(null)}
+      style={{position:'fixed',inset:0,zIndex:600,background:'rgba(0,0,0,0.72)',
+        display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
+        border:`1.5px solid ${t.border}`,maxWidth:380,width:'100%',padding:'20px',animation:'fu .25s ease both'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+          <h3 style={{fontFamily:t.fontTitle,fontSize:19,margin:0,color:t.text}}>
+            👥 {lang==='en'?'Share to team':lang==='es'?'Compartir al equipo':'Ins Team teilen'}
+          </h3>
+          <button onClick={()=>setPushTarget(null)} style={{background:'none',border:'none',
+            color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+        </div>
+        <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>
+          „{pushTarget.name}" → {lang==='en'?'choose a team:':lang==='es'?'elige un equipo:':'Team wählen:'}
+        </p>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {myTeams.filter(tm=>tm.role!=='viewer').map(tm=>(
+            <button key={tm.id} onClick={()=>pushPackToTeam(tm.id,pushTarget)}
+              style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'12px 14px',
+                borderRadius:t.radius,background:t.surface,border:`1.5px solid ${t.border}`,
+                cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+              <span style={{fontSize:20}}>👥</span>
+              <span style={{flex:1,fontSize:14,fontWeight:700,color:t.text}}>{tm.name}</span>
+              <span style={{color:t.accent,fontSize:18,fontWeight:800}}>→</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>}
   </div>;
 }
 
