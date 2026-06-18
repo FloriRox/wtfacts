@@ -3048,6 +3048,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
     {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center'}}><p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>{onLeave&&<button onClick={onLeave} style={{padding:'6px 14px',borderRadius:t.radius,background:'transparent',border:`1px solid ${t.danger}33`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>🚪 {i.leaveGame||'Verlassen'}</button>}</div>}
+    {q&&<div style={{textAlign:'center',marginTop:14}}><BugReportButton t={t} lang={lang} question={q}/></div>}
   </div>;
 }
 
@@ -5289,6 +5290,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
   const[loading,setLoading]=useState(true);
   const[editing,setEditing]=useState(null); // null=list, 'new'=new, {id,...}=edit
   const[shareMsg,setShareMsg]=useState('');
+  const[openPacks,setOpenPacks]=useState({});
   const fileRef=React.useRef(null);
 
   useEffect(()=>{
@@ -5544,23 +5546,31 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       </p>
     </Card>}
 
-    {packNames.map(packName=>(
-      <div key={packName} style={{marginBottom:18}}>
-        {/* Pack-Header mit Teilen */}
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
-          gap:8,margin:'0 0 8px',paddingLeft:2}}>
-          <p style={{fontSize:13,fontWeight:800,color:t.text,margin:0}}>
-            {packName} <span style={{color:t.muted,fontWeight:600}}>· {packs[packName].length}</span>
-          </p>
+    {packNames.map(packName=>{
+      const open=!!openPacks[packName];
+      return <div key={packName} style={{marginBottom:10}}>
+        {/* Pack-Header (klappt auf/zu) + Teilen */}
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={()=>setOpenPacks(o=>({...o,[packName]:!o[packName]}))}
+            style={{flex:1,display:'flex',alignItems:'center',gap:10,background:t.surface,
+              border:`1px solid ${t.border}`,borderRadius:t.radius,padding:'11px 14px',
+              cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+            <span style={{color:t.muted,fontSize:16,transform:open?'rotate(90deg)':'none',
+              transition:'transform .15s',flexShrink:0}}>›</span>
+            <span style={{flex:1,fontSize:13,fontWeight:800,color:t.text,overflow:'hidden',
+              textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{packName}</span>
+            <span style={{fontSize:12,color:t.muted,fontWeight:700,background:t.bg,
+              borderRadius:100,padding:'2px 9px',flexShrink:0}}>{packs[packName].length}</span>
+          </button>
           <button onClick={()=>sharePack(packName,packs[packName])}
             style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,
-              color:t.accent,fontSize:11,fontWeight:700,cursor:'pointer',padding:'4px 11px',
-              whiteSpace:'nowrap',fontFamily:t.fontBody}}>
-            🔗 {lang==='en'?'Share pack':lang==='es'?'Compartir':'Pack teilen'}
+              color:t.accent,fontSize:11,fontWeight:700,cursor:'pointer',padding:'8px 11px',
+              whiteSpace:'nowrap',fontFamily:t.fontBody,flexShrink:0}}>
+            🔗 {lang==='en'?'Share':lang==='es'?'Compartir':'Teilen'}
           </button>
         </div>
 
-        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {open&&<div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8,marginBottom:8}}>
           {packs[packName].map(q=><Card key={q.id} t={t} style={{padding:'12px 14px'}}>
             <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
               <span style={{fontSize:22,flexShrink:0}}>{q.emoji||'📝'}</span>
@@ -5601,9 +5611,67 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
                 : <span style={{fontSize:10,color:t.muted}}>🔒 {lang==='en'?'Private':lang==='es'?'Privada':'Privat'}</span>}
             </div>
           </Card>)}
-        </div>
+        </div>}
+      </div>;
+    })}
+  </div>;
+}
+
+/* ─── EDITOR-HILFE ─────────────────────────────────────── */
+function EditorHelpOverlay({t, lang, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const steps=[
+    {icon:'❓', title:L('Eine gute Frage','A good question','Una buena pregunta'),
+      body:L('Stelle eine Schätzfrage mit einer eindeutigen Zahl als Antwort. Am besten beginnt sie mit „Wie viele…" oder „Wie lange…". Beispiel: „Wie viele Länder habe ich bereist?"',
+             'Ask an estimation question with one clear number as the answer. It works best starting with “How many…” or “How long…”. Example: “How many countries have I visited?”',
+             'Haz una pregunta de estimación con un número claro como respuesta. Funciona mejor si empieza con “¿Cuántos…?”. Ejemplo: “¿Cuántos países he visitado?”')},
+    {icon:'🔢', title:L('Antwort & Einheit','Answer & unit','Respuesta y unidad'),
+      body:L('Die Antwort muss eine Zahl sein (Dezimalstellen mit Punkt, z. B. 3.5). Die Einheit beschreibt, was gezählt wird – z. B. „Länder", „Tage", „€".',
+             'The answer must be a number (decimals with a dot, e.g. 3.5). The unit describes what is counted – e.g. “countries”, “days”, “€”.',
+             'La respuesta debe ser un número (decimales con punto, p. ej. 3.5). La unidad describe qué se cuenta – p. ej. “países”, “días”, “€”.')},
+    {icon:'💡', title:L('Hinweis (optional)','Hint (optional)','Pista (opcional)'),
+      body:L('Ein kurzer Fun Fact, der nach dem Auflösen gezeigt wird – macht die Frage persönlicher und unterhaltsamer.',
+             'A short fun fact shown after the reveal – it makes the question more personal and entertaining.',
+             'Un dato curioso que se muestra tras revelar – hace la pregunta más personal y divertida.')},
+    {icon:'📦', title:L('Packs / Kategorien','Packs / categories','Paquetes / categorías'),
+      body:L('Sortiere deine Fragen in Packs (z. B. „Lisas Hochzeit"). Ein Pack kannst du später per Link mit anderen teilen oder im Spiel als Kategorie auswählen.',
+             'Sort your questions into packs (e.g. “Lisa’s Wedding”). You can share a pack via link or pick it as a category in a game.',
+             'Organiza tus preguntas en paquetes (p. ej. “Boda de Lisa”). Puedes compartir un paquete por enlace o elegirlo como categoría en una partida.')},
+    {icon:'🌍', title:L('Sichtbarkeit','Visibility','Visibilidad'),
+      body:L('„Nur meine Runden" bleibt privat. „Für alle vorschlagen" reicht die Frage zur Prüfung ein – wird sie genehmigt, taucht sie anonym im Community-Pool auf.',
+             '“My games only” stays private. “Suggest for all” submits it for review – once approved it appears anonymously in the community pool.',
+             '“Solo mis partidas” queda privada. “Proponer para todos” la envía a revisión – si se aprueba aparece de forma anónima en el grupo de la comunidad.')},
+    {icon:'📄', title:L('Viele auf einmal (CSV)','Many at once (CSV)','Muchas a la vez (CSV)'),
+      body:L('Über „Vorlage" lädst du eine Tabelle herunter, füllst sie in Excel/Sheets aus und importierst sie per „CSV importieren" – bis zu 50 Fragen auf einmal.',
+             'Use “Template” to download a sheet, fill it in Excel/Sheets and import it via “Import CSV” – up to 50 questions at once.',
+             'Usa “Plantilla” para descargar una hoja, complétala en Excel/Sheets e impórtala con “Importar CSV” – hasta 50 preguntas de una vez.')},
+  ];
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:600,
+    background:'rgba(0,0,0,0.72)',display:'flex',alignItems:'center',justifyContent:'center',
+    padding:18}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
+      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',maxHeight:'85vh',
+      overflowY:'auto',padding:'22px 20px',animation:'fu .25s ease both'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+        <h2 style={{fontFamily:t.fontTitle,fontSize:24,margin:0,color:t.text}}>
+          {L('So erstellst du Fragen','How to create questions','Cómo crear preguntas')}
+        </h2>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,
+          fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
       </div>
-    ))}
+      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+        {steps.map((s,idx)=><div key={idx} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+          <span style={{fontSize:24,flexShrink:0,lineHeight:1.1}}>{s.icon}</span>
+          <div>
+            <p style={{fontSize:14,fontWeight:800,color:t.text,margin:'0 0 3px'}}>{s.title}</p>
+            <p style={{fontSize:13,color:t.muted,margin:0,lineHeight:1.5}}>{s.body}</p>
+          </div>
+        </div>)}
+      </div>
+      <Btn t={t} onClick={onClose} full style={{marginTop:20}}>
+        {L('Verstanden','Got it','Entendido')}
+      </Btn>
+    </div>
   </div>;
 }
 
@@ -5620,6 +5688,8 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
   const[visibility,setVisibility]=useState(initial?.visibility||'private');
   const[error,setError]=useState('');
   const[saving,setSaving]=useState(false);
+  const[showHelp,setShowHelp]=useState(false);
+  const[newCatMode,setNewCatMode]=useState(false);
 
   const EMOJIS=['📝','🎯','🔢','💡','🌍','🏆','🎲','⭐','🔬','🎭','🍔','🎵','🚀','💰','🏋️','🐾'];
   const packSuggestions=[...new Set([DEFAULT_PACK,...existingPacks])].filter(Boolean);
@@ -5651,33 +5721,31 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
   }
 
   const labelStyle={fontSize:13,color:t.text,fontWeight:600,margin:'0 0 4px',display:'block'};
+  const sectionStyle={borderTop:`1px solid ${t.border}`,paddingTop:14,marginTop:2};
+  const selectStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
+    borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
+    fontFamily:t.fontBody,boxSizing:'border-box',cursor:'pointer',appearance:'none',
+    backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e5e54' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+    backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32};
 
   return <div style={{...page,animation:'fu .3s ease both'}}>
+    {showHelp&&<EditorHelpOverlay t={t} lang={lang} onClose={()=>setShowHelp(false)}/>}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
       <button onClick={onCancel} style={{background:'none',border:'none',color:t.muted,
         fontSize:20,cursor:'pointer',padding:0}}>←</button>
-      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,flex:1}}>
         {isNew
           ?(lang==='en'?'New Question':lang==='es'?'Nueva Pregunta':'Neue Frage')
           :(lang==='en'?'Edit Question':lang==='es'?'Editar Pregunta':'Frage bearbeiten')}
       </h2>
+      <button onClick={()=>setShowHelp(true)} title={lang==='en'?'How it works':lang==='es'?'Cómo funciona':'So geht\'s'}
+        style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:'50%',
+          width:34,height:34,color:t.muted,fontSize:16,fontWeight:800,cursor:'pointer',
+          flexShrink:0,fontFamily:t.fontBody}}>?</button>
     </div>
 
     <Card t={t} style={{display:'flex',flexDirection:'column',gap:14}}>
-      {/* Emoji picker */}
-      <div>
-        <span style={labelStyle}>Emoji</span>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-          {EMOJIS.map(em=><button key={em} onClick={()=>setEmoji(em)}
-            style={{fontSize:22,background:emoji===em?t.accent+'22':'none',
-              border:`1.5px solid ${emoji===em?t.accent:t.border}`,
-              borderRadius:t.radius,padding:'4px 6px',cursor:'pointer'}}>
-            {em}
-          </button>)}
-        </div>
-      </div>
-
-      {/* Question */}
+      {/* 1) Die Frage – das Wichtigste zuerst */}
       <div>
         <span style={labelStyle}>
           {lang==='en'?'Question (start with "How many...")':
@@ -5693,7 +5761,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
             fontFamily:t.fontBody,resize:'none',boxSizing:'border-box'}}/>
       </div>
 
-      {/* Answer + Unit */}
+      {/* 2) Antwort + Einheit */}
       <div style={{display:'flex',gap:10}}>
         <div style={{flex:1}}>
           <span style={labelStyle}>
@@ -5711,9 +5779,20 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
         </div>
       </div>
 
-      {/* Hint */}
-      <div>
+      {/* 3) Darstellung: Emoji + Hinweis */}
+      <div style={sectionStyle}>
         <span style={labelStyle}>
+          {lang==='en'?'Icon':lang==='es'?'Icono':'Symbol'}
+        </span>
+        <div style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4,WebkitOverflowScrolling:'touch'}}>
+          {EMOJIS.map(em=><button key={em} onClick={()=>setEmoji(em)}
+            style={{fontSize:20,background:emoji===em?t.accent+'22':'none',
+              border:`1.5px solid ${emoji===em?t.accent:t.border}`,
+              borderRadius:t.radius,padding:'3px 7px',cursor:'pointer',flexShrink:0}}>
+            {em}
+          </button>)}
+        </div>
+        <span style={{...labelStyle,marginTop:12}}>
           💡 {lang==='en'?'Hint (optional)':lang==='es'?'Pista (opcional)':'Hinweis (optional)'}
         </span>
         <Inp value={hint} onChange={setHint}
@@ -5722,28 +5801,34 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
             'Fun Fact zur Antwort...'} t={t}/>
       </div>
 
-      {/* Pack / Kategorie */}
-      <div>
+      {/* 4) Pack / Kategorie – Dropdown statt Knopf-Wolke */}
+      <div style={sectionStyle}>
         <span style={labelStyle}>
           📦 {lang==='en'?'Pack / category':lang==='es'?'Paquete / categoría':'Pack / Kategorie'}
         </span>
-        <Inp value={category} onChange={setCategory}
-          placeholder={lang==='en'?'e.g. Anna\'s Wedding':lang==='es'?'p.ej. Boda de Ana':'z.B. Lisas Hochzeit'} t={t}/>
-        {packSuggestions.length>0&&<div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:8}}>
-          {packSuggestions.map(p=>(
-            <button key={p} onClick={()=>setCategory(p)}
-              style={{padding:'4px 10px',borderRadius:100,fontSize:11,fontWeight:600,cursor:'pointer',
-                border:`1.5px solid ${category===p?t.accent:t.border}`,
-                background:category===p?t.accent+'18':'none',
-                color:category===p?t.accent:t.muted,fontFamily:t.fontBody}}>
-              {p}
-            </button>
-          ))}
-        </div>}
+        {!newCatMode
+          ? <select
+              value={packSuggestions.includes(category)?category:'__new__'}
+              onChange={e=>{
+                if(e.target.value==='__new__'){ setNewCatMode(true); setCategory(''); }
+                else setCategory(e.target.value);
+              }}
+              style={selectStyle}>
+              {packSuggestions.map(p=><option key={p} value={p}>{p}</option>)}
+              <option value="__new__">➕ {lang==='en'?'New category…':lang==='es'?'Nueva categoría…':'Neue Kategorie…'}</option>
+            </select>
+          : <div style={{display:'flex',gap:8}}>
+              <Inp value={category} onChange={setCategory}
+                placeholder={lang==='en'?'e.g. Anna\'s Wedding':lang==='es'?'p.ej. Boda de Ana':'z.B. Lisas Hochzeit'} t={t} style={{flex:1}}/>
+              <button onClick={()=>{ setNewCatMode(false); setCategory(DEFAULT_PACK); }}
+                title={lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
+                style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:t.radius,
+                  color:t.muted,fontSize:18,cursor:'pointer',padding:'0 12px',flexShrink:0}}>×</button>
+            </div>}
       </div>
 
-      {/* Sichtbarkeit */}
-      <div>
+      {/* 5) Sichtbarkeit */}
+      <div style={sectionStyle}>
         <span style={labelStyle}>
           {lang==='en'?'Visibility':lang==='es'?'Visibilidad':'Sichtbarkeit'}
         </span>
@@ -5774,11 +5859,11 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
         </p>
       </div>
 
-      {/* Preview */}
+      {/* Vorschau */}
       {q&&a&&unit&&<div style={{background:t.surface,borderRadius:t.radius,
         padding:'12px',border:`1.5px solid ${t.border}`}}>
         <p style={{fontSize:11,color:t.muted,margin:'0 0 8px',fontWeight:700,letterSpacing:.8}}>
-          VORSCHAU
+          {lang==='en'?'PREVIEW':lang==='es'?'VISTA PREVIA':'VORSCHAU'}
         </p>
         <div style={{textAlign:'center'}}>
           <div style={{fontSize:28,marginBottom:4}}>{emoji}</div>
