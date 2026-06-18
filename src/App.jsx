@@ -1671,7 +1671,7 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1805,6 +1805,11 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           {onMyQuestions&&<button onClick={onMyQuestions} style={landingMenuBtn}>
             <span style={{fontSize:17,width:22,textAlign:'center'}}>📝</span>
             <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
+            <span style={{color:lt.muted}}>›</span>
+          </button>}
+          {onTeam&&<button onClick={onTeam} style={landingMenuBtn}>
+            <span style={{fontSize:17,width:22,textAlign:'center'}}>👥</span>
+            <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Team':lang==='es'?'Equipo':'Team'}</span>
             <span style={{color:lt.muted}}>›</span>
           </button>}
           {onAdmin&&<button onClick={onAdmin} style={{...landingMenuBtn,borderColor:ADULT.accent+'66',color:ADULT.accent,fontWeight:700}}>
@@ -6344,13 +6349,6 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
         📋 {lang==='en'?'Templates':lang==='es'?'Plantillas':'Vorlagen'}
       </Btn>
     </div>
-    {onTeam&&<button onClick={onTeam}
-      style={{width:'100%',marginBottom:16,padding:'12px',borderRadius:t.radius,
-        background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,
-        fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,
-        display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-      👥 {lang==='en'?'Team (share packs)':lang==='es'?'Equipo (compartir paquetes)':'Team (Packs teilen)'}
-    </button>}
 
     {showOccasions&&<div onClick={()=>setShowOccasions(false)}
       style={{position:'fixed',inset:0,zIndex:600,background:'rgba(0,0,0,0.72)',
@@ -7476,8 +7474,8 @@ function App(){
       onDone={()=>setShowOnboarding(false)}/>}
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
-    {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('myQuestions')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y}/>}
+    {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
