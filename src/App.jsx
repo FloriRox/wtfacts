@@ -4008,17 +4008,21 @@ function BugReportButton({t, lang, question}) {
   }
 
   if(sent) return (
-    <span style={{fontSize:11,color:t.gold,opacity:.85,padding:'4px 0',
-      display:'inline-block'}}>
+    <span style={{display:'inline-flex',alignItems:'center',gap:6,
+      fontSize:13,fontWeight:700,color:t.green,
+      border:`1.5px solid ${t.green}`,borderRadius:t.radius,
+      padding:'9px 16px',background:t.green+'18'}}>
       ✅ {i.feedbackThanks||'Danke, gemeldet!'}
     </span>
   );
 
   return (
     <button onClick={report}
-      style={{background:'none',border:'none',color:t.muted,fontSize:11,
-        cursor:'pointer',fontFamily:t.fontBody,textDecoration:'underline',
-        opacity:.6,padding:'4px 0'}}>
+      style={{display:'inline-flex',alignItems:'center',gap:6,
+        background:t.surface,border:`1.5px solid ${t.danger}`,
+        color:t.danger,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:t.fontBody,
+        borderRadius:t.radius,padding:'9px 16px'}}>
       {i.feedbackBug||'🐛 Fehler melden'}
     </button>
   );
@@ -4516,6 +4520,7 @@ function AdminDashboard({t, lang, onBack}){
   const[qSort,setQSort]=useState('played'); // played|hard|easy|ambiguous
   const[range,setRange]=useState('14d'); // 14d|30d|6m|1y|all – Zeitraum des Verlaufs-Charts
   const[commFilter,setCommFilter]=useState('pending'); // pending|approved|rejected|all
+  const[fbSort,setFbSort]=useState('newest'); // newest|oldest|best|worst|region
   const[editComm,setEditComm]=useState(null); // {id,q,a,unit}
   const[busyId,setBusyId]=useState(null);
 
@@ -4604,6 +4609,16 @@ function AdminDashboard({t, lang, onBack}){
         const active7      = users.filter(u=>(u.lastSeen||0)>=todayMs-6*DAY).length;
         const usersByLang  = {};
         users.forEach(u=>{ const l=u.lang||'de'; usersByLang[l]=(usersByLang[l]||0)+1; });
+        // #2 Login-Methoden (Google/Apple/anonym/…)
+        const usersByMethod = {};
+        users.forEach(u=>{
+          let m = u.method;
+          if(!m) m = u.anon ? 'anonymous' : 'other';
+          if(m==='google.com') m='google';
+          else if(m==='apple.com') m='apple';
+          else if(m==='password') m='email';
+          usersByMethod[m] = (usersByMethod[m]||0)+1;
+        });
 
         // #1 Community-Fragen
         const community = Object.entries(communityV||{})
@@ -4633,7 +4648,7 @@ function AdminDashboard({t, lang, onBack}){
           questions: questions.slice(0,50), questionsAll: questions,
           feedbacks,
           sparkDays, last7, prev7, delta7,
-          totalUsers, registered, anonUsers, returning, newUsers7, active7, usersByLang,
+          totalUsers, registered, anonUsers, returning, newUsers7, active7, usersByLang, usersByMethod,
           community, communityPending, communityApproved, communityRejected,
           bugs, bugsOpen,
         });
@@ -5021,15 +5036,39 @@ function AdminDashboard({t, lang, onBack}){
       </div>}
 
       {/* ── FEEDBACK ── */}
-      {tab==='feedback'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-        <p style={{fontSize:11,color:muted,margin:'0 0 8px'}}>
-          Kommentare bei Bewertungen unter 4★ oder NPS unter 7 · {stats.feedbacks.length} Einträge
-        </p>
+      {tab==='feedback'&&(()=>{
+        const fbSorted=[...stats.feedbacks].sort((a,b)=>{
+          switch(fbSort){
+            case 'oldest': return (a.ts||0)-(b.ts||0);
+            case 'best':   return (b.stars||0)-(a.stars||0) || (b.ts||0)-(a.ts||0);
+            case 'worst':  return (a.stars||0)-(b.stars||0) || (b.ts||0)-(a.ts||0);
+            case 'region': return String(a.region||'').localeCompare(String(b.region||'')) || (b.ts||0)-(a.ts||0);
+            default:       return (b.ts||0)-(a.ts||0);
+          }
+        });
+        return <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap',margin:'0 0 4px'}}>
+          <p style={{fontSize:11,color:muted,margin:0}}>
+            Kommentare bei Bewertungen unter 4★ oder NPS unter 7 · {stats.feedbacks.length} Einträge
+          </p>
+          <select value={fbSort} onChange={e=>setFbSort(e.target.value)}
+            style={{padding:'6px 10px',background:surface,border:`1.5px solid ${border}`,
+              borderRadius:8,color:t.text,fontSize:12,fontWeight:600,cursor:'pointer',
+              fontFamily:t.fontBody,appearance:'none',paddingRight:26,
+              backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e5e54' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+              backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center'}}>
+            <option value="newest">Neueste zuerst</option>
+            <option value="oldest">Älteste zuerst</option>
+            <option value="best">Beste zuerst (★)</option>
+            <option value="worst">Schlechteste zuerst (★)</option>
+            <option value="region">Nach Region</option>
+          </select>
+        </div>
         {stats.feedbacks.length===0&&<div style={{background:surface,borderRadius:10,
           padding:'20px',textAlign:'center',border:`1px solid ${border}`}}>
           <p style={{color:muted,fontSize:13}}>Noch keine Feedback-Kommentare.</p>
         </div>}
-        {stats.feedbacks.map((f,idx)=>{
+        {fbSorted.map((f,idx)=>{
           const date=f.ts?new Date(f.ts).toLocaleDateString('de-DE',{
             day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
           }):'–';
@@ -5061,7 +5100,8 @@ function AdminDashboard({t, lang, onBack}){
             </div>
           </div>;
         })}
-      </div>}
+      </div>;
+      })()}
 
       {/* ── FRAGEN ── */}
       {/* ── #1 COMMUNITY-MODERATION ── */}
@@ -5205,9 +5245,25 @@ function AdminDashboard({t, lang, onBack}){
           {!Object.keys(stats.usersByLang).length&&<p style={{fontSize:12,color:muted,margin:0}}>
             Noch keine Account-Daten.</p>}
         </div>
+        <div style={{background:surface,borderRadius:12,padding:'14px 16px',border:`1px solid ${border}`}}>
+          <p style={{fontSize:11,color:muted,fontWeight:700,letterSpacing:.8,margin:'0 0 10px'}}>
+            ANMELDUNG NACH METHODE
+          </p>
+          {(()=>{
+            const labels={google:'🔵 Google',apple:'🍎 Apple',email:'✉ E-Mail',anonymous:'👤 Anonym',other:'• Sonstige',unknown:'• Unbekannt'};
+            const order=['google','apple','email','anonymous','other','unknown'];
+            const entries=Object.entries(stats.usersByMethod||{})
+              .sort((a,b)=>(order.indexOf(a[0])-order.indexOf(b[0]))||(b[1]-a[1]));
+            const max=Math.max(1,...Object.values(stats.usersByMethod||{}));
+            return entries.length
+              ? entries.map(([k,v])=><Bar key={k} label={labels[k]||k} value={v} max={max}
+                  color={k==='anonymous'?muted:k==='apple'?t.text:green}/>)
+              : <p style={{fontSize:12,color:muted,margin:0}}>Noch keine Login-Daten.</p>;
+          })()}
+        </div>
         <p style={{fontSize:10,color:muted,margin:0,lineHeight:1.5}}>
           Hinweis: Account-Daten werden erst seit diesem Update erfasst (Heartbeat beim App-Start) –
-          die Werte wachsen ab Deploy.
+          die Werte wachsen ab Deploy. Login-Methode wird pro Account beim Anmelden gespeichert.
         </p>
       </div>}
 
@@ -5979,8 +6035,10 @@ function App(){
           const uref=ref(db,`globalStats/users/${user.uid}`);
           get(uref).then(s=>{
             const prev=s.val()||{};
+            const method=user.isAnonymous?'anonymous':((user.providerData&&user.providerData[0]&&user.providerData[0].providerId)||'unknown');
             update(uref,{
               anon:user.isAnonymous,
+              method,
               lang:(typeof localStorage!=='undefined'&&localStorage.getItem('em_lang'))||'de',
               firstSeen:prev.firstSeen||Date.now(),
               lastSeen:Date.now(),
