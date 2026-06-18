@@ -129,7 +129,7 @@ const KIDS = {
 };
 
 /* ─── BARRIEREFREIHEIT (global, persistent) ──────── */
-function loadA11y(){ try{ return JSON.parse(localStorage.getItem('em_a11y')||'{}')||{}; }catch(e){ return {}; } }
+function loadA11y(){ try{ var o=JSON.parse(localStorage.getItem('em_a11y')||'{}')||{}; if(o.contrast===undefined) o.contrast=true; return o; }catch(e){ return {contrast:true}; } }
 var A11Y = loadA11y();
 function applyLargeText(){ try{ document.documentElement.style.zoom = A11Y.large ? '1.12' : ''; }catch(e){} }
 function setA11yPref(key,val){ A11Y={...A11Y,[key]:val}; try{ localStorage.setItem('em_a11y',JSON.stringify(A11Y)); }catch(e){} applyLargeText(); }
@@ -1024,17 +1024,18 @@ function Avatar({name,t,size=36}){
   return <div style={{width:size,height:size,borderRadius:"50%",background:avatarColor(name,t),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.42,fontWeight:800,flexShrink:0}}>{(name||"?")[0].toUpperCase()}</div>;
 }
 function Logo({t,size="lg"}){
-  const fs=size==="lg"?"clamp(52px,12vw,80px)":"36px";
+  const big=size==="lg"||size==="xl";
+  const fs=size==="xl"?"clamp(64px,17vw,116px)":size==="lg"?"clamp(52px,12vw,80px)":"36px";
   if(t.id==="adult")return <div style={{fontFamily:t.fontTitle,fontSize:fs,letterSpacing:2,lineHeight:1,color:t.accent,animation:"flame 2.5s ease infinite"}}>
     Esti<span style={{color:t.gold}}>Mates</span>
-    {size==="lg"&&<div style={{fontFamily:t.fontBody,fontSize:12,letterSpacing:1.8,color:t.muted,marginTop:6,textTransform:"uppercase"}}>The pocket party game to prove your mates wrong.</div>}
+    {big&&<div style={{fontFamily:t.fontBody,fontSize:size==="xl"?14:12,letterSpacing:1.8,color:t.muted,marginTop:size==="xl"?10:6,textTransform:"uppercase"}}>The pocket party game to prove your mates wrong.</div>}
   </div>;
   return <div style={{textAlign:"center"}}>
     <div style={{fontFamily:t.fontTitle,fontSize:fs,lineHeight:1.1}}>
       <span style={{animation:"rainbow 3s linear infinite"}}>Esti</span><span style={{animation:"rainbow 3s .5s linear infinite"}}>Mates</span>
     </div>
-    {size==="lg"&&<div style={{fontSize:13,color:t.muted,marginTop:4}}>The pocket party game to prove your mates wrong. 🎉</div>}
-    {size!=="lg"&&<div style={{fontSize:16,animation:"bop 1.2s ease infinite"}}>🎉✨</div>}
+    {big&&<div style={{fontSize:size==="xl"?15:13,color:t.muted,marginTop:4}}>The pocket party game to prove your mates wrong. 🎉</div>}
+    {!big&&<div style={{fontSize:16,animation:"bop 1.2s ease infinite"}}>🎉✨</div>}
   </div>;
 }
 function LoadingOverlay({t,text}){
@@ -1790,7 +1791,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             {i.demoLabel||"Demo"}
           </button>}
         </div>
-        <Logo t={lt} size="lg"/>
+        <Logo t={lt} size="xl"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
           <Btn t={lt} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
           <Btn t={lt} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
@@ -1813,8 +1814,8 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           </button>}
           {onA11y&&<div style={{width:'100%',marginTop:4}}>
             <button onClick={()=>setA11yOpen(o=>!o)} style={{...landingMenuBtn,fontWeight:700}}>
-              <span style={{fontSize:17,width:22,textAlign:'center'}}>♿</span>
-              <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}</span>
+              <span style={{fontSize:17,width:22,textAlign:'center'}}>⚙️</span>
+              <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}</span>
               <span style={{color:lt.muted,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
             </button>
             {a11yOpen&&<div style={{marginTop:8}}><A11yMenu t={lt} lang={lang} onA11y={onA11y}/></div>}
@@ -6339,17 +6340,10 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
       <Btn t={t} variant="secondary" onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1}}>
         📄 {lang==='en'?'Import CSV':lang==='es'?'Importar CSV':'CSV importieren'}
       </Btn>
-      <Btn t={t} variant="secondary" onClick={downloadTemplate} style={{flex:1}}>
-        📋 {lang==='en'?'Template':lang==='es'?'Plantilla':'Vorlage'}
+      <Btn t={t} variant="secondary" onClick={()=>setShowOccasions(true)} style={{flex:1}}>
+        📋 {lang==='en'?'Templates':lang==='es'?'Plantillas':'Vorlagen'}
       </Btn>
     </div>
-    <button onClick={()=>setShowOccasions(true)}
-      style={{width:'100%',marginBottom:16,padding:'12px',borderRadius:t.radius,
-        background:t.gold+'18',border:`1.5px solid ${t.gold}66`,color:t.gold,
-        fontSize:14,fontWeight:800,cursor:'pointer',fontFamily:t.fontBody,
-        display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-      ✨ {lang==='en'?'Occasion templates (ready-made)':lang==='es'?'Plantillas por ocasión (listas)':'Anlass-Vorlagen (fix & fertig)'}
-    </button>
     {onTeam&&<button onClick={onTeam}
       style={{width:'100%',marginBottom:16,padding:'12px',borderRadius:t.radius,
         background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,
@@ -6366,15 +6360,15 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
         overflowY:'auto',padding:'20px',animation:'fu .25s ease both'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
           <h2 style={{fontFamily:t.fontTitle,fontSize:22,margin:0,color:t.text}}>
-            ✨ {lang==='en'?'Occasion templates':lang==='es'?'Plantillas por ocasión':'Anlass-Vorlagen'}
+            📋 {lang==='en'?'Templates':lang==='es'?'Plantillas':'Vorlagen'}
           </h2>
           <button onClick={()=>setShowOccasions(false)} style={{background:'none',border:'none',
             color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
         </div>
         <p style={{fontSize:12,color:t.muted,margin:'0 0 14px',lineHeight:1.5}}>
-          {lang==='en'?'Pick an occasion to add ~22 ready-made questions as an editable pack. Then adjust the answers to your event!'
-            :lang==='es'?'Elige una ocasión para añadir ~22 preguntas listas como paquete editable. ¡Luego ajusta las respuestas a tu evento!'
-            :'Wähle einen Anlass – ~22 fertige Fragen landen als editierbares Pack. Danach die Antworten an euer Event anpassen!'}
+          {lang==='en'?'Ready-made occasion packs (~22 questions each) – or a blank CSV template to fill in yourself. For occasions: adjust the answers to your event!'
+            :lang==='es'?'Paquetes por ocasión (~22 preguntas) – o una plantilla CSV en blanco para rellenar. En ocasiones: ¡ajusta las respuestas a tu evento!'
+            :'Fertige Anlass-Pakete (~22 Fragen) – oder eine leere CSV-Vorlage zum selbst Ausfüllen. Bei Anlässen: Antworten an euer Event anpassen!'}
         </p>
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {Object.entries(OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de).map(([occId,occ])=>(
@@ -6394,15 +6388,29 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
               <span style={{color:t.gold,fontSize:18,fontWeight:800,flexShrink:0}}>+</span>
             </button>
           ))}
+          <div style={{height:1,background:t.border,margin:'2px 0'}}/>
+          <button onClick={()=>{ setShowOccasions(false); downloadTemplate(); }}
+            style={{display:'flex',alignItems:'center',gap:12,width:'100%',
+              padding:'14px 16px',borderRadius:t.radius,background:t.surface,
+              border:`1.5px dashed ${t.border}`,cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+            <span style={{fontSize:26,flexShrink:0}}>📄</span>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 1px'}}>
+                {lang==='en'?'Blank template (CSV)':lang==='es'?'Plantilla en blanco (CSV)':'Leere Vorlage (CSV)'}
+              </p>
+              <p style={{fontSize:11,color:t.muted,margin:0}}>
+                {lang==='en'?'Fill in Excel/Sheets, then import':lang==='es'?'Rellena en Excel/Sheets e importa':'In Excel/Sheets ausfüllen, dann importieren'}
+              </p>
+            </div>
+            <span style={{color:t.muted,fontSize:18,flexShrink:0}}>⬇</span>
+          </button>
         </div>
       </div>
     </div>}
     <p style={{fontSize:11,color:t.muted,margin:'-8px 0 16px',lineHeight:1.5}}>
-      {lang==='en'
-        ? 'Open the template in Excel/Sheets, fill the columns (answer = a number, decimals with a dot), save as CSV, then import. Max 50 questions.'
-        : lang==='es'
-        ? 'Abre la plantilla en Excel/Sheets, rellena las columnas (respuesta = número, decimales con punto), guarda como CSV e importa. Máx. 50 preguntas.'
-        : 'Vorlage in Excel/Sheets öffnen, Spalten ausfüllen (antwort = Zahl, Dezimal mit Punkt), als CSV speichern, dann importieren. Max. 50 Fragen.'}
+      {lang==='en'?'Tip: "Templates" gives ready-made packs or a blank CSV; "Import CSV" uploads your filled file (max 50 questions).'
+        :lang==='es'?'Consejo: "Plantillas" ofrece paquetes listos o un CSV en blanco; "Importar CSV" sube tu archivo (máx. 50 preguntas).'
+        :'Tipp: „Vorlagen" liefert fertige Pakete oder eine leere CSV; „CSV importieren" lädt deine ausgefüllte Datei hoch (max. 50 Fragen).'}
     </p>
 
     {shareMsg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,
@@ -7518,14 +7526,14 @@ function App(){
       ✓ {lang==='en'?'Reconnected':lang==='es'?'Reconectado':'Wieder verbunden'}
     </div>}
 
-    {/* #8 Barrierefreiheit auch im Spiel erreichbar */}
+    {/* #8 Einstellungen auch im Spiel erreichbar */}
     {screen!=="home"&&screen!=="admin"&&screen!=="myQuestions"&&<>
       <button onClick={()=>setShowA11y(true)}
-        title={lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}
+        title={lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}
         style={{position:'fixed',left:14,bottom:14,zIndex:480,width:42,height:42,
           borderRadius:'50%',background:t.surface,border:`1.5px solid ${t.border}`,
           color:t.text,fontSize:20,cursor:'pointer',boxShadow:'0 2px 10px rgba(0,0,0,.35)',
-          display:'flex',alignItems:'center',justifyContent:'center',opacity:.85}}>♿</button>
+          display:'flex',alignItems:'center',justifyContent:'center',opacity:.85}}>⚙️</button>
       {showA11y&&<div onClick={()=>setShowA11y(false)}
         style={{position:'fixed',inset:0,zIndex:620,background:'rgba(0,0,0,0.72)',
           display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
@@ -7534,11 +7542,14 @@ function App(){
           animation:'fu .25s ease both'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
             <h3 style={{fontFamily:t.fontTitle,fontSize:20,margin:0,color:t.text}}>
-              ♿ {lang==='en'?'Accessibility':lang==='es'?'Accesibilidad':'Barrierefreiheit'}
+              ⚙️ {lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}
             </h3>
             <button onClick={()=>setShowA11y(false)} style={{background:'none',border:'none',
               color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
           </div>
+          <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,margin:'0 0 8px'}}>
+            {lang==='en'?'DISPLAY & ACCESSIBILITY':lang==='es'?'PANTALLA Y ACCESIBILIDAD':'ANZEIGE & BARRIEREFREIHEIT'}
+          </p>
           <A11yMenu t={t} lang={lang} onA11y={handleA11y}/>
         </div>
       </div>}
