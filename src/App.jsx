@@ -5909,6 +5909,10 @@ function App(){
   const[authReady,setAuthReady]=useState(false);
   const[showLoginPrompt,setShowLoginPrompt]=useState(false);
   const[showA11y,setShowA11y]=useState(false);
+  const[online,setOnline]=useState(true);
+  const[showReconnected,setShowReconnected]=useState(false);
+  const hasConnectedRef=useRef(false);
+  const hasDroppedRef=useRef(false);
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[showSteckbrief,setShowSteckbrief]=useState(false);
   const[gamePaused,setGamePaused]=useState(false);
@@ -6079,6 +6083,28 @@ function App(){
   const[,setA11yTick]=useState(0);
   useEffect(()=>{ applyLargeText(); },[]);
   function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
+
+  // Verbindungsstatus (nahtloser Reconnect-Feedback) – Firebase nimmt Listener selbst wieder auf
+  useEffect(()=>{
+    let flashTimer=null;
+    const cref=ref(db,'.info/connected');
+    const unsub=onValue(cref,snap=>{
+      const v=snap.val()===true;
+      setOnline(v);
+      if(v){
+        if(hasDroppedRef.current){
+          setShowReconnected(true);
+          if(flashTimer)clearTimeout(flashTimer);
+          flashTimer=setTimeout(()=>setShowReconnected(false),2200);
+          hasDroppedRef.current=false;
+        }
+        hasConnectedRef.current=true;
+      } else if(hasConnectedRef.current){
+        hasDroppedRef.current=true;
+      }
+    });
+    return()=>{ if(flashTimer)clearTimeout(flashTimer); unsub(); };
+  },[]);
 
   function listenRoom(c){
     if(unsubRef.current)unsubRef.current();
@@ -6565,6 +6591,22 @@ function App(){
     {screen==="betting"&&room&&(room.order||[]).filter(id=>!(room.afkPlayers||{})[id]).length>1&&<BettingScreen room={room} myId={myId} t={t} onBet={handleBet} code={code} lang={lang}/>}
     {screen==="results"&&room&&<ResultsScreen room={room} myId={myId} t={t} onNext={handleNext} onEnd={handleEnd} lang={lang} code={code} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null}/>}
     {screen==="final"&&room&&<FinalScreen room={room} myId={myId} t={t} onRestart={handleRestart} lang={lang} isAnonymous={isAnonymous} onShowLogin={()=>setShowLoginPrompt(true)} userName={userName} onKick={room.hostId===myId?handleKick:null}/>}
+
+    {/* Verbindungsstatus-Banner (Reconnect-Feedback) */}
+    {code&&screen!=="home"&&!online&&hasConnectedRef.current&&<div style={{position:'fixed',
+      top:0,left:0,right:0,zIndex:660,background:'#b8860b',color:'#fff',
+      padding:'8px 14px',textAlign:'center',fontSize:13,fontWeight:700,
+      fontFamily:t.fontBody,boxShadow:'0 2px 8px rgba(0,0,0,.3)',
+      animation:'pulse 1.6s ease infinite'}}>
+      ⚠ {lang==='en'?'Connection lost – reconnecting…':lang==='es'?'Conexión perdida – reconectando…':'Verbindung unterbrochen – verbinde neu…'}
+    </div>}
+    {code&&screen!=="home"&&online&&showReconnected&&<div style={{position:'fixed',
+      top:0,left:0,right:0,zIndex:660,background:t.green,color:'#06281a',
+      padding:'8px 14px',textAlign:'center',fontSize:13,fontWeight:800,
+      fontFamily:t.fontBody,boxShadow:'0 2px 8px rgba(0,0,0,.3)',
+      animation:'fu .25s ease both'}}>
+      ✓ {lang==='en'?'Reconnected':lang==='es'?'Reconectado':'Wieder verbunden'}
+    </div>}
 
     {/* #8 Barrierefreiheit auch im Spiel erreichbar */}
     {screen!=="home"&&screen!=="admin"&&screen!=="myQuestions"&&<>
