@@ -152,26 +152,30 @@ function applyA11y(base){
 }
 
 /* ─── BARRIEREFREIHEIT-MENÜ ──────────────────────── */
-function A11yMenu({t, lang, onA11y}){
+function A11yMenu({t, lang, onA11y, compact=false}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const items=[
     {k:'cb', icon:'🎨', label:L('Rot/Grün-Schwäche','Red/green colorblind','Daltonismo rojo/verde')},
     {k:'large', icon:'🔠', label:L('Große Schrift','Large text','Texto grande')},
     {k:'contrast', icon:'◐', label:L('Hoher Kontrast','High contrast','Alto contraste')},
   ];
-  return <div style={{width:'100%',display:'flex',flexDirection:'column',gap:8}}>
+  const pad=compact?'8px 12px':'10px 20px';
+  const fs=compact?13:14;
+  const rad=compact?t.radius:100;
+  const sw=compact?34:38, sh=compact?20:22, kn=compact?16:18;
+  return <div style={{width:'100%',display:'flex',flexDirection:'column',gap:compact?6:8}}>
     {items.map(it=>{
       const on=!!A11Y[it.k];
       return <button key={it.k} onClick={()=>onA11y&&onA11y(it.k,!on)}
         style={{width:'100%',display:'flex',alignItems:'center',gap:10,
           justifyContent:'flex-start',background:t.surface,
-          border:`1.5px solid ${on?t.gold:t.border}`,borderRadius:100,padding:'10px 20px',
-          color:t.text,fontSize:14,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
-        <span style={{fontSize:16,width:22,textAlign:'center'}}>{it.icon}</span>
+          border:`1.5px solid ${on?t.gold:t.border}`,borderRadius:rad,padding:pad,
+          color:t.text,fontSize:fs,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+        <span style={{fontSize:compact?15:16,width:20,textAlign:'center'}}>{it.icon}</span>
         <span style={{flex:1,textAlign:'left'}}>{it.label}</span>
-        <span style={{width:38,height:22,borderRadius:11,background:on?t.gold:t.border,
+        <span style={{width:sw,height:sh,borderRadius:sh/2,background:on?t.gold:t.border,
           position:'relative',transition:'background .15s',flexShrink:0,display:'inline-block'}}>
-          <span style={{position:'absolute',top:2,left:on?18:2,width:18,height:18,
+          <span style={{position:'absolute',top:2,left:on?sw-kn-2:2,width:kn,height:kn,
             borderRadius:'50%',background:'#fff',transition:'left .15s'}}/>
         </span>
       </button>;
@@ -1823,7 +1827,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
               <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}</span>
               <span style={{color:lt.muted,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
             </button>
-            {a11yOpen&&<div style={{marginTop:8}}><A11yMenu t={lt} lang={lang} onA11y={onA11y}/></div>}
+            {a11yOpen&&<div style={{marginTop:6,marginLeft:11,paddingLeft:13,
+              borderLeft:`2px solid ${lt.gold}55`,display:'flex',flexDirection:'column',gap:8}}>
+              <p style={{fontSize:10,color:lt.muted,fontWeight:700,letterSpacing:.6,
+                margin:'2px 0 0',textTransform:'uppercase'}}>
+                {lang==='en'?'Display & accessibility':lang==='es'?'Pantalla y accesibilidad':'Anzeige & Barrierefreiheit'}
+              </p>
+              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact/>
+            </div>}
           </div>}
         </div>
       </div>
