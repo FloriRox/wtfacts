@@ -5294,6 +5294,304 @@ function AdminDashboard({t, lang, onBack}){
   </div>;
 }
 
+/* ─── ANLASS-VORLAGEN ──────────────────────────────────── */
+var OCCASION_TEMPLATES = {
+  de: {
+    geburtstag: { icon:'🎂', name:'🎂 Geburtstag', questions:[
+      {q:'Wie viele Gäste sind heute hier?',a:30,unit:'Gäste',hint:'Zählt mal durch!',emoji:'🎉'},
+      {q:'Wie alt wird das Geburtstagskind heute?',a:30,unit:'Jahre',hint:'Kein Schummeln!',emoji:'🎂'},
+      {q:'Wie viele Kerzen stecken auf der Torte?',a:30,unit:'Kerzen',hint:'Feuergefahr!',emoji:'🕯️'},
+      {q:'Wie viele Geschenke hat das Geburtstagskind bekommen?',a:12,unit:'Geschenke',hint:'Auspacken!',emoji:'🎁'},
+      {q:'In welchem Jahr wurde das Geburtstagskind geboren?',a:1994,unit:'Jahr',hint:'Rechnen erlaubt',emoji:'📅'},
+      {q:'Wie viel wog das Geburtstagskind bei der Geburt?',a:3400,unit:'Gramm',hint:'Ein Brocken!',emoji:'⚖️'},
+      {q:'Wie viele Länder hat das Geburtstagskind schon bereist?',a:14,unit:'Länder',hint:'Fernweh',emoji:'✈️'},
+      {q:'Wie viele Haustiere hatte das Geburtstagskind im Leben?',a:4,unit:'Haustiere',hint:'Inkl. Goldfisch',emoji:'🐾'},
+      {q:'Wie viele Umzüge hat das Geburtstagskind hinter sich?',a:7,unit:'Umzüge',hint:'Kistenpacken',emoji:'📦'},
+      {q:'Wie viele Jahre kennen sich Gastgeber und Geburtstagskind schon?',a:10,unit:'Jahre',hint:'Lange her',emoji:'🤝'},
+      {q:'Wie viele Stücke Kuchen werden heute verputzt?',a:35,unit:'Stücke',hint:'Schätzt großzügig',emoji:'🍰'},
+      {q:'Wie viele Luftballons hängen im Raum?',a:24,unit:'Ballons',hint:'Pust pust',emoji:'🎈'},
+      {q:'Wie viele Geburtstagsnachrichten kamen heute aufs Handy?',a:47,unit:'Nachrichten',hint:'Ping ping ping',emoji:'📱'},
+      {q:'Wie viele Geschwister hat das Geburtstagskind?',a:2,unit:'Geschwister',hint:'Familienbande',emoji:'👨‍👩‍👧‍👦'},
+      {q:'Wie viele verschiedene Wohnungen hatte das Geburtstagskind schon?',a:6,unit:'Wohnungen',hint:'',emoji:'🏠'},
+      {q:'Wie viele Tassen Kaffee trinkt das Geburtstagskind pro Tag?',a:4,unit:'Tassen',hint:'Wachmacher',emoji:'☕'},
+      {q:'Wie viele Jahre ist das Geburtstagskind schon im aktuellen Job?',a:5,unit:'Jahre',hint:'',emoji:'💼'},
+      {q:'Wie viele Paar Schuhe besitzt das Geburtstagskind?',a:18,unit:'Paar',hint:'Schrank voll',emoji:'👟'},
+      {q:'Wie viele Kilometer ist das Geburtstagskind heute zur Party gereist?',a:0,unit:'km',hint:'Heimspiel?',emoji:'🚗'},
+      {q:'Wie viele Stunden Schlaf hatte das Geburtstagskind letzte Nacht?',a:6,unit:'Stunden',hint:'Aufregung!',emoji:'😴'},
+      {q:'Wie viel kostet die Geburtstagstorte heute?',a:45,unit:'Euro',hint:'Süße Investition',emoji:'💶'},
+      {q:'Wie viele Minuten dauerte das längste Geburtstagsständchen?',a:3,unit:'Minuten',hint:'Happy Birthdaaay',emoji:'🎵'},
+    ]},
+    hochzeit: { icon:'💍', name:'💍 Hochzeit', questions:[
+      {q:'Wie viele Gäste sind heute hier?',a:80,unit:'Gäste',hint:'Zählt durch!',emoji:'🥂'},
+      {q:'In welchem Jahr haben sich die Brautleute kennengelernt?',a:2018,unit:'Jahr',hint:'Ein besonderer Tag',emoji:'💑'},
+      {q:'Wie viele Monate hat die Hochzeitsplanung gedauert?',a:14,unit:'Monate',hint:'Stress pur',emoji:'📋'},
+      {q:'Wie viele Kilometer liegen zwischen den Heimatorten der Brautleute?',a:120,unit:'km',hint:'Fernbeziehung?',emoji:'🗺️'},
+      {q:'Wie viel kostet die Hochzeit insgesamt?',a:18000,unit:'Euro',hint:'Lieber nicht fragen',emoji:'💸'},
+      {q:'Wie viele Gäste tanzen heute Abend auf der Tanzfläche?',a:45,unit:'Gäste',hint:'Party!',emoji:'💃'},
+      {q:'Wie viele Stunden brauchte das Brautpaar heute für die Vorbereitung?',a:5,unit:'Stunden',hint:'Frühaufsteher',emoji:'⏰'},
+      {q:'Wie viele Reden werden heute gehalten?',a:6,unit:'Reden',hint:'Taschentücher bereit',emoji:'🎤'},
+      {q:'Wie viele Jahre sind die Brautleute schon zusammen?',a:7,unit:'Jahre',hint:'Lange her',emoji:'❤️'},
+      {q:'Wie viele Blumen stecken im Brautstrauß?',a:24,unit:'Blumen',hint:'Duftend',emoji:'💐'},
+      {q:'Wie viele Etagen hat die Hochzeitstorte?',a:4,unit:'Etagen',hint:'Süßer Turm',emoji:'🎂'},
+      {q:'Wie viele Gäste reisen von weiter als 200 km an?',a:18,unit:'Gäste',hint:'Weltreisende',emoji:'✈️'},
+      {q:'Wie viele Fotos werden heute geschossen?',a:1200,unit:'Fotos',hint:'Dauerblitz',emoji:'📸'},
+      {q:'Wie viele Flaschen Sekt werden heute geleert?',a:60,unit:'Flaschen',hint:'Prost!',emoji:'🍾'},
+      {q:'Wie viele Kinder sind unter den Gästen?',a:9,unit:'Kinder',hint:'Wuselig',emoji:'🧒'},
+      {q:'Wie viele gemeinsame Reisen hatten die Brautleute schon?',a:15,unit:'Reisen',hint:'Weltenbummler',emoji:'🧳'},
+      {q:'Wie viele Anläufe brauchte der Heiratsantrag?',a:1,unit:'Versuche',hint:'Volltreffer?',emoji:'💍'},
+      {q:'Wie viele Lieder umfasst die Party-Playlist?',a:85,unit:'Lieder',hint:'Bis zum Morgen',emoji:'🎶'},
+      {q:'Wie viele Minuten dauerte die Trauung?',a:35,unit:'Minuten',hint:'Ja-Wort inklusive',emoji:'⛪'},
+      {q:'Wie viele Trauzeugen hat das Paar zusammen?',a:4,unit:'Trauzeugen',hint:'Vertrauenssache',emoji:'🤝'},
+      {q:'Wie viele Jahre wollen die Brautleute mindestens zusammenbleiben?',a:70,unit:'Jahre',hint:'Optimistisch!',emoji:'👵'},
+      {q:'Wie viele Tortenstücke bleiben am Ende übrig?',a:8,unit:'Stücke',hint:'Für morgen',emoji:'🍰'},
+    ]},
+    teamevent: { icon:'🏢', name:'🏢 Team-Event', questions:[
+      {q:'Wie viele Mitarbeiter hat unser Unternehmen?',a:340,unit:'Mitarbeiter',hint:'Tendenz steigend',emoji:'🏢'},
+      {q:'In welchem Jahr wurde das Unternehmen gegründet?',a:2008,unit:'Jahr',hint:'Der Anfang',emoji:'📅'},
+      {q:'In wie vielen Ländern sind wir aktiv?',a:12,unit:'Länder',hint:'Global',emoji:'🌍'},
+      {q:'Wie viele Tassen Kaffee trinkt das Team pro Woche?',a:210,unit:'Tassen',hint:'Koffein-Motor',emoji:'☕'},
+      {q:'Wie viele E-Mails verschickt das Team an einem Tag?',a:480,unit:'E-Mails',hint:'Posteingang voll',emoji:'📧'},
+      {q:'Wie viele Meetings hatte das Team letzte Woche?',a:27,unit:'Meetings',hint:'Hätte eine Mail sein können',emoji:'📆'},
+      {q:'Wie viele Jahre ist der dienstälteste Kollege schon dabei?',a:16,unit:'Jahre',hint:'Urgestein',emoji:'🏅'},
+      {q:'Wie viele verschiedene Nationalitäten arbeiten im Team?',a:8,unit:'Nationalitäten',hint:'Bunt gemischt',emoji:'🌐'},
+      {q:'Wie viele Kilometer pendelt das Team zusammen pro Tag?',a:640,unit:'km',hint:'Stau garantiert',emoji:'🚗'},
+      {q:'Wie viele Kekse verschwinden pro Woche aus der Küche?',a:150,unit:'Kekse',hint:'Heißhunger',emoji:'🍪'},
+      {q:'Wie viele Projekte hat das Team dieses Jahr abgeschlossen?',a:23,unit:'Projekte',hint:'Geschafft',emoji:'✅'},
+      {q:'Wie viele Bildschirme stehen im Büro?',a:95,unit:'Bildschirme',hint:'Doppelt sieht besser',emoji:'🖥️'},
+      {q:'Wie viele Stockwerke hat unser Bürogebäude?',a:6,unit:'Stockwerke',hint:'Treppe oder Lift?',emoji:'🏬'},
+      {q:'Wie viele Stunden verbringt das Team pro Woche in Calls?',a:88,unit:'Stunden',hint:'Mute-Taste',emoji:'🎧'},
+      {q:'Wie viele Pflanzen stehen im Büro?',a:34,unit:'Pflanzen',hint:'Grünes Büro',emoji:'🪴'},
+      {q:'Wie viele Kollegen haben heute Homeoffice?',a:11,unit:'Kollegen',hint:'Pyjama-Modus',emoji:'🏠'},
+      {q:'Wie viele Geburtstage feiert das Team pro Jahr?',a:38,unit:'Geburtstage',hint:'Kuchen-Alarm',emoji:'🎂'},
+      {q:'Wie viele Kaffeemaschinen gibt es im Gebäude?',a:5,unit:'Maschinen',hint:'Lebensader',emoji:'☕'},
+      {q:'Wie viele Schritte geht das Team zusammen an einem Tag?',a:95000,unit:'Schritte',hint:'Marathon',emoji:'👟'},
+      {q:'Wie viele Jahre Berufserfahrung hat das Team zusammen?',a:420,unit:'Jahre',hint:'Geballtes Wissen',emoji:'🧠'},
+      {q:'Wie viele verschiedene Tools nutzt das Team täglich?',a:14,unit:'Tools',hint:'Tab-Chaos',emoji:'🛠️'},
+      {q:'Wie viele Minuten dauert die längste tägliche Mittagspause?',a:75,unit:'Minuten',hint:'Wohlverdient',emoji:'🍽️'},
+    ]},
+    jga: { icon:'🍻', name:'🍻 Junggesellenabschied', questions:[
+      {q:'Wie viele Leute sind heute beim JGA dabei?',a:12,unit:'Leute',hint:'Crew komplett',emoji:'🎉'},
+      {q:'In welchem Jahr lernten sich die Hauptperson und der Partner kennen?',a:2017,unit:'Jahr',hint:'Lang her',emoji:'💑'},
+      {q:'Wie viele Stunden dauert der heutige JGA insgesamt?',a:14,unit:'Stunden',hint:'Marathon',emoji:'⏱️'},
+      {q:'Wie viele Drinks wird die Hauptperson heute trinken?',a:11,unit:'Drinks',hint:'Wasser nicht vergessen',emoji:'🍹'},
+      {q:'Wie viele Kilometer legt die Gruppe heute zurück?',a:25,unit:'km',hint:'Tour de Stadt',emoji:'🚕'},
+      {q:'Wie viel Geld gibt die Gruppe heute insgesamt aus?',a:850,unit:'Euro',hint:'Aua, Konto',emoji:'💸'},
+      {q:'Wie viele Jahre kennen sich die besten Freunde schon?',a:18,unit:'Jahre',hint:'Dicke',emoji:'🤝'},
+      {q:'Wie viele peinliche Aufgaben muss die Hauptperson heute erfüllen?',a:7,unit:'Aufgaben',hint:'Augen zu',emoji:'😳'},
+      {q:'Wie viele Fremde werden heute angesprochen?',a:20,unit:'Fremde',hint:'Mutprobe',emoji:'🗣️'},
+      {q:'Wie viele Selfies entstehen heute?',a:95,unit:'Selfies',hint:'Dauergrinsen',emoji:'🤳'},
+      {q:'Wie viele Stunden Schlaf hatte die Hauptperson letzte Nacht?',a:5,unit:'Stunden',hint:'Vorfreude',emoji:'😴'},
+      {q:'Wie viele verschiedene Locations besucht die Gruppe heute?',a:6,unit:'Locations',hint:'Hopping',emoji:'📍'},
+      {q:'Wie viele Lieder werden heute lautstark mitgesungen?',a:14,unit:'Lieder',hint:'Schief, aber laut',emoji:'🎤'},
+      {q:'Wie viele Shots gehen heute auf die Hauptperson?',a:9,unit:'Shots',hint:'Prost',emoji:'🥃'},
+      {q:'Wie viele Tage sind es noch bis zur Hochzeit?',a:21,unit:'Tage',hint:'Countdown',emoji:'📆'},
+      {q:'Wie viele Kostüm-Teile trägt die Hauptperson heute?',a:5,unit:'Teile',hint:'Verkleidet',emoji:'🎭'},
+      {q:'Wie viele Nachrichten kommen heute in den Gruppen-Chat?',a:130,unit:'Nachrichten',hint:'Ping',emoji:'📱'},
+      {q:'Wie viele Jahre ist die Hauptperson schon mit dem Partner zusammen?',a:6,unit:'Jahre',hint:'Bald für immer',emoji:'❤️'},
+      {q:'Wie viele Tänze legt die Gruppe heute aufs Parkett?',a:12,unit:'Tänze',hint:'Moves',emoji:'💃'},
+      {q:'Wie viele Bilder sind am Ende zu peinlich für Social Media?',a:15,unit:'Bilder',hint:'Geheimsache',emoji:'🙈'},
+      {q:'Wie viele Kilometer ist die am weitesten angereiste Person gefahren?',a:320,unit:'km',hint:'Echter Freund',emoji:'🚗'},
+      {q:'Wie viele Stunden bis die erste Person umfällt?',a:8,unit:'Stunden',hint:'Wer hält durch?',emoji:'🛌'},
+    ]},
+  },
+  en: {
+    geburtstag: { icon:'🎂', name:'🎂 Birthday', questions:[
+      {q:'How many guests are here today?',a:30,unit:'guests',hint:'Count them!',emoji:'🎉'},
+      {q:'How old is the birthday person turning today?',a:30,unit:'years',hint:'No cheating!',emoji:'🎂'},
+      {q:'How many candles are on the cake?',a:30,unit:'candles',hint:'Fire hazard!',emoji:'🕯️'},
+      {q:'How many gifts did the birthday person get?',a:12,unit:'gifts',hint:'Unwrap them!',emoji:'🎁'},
+      {q:'In what year was the birthday person born?',a:1994,unit:'year',hint:'Math allowed',emoji:'📅'},
+      {q:'How much did the birthday person weigh at birth?',a:3400,unit:'grams',hint:'A chunky one!',emoji:'⚖️'},
+      {q:'How many countries has the birthday person visited?',a:14,unit:'countries',hint:'Wanderlust',emoji:'✈️'},
+      {q:'How many pets has the birthday person had in life?',a:4,unit:'pets',hint:'Goldfish included',emoji:'🐾'},
+      {q:'How many times has the birthday person moved house?',a:7,unit:'moves',hint:'Box packing',emoji:'📦'},
+      {q:'How many years have the host and birthday person known each other?',a:10,unit:'years',hint:'A while',emoji:'🤝'},
+      {q:'How many slices of cake will be eaten today?',a:35,unit:'slices',hint:'Estimate big',emoji:'🍰'},
+      {q:'How many balloons are in the room?',a:24,unit:'balloons',hint:'Puff puff',emoji:'🎈'},
+      {q:'How many birthday messages arrived on the phone today?',a:47,unit:'messages',hint:'Ping ping ping',emoji:'📱'},
+      {q:'How many siblings does the birthday person have?',a:2,unit:'siblings',hint:'Family ties',emoji:'👨‍👩‍👧‍👦'},
+      {q:'How many different homes has the birthday person lived in?',a:6,unit:'homes',hint:'',emoji:'🏠'},
+      {q:'How many cups of coffee does the birthday person drink per day?',a:4,unit:'cups',hint:'Wake-up juice',emoji:'☕'},
+      {q:'How many years has the birthday person been in their current job?',a:5,unit:'years',hint:'',emoji:'💼'},
+      {q:'How many pairs of shoes does the birthday person own?',a:18,unit:'pairs',hint:'Full closet',emoji:'👟'},
+      {q:'How many kilometers did the birthday person travel to the party today?',a:0,unit:'km',hint:'Home game?',emoji:'🚗'},
+      {q:'How many hours of sleep did the birthday person get last night?',a:6,unit:'hours',hint:'Too excited!',emoji:'😴'},
+      {q:'How much does the birthday cake cost today?',a:45,unit:'euros',hint:'Sweet investment',emoji:'💶'},
+      {q:'How many minutes did the longest birthday song last?',a:3,unit:'minutes',hint:'Happy Birthdaaay',emoji:'🎵'},
+    ]},
+    hochzeit: { icon:'💍', name:'💍 Wedding', questions:[
+      {q:'How many guests are here today?',a:80,unit:'guests',hint:'Count them!',emoji:'🥂'},
+      {q:'In what year did the couple first meet?',a:2018,unit:'year',hint:'A special day',emoji:'💑'},
+      {q:'How many months did the wedding planning take?',a:14,unit:'months',hint:'Pure stress',emoji:'📋'},
+      {q:'How many kilometers lie between the couple\u2019s hometowns?',a:120,unit:'km',hint:'Long distance?',emoji:'🗺️'},
+      {q:'How much does the wedding cost in total?',a:18000,unit:'euros',hint:'Better not ask',emoji:'💸'},
+      {q:'How many guests will hit the dance floor tonight?',a:45,unit:'guests',hint:'Party!',emoji:'💃'},
+      {q:'How many hours did the couple need to get ready today?',a:5,unit:'hours',hint:'Early birds',emoji:'⏰'},
+      {q:'How many speeches will be given today?',a:6,unit:'speeches',hint:'Tissues ready',emoji:'🎤'},
+      {q:'How many years has the couple been together?',a:7,unit:'years',hint:'A while',emoji:'❤️'},
+      {q:'How many flowers are in the bridal bouquet?',a:24,unit:'flowers',hint:'Fragrant',emoji:'💐'},
+      {q:'How many tiers does the wedding cake have?',a:4,unit:'tiers',hint:'Sweet tower',emoji:'🎂'},
+      {q:'How many guests traveled more than 200 km?',a:18,unit:'guests',hint:'World travelers',emoji:'✈️'},
+      {q:'How many photos will be taken today?',a:1200,unit:'photos',hint:'Constant flash',emoji:'📸'},
+      {q:'How many bottles of sparkling wine will be emptied today?',a:60,unit:'bottles',hint:'Cheers!',emoji:'🍾'},
+      {q:'How many children are among the guests?',a:9,unit:'children',hint:'Lively',emoji:'🧒'},
+      {q:'How many trips has the couple taken together?',a:15,unit:'trips',hint:'Globetrotters',emoji:'🧳'},
+      {q:'How many attempts did the proposal take?',a:1,unit:'attempts',hint:'Bullseye?',emoji:'💍'},
+      {q:'How many songs are on the party playlist?',a:85,unit:'songs',hint:'Until morning',emoji:'🎶'},
+      {q:'How many minutes did the ceremony last?',a:35,unit:'minutes',hint:'Vows included',emoji:'⛪'},
+      {q:'How many witnesses does the couple have together?',a:4,unit:'witnesses',hint:'A matter of trust',emoji:'🤝'},
+      {q:'How many years do the couple want to stay together at least?',a:70,unit:'years',hint:'Optimistic!',emoji:'👵'},
+      {q:'How many cake slices will be left at the end?',a:8,unit:'slices',hint:'For tomorrow',emoji:'🍰'},
+    ]},
+    teamevent: { icon:'🏢', name:'🏢 Team Event', questions:[
+      {q:'How many employees does our company have?',a:340,unit:'employees',hint:'Growing',emoji:'🏢'},
+      {q:'In what year was the company founded?',a:2008,unit:'year',hint:'The beginning',emoji:'📅'},
+      {q:'In how many countries are we active?',a:12,unit:'countries',hint:'Global',emoji:'🌍'},
+      {q:'How many cups of coffee does the team drink per week?',a:210,unit:'cups',hint:'Caffeine engine',emoji:'☕'},
+      {q:'How many emails does the team send in one day?',a:480,unit:'emails',hint:'Inbox full',emoji:'📧'},
+      {q:'How many meetings did the team have last week?',a:27,unit:'meetings',hint:'Could\u2019ve been an email',emoji:'📆'},
+      {q:'How many years has the longest-serving colleague been here?',a:16,unit:'years',hint:'Veteran',emoji:'🏅'},
+      {q:'How many different nationalities work in the team?',a:8,unit:'nationalities',hint:'Diverse mix',emoji:'🌐'},
+      {q:'How many kilometers does the team commute together per day?',a:640,unit:'km',hint:'Traffic guaranteed',emoji:'🚗'},
+      {q:'How many cookies disappear from the kitchen per week?',a:150,unit:'cookies',hint:'Cravings',emoji:'🍪'},
+      {q:'How many projects did the team finish this year?',a:23,unit:'projects',hint:'Done',emoji:'✅'},
+      {q:'How many screens are in the office?',a:95,unit:'screens',hint:'Double is better',emoji:'🖥️'},
+      {q:'How many floors does our office building have?',a:6,unit:'floors',hint:'Stairs or lift?',emoji:'🏬'},
+      {q:'How many hours per week does the team spend in calls?',a:88,unit:'hours',hint:'Mute button',emoji:'🎧'},
+      {q:'How many plants are in the office?',a:34,unit:'plants',hint:'Green office',emoji:'🪴'},
+      {q:'How many colleagues work from home today?',a:11,unit:'colleagues',hint:'Pyjama mode',emoji:'🏠'},
+      {q:'How many birthdays does the team celebrate per year?',a:38,unit:'birthdays',hint:'Cake alert',emoji:'🎂'},
+      {q:'How many coffee machines are in the building?',a:5,unit:'machines',hint:'Lifeline',emoji:'☕'},
+      {q:'How many steps does the team walk together in one day?',a:95000,unit:'steps',hint:'Marathon',emoji:'👟'},
+      {q:'How many years of work experience does the team have combined?',a:420,unit:'years',hint:'Brain power',emoji:'🧠'},
+      {q:'How many different tools does the team use daily?',a:14,unit:'tools',hint:'Tab chaos',emoji:'🛠️'},
+      {q:'How many minutes is the longest daily lunch break?',a:75,unit:'minutes',hint:'Well deserved',emoji:'🍽️'},
+    ]},
+    jga: { icon:'🍻', name:'🍻 Stag/Hen Party', questions:[
+      {q:'How many people are at the party today?',a:12,unit:'people',hint:'Crew complete',emoji:'🎉'},
+      {q:'In what year did the guest of honor and their partner meet?',a:2017,unit:'year',hint:'Long ago',emoji:'💑'},
+      {q:'How many hours will today\u2019s party last in total?',a:14,unit:'hours',hint:'Marathon',emoji:'⏱️'},
+      {q:'How many drinks will the guest of honor have today?',a:11,unit:'drinks',hint:'Don\u2019t forget water',emoji:'🍹'},
+      {q:'How many kilometers will the group cover today?',a:25,unit:'km',hint:'City tour',emoji:'🚕'},
+      {q:'How much money will the group spend in total today?',a:850,unit:'euros',hint:'Ouch, the account',emoji:'💸'},
+      {q:'How many years have the best friends known each other?',a:18,unit:'years',hint:'Tight crew',emoji:'🤝'},
+      {q:'How many embarrassing tasks must the guest of honor complete today?',a:7,unit:'tasks',hint:'Eyes closed',emoji:'😳'},
+      {q:'How many strangers will be approached today?',a:20,unit:'strangers',hint:'Dare',emoji:'🗣️'},
+      {q:'How many selfies will be taken today?',a:95,unit:'selfies',hint:'Endless grins',emoji:'🤳'},
+      {q:'How many hours of sleep did the guest of honor get last night?',a:5,unit:'hours',hint:'Too excited',emoji:'😴'},
+      {q:'How many different locations will the group visit today?',a:6,unit:'locations',hint:'Hopping',emoji:'📍'},
+      {q:'How many songs will be sung out loud today?',a:14,unit:'songs',hint:'Off-key but loud',emoji:'🎤'},
+      {q:'How many shots will the guest of honor take today?',a:9,unit:'shots',hint:'Cheers',emoji:'🥃'},
+      {q:'How many days until the wedding?',a:21,unit:'days',hint:'Countdown',emoji:'📆'},
+      {q:'How many costume pieces is the guest of honor wearing today?',a:5,unit:'pieces',hint:'In disguise',emoji:'🎭'},
+      {q:'How many messages land in the group chat today?',a:130,unit:'messages',hint:'Ping',emoji:'📱'},
+      {q:'How many years has the guest of honor been with their partner?',a:6,unit:'years',hint:'Soon forever',emoji:'❤️'},
+      {q:'How many dances will the group bust out today?',a:12,unit:'dances',hint:'Moves',emoji:'💃'},
+      {q:'How many photos end up too embarrassing for social media?',a:15,unit:'photos',hint:'Top secret',emoji:'🙈'},
+      {q:'How many kilometers did the person who traveled farthest drive?',a:320,unit:'km',hint:'True friend',emoji:'🚗'},
+      {q:'How many hours until the first person taps out?',a:8,unit:'hours',hint:'Who lasts?',emoji:'🛌'},
+    ]},
+  },
+  es: {
+    geburtstag: { icon:'🎂', name:'🎂 Cumpleaños', questions:[
+      {q:'¿Cuántos invitados hay hoy aquí?',a:30,unit:'invitados',hint:'¡A contar!',emoji:'🎉'},
+      {q:'¿Cuántos años cumple hoy la persona homenajeada?',a:30,unit:'años',hint:'¡Sin trampas!',emoji:'🎂'},
+      {q:'¿Cuántas velas hay en la tarta?',a:30,unit:'velas',hint:'¡Peligro de fuego!',emoji:'🕯️'},
+      {q:'¿Cuántos regalos ha recibido la persona homenajeada?',a:12,unit:'regalos',hint:'¡A abrir!',emoji:'🎁'},
+      {q:'¿En qué año nació la persona homenajeada?',a:1994,unit:'año',hint:'Se permite calcular',emoji:'📅'},
+      {q:'¿Cuánto pesó la persona homenajeada al nacer?',a:3400,unit:'gramos',hint:'¡Buen tamaño!',emoji:'⚖️'},
+      {q:'¿Cuántos países ha visitado la persona homenajeada?',a:14,unit:'países',hint:'Ganas de viajar',emoji:'✈️'},
+      {q:'¿Cuántas mascotas ha tenido en su vida?',a:4,unit:'mascotas',hint:'Pez incluido',emoji:'🐾'},
+      {q:'¿Cuántas mudanzas ha hecho la persona homenajeada?',a:7,unit:'mudanzas',hint:'A empacar cajas',emoji:'📦'},
+      {q:'¿Cuántos años se conocen el anfitrión y la persona homenajeada?',a:10,unit:'años',hint:'Hace tiempo',emoji:'🤝'},
+      {q:'¿Cuántas porciones de tarta se comerán hoy?',a:35,unit:'porciones',hint:'Calcula generoso',emoji:'🍰'},
+      {q:'¿Cuántos globos hay en la sala?',a:24,unit:'globos',hint:'Sopla sopla',emoji:'🎈'},
+      {q:'¿Cuántos mensajes de cumpleaños llegaron hoy al móvil?',a:47,unit:'mensajes',hint:'Ping ping ping',emoji:'📱'},
+      {q:'¿Cuántos hermanos tiene la persona homenajeada?',a:2,unit:'hermanos',hint:'Lazos familiares',emoji:'👨‍👩‍👧‍👦'},
+      {q:'¿En cuántas viviendas distintas ha vivido?',a:6,unit:'viviendas',hint:'',emoji:'🏠'},
+      {q:'¿Cuántas tazas de café bebe al día?',a:4,unit:'tazas',hint:'Para despertar',emoji:'☕'},
+      {q:'¿Cuántos años lleva en su trabajo actual?',a:5,unit:'años',hint:'',emoji:'💼'},
+      {q:'¿Cuántos pares de zapatos tiene?',a:18,unit:'pares',hint:'Armario lleno',emoji:'👟'},
+      {q:'¿Cuántos kilómetros viajó hoy hasta la fiesta?',a:0,unit:'km',hint:'¿Partido en casa?',emoji:'🚗'},
+      {q:'¿Cuántas horas durmió anoche?',a:6,unit:'horas',hint:'¡Qué emoción!',emoji:'😴'},
+      {q:'¿Cuánto cuesta la tarta de hoy?',a:45,unit:'euros',hint:'Dulce inversión',emoji:'💶'},
+      {q:'¿Cuántos minutos duró la canción de cumpleaños más larga?',a:3,unit:'minutos',hint:'Cumpleaños feliz',emoji:'🎵'},
+    ]},
+    hochzeit: { icon:'💍', name:'💍 Boda', questions:[
+      {q:'¿Cuántos invitados hay hoy aquí?',a:80,unit:'invitados',hint:'¡A contar!',emoji:'🥂'},
+      {q:'¿En qué año se conocieron los novios?',a:2018,unit:'año',hint:'Un día especial',emoji:'💑'},
+      {q:'¿Cuántos meses duró la planificación de la boda?',a:14,unit:'meses',hint:'Puro estrés',emoji:'📋'},
+      {q:'¿Cuántos kilómetros hay entre los pueblos de los novios?',a:120,unit:'km',hint:'¿A distancia?',emoji:'🗺️'},
+      {q:'¿Cuánto cuesta la boda en total?',a:18000,unit:'euros',hint:'Mejor no preguntar',emoji:'💸'},
+      {q:'¿Cuántos invitados bailarán esta noche?',a:45,unit:'invitados',hint:'¡Fiesta!',emoji:'💃'},
+      {q:'¿Cuántas horas necesitaron hoy los novios para prepararse?',a:5,unit:'horas',hint:'Madrugadores',emoji:'⏰'},
+      {q:'¿Cuántos discursos se darán hoy?',a:6,unit:'discursos',hint:'Pañuelos listos',emoji:'🎤'},
+      {q:'¿Cuántos años llevan juntos los novios?',a:7,unit:'años',hint:'Hace tiempo',emoji:'❤️'},
+      {q:'¿Cuántas flores tiene el ramo de novia?',a:24,unit:'flores',hint:'Aromático',emoji:'💐'},
+      {q:'¿Cuántos pisos tiene la tarta de boda?',a:4,unit:'pisos',hint:'Torre dulce',emoji:'🎂'},
+      {q:'¿Cuántos invitados vienen de más de 200 km?',a:18,unit:'invitados',hint:'Viajeros',emoji:'✈️'},
+      {q:'¿Cuántas fotos se harán hoy?',a:1200,unit:'fotos',hint:'Flash sin parar',emoji:'📸'},
+      {q:'¿Cuántas botellas de cava se vaciarán hoy?',a:60,unit:'botellas',hint:'¡Salud!',emoji:'🍾'},
+      {q:'¿Cuántos niños hay entre los invitados?',a:9,unit:'niños',hint:'Movidos',emoji:'🧒'},
+      {q:'¿Cuántos viajes han hecho juntos los novios?',a:15,unit:'viajes',hint:'Trotamundos',emoji:'🧳'},
+      {q:'¿Cuántos intentos necesitó la pedida de mano?',a:1,unit:'intentos',hint:'¿Diana?',emoji:'💍'},
+      {q:'¿Cuántas canciones tiene la lista de la fiesta?',a:85,unit:'canciones',hint:'Hasta el amanecer',emoji:'🎶'},
+      {q:'¿Cuántos minutos duró la ceremonia?',a:35,unit:'minutos',hint:'Sí, quiero',emoji:'⛪'},
+      {q:'¿Cuántos testigos tienen los novios juntos?',a:4,unit:'testigos',hint:'Cuestión de confianza',emoji:'🤝'},
+      {q:'¿Cuántos años quieren estar juntos como mínimo?',a:70,unit:'años',hint:'¡Optimistas!',emoji:'👵'},
+      {q:'¿Cuántas porciones de tarta sobrarán al final?',a:8,unit:'porciones',hint:'Para mañana',emoji:'🍰'},
+    ]},
+    teamevent: { icon:'🏢', name:'🏢 Evento de Equipo', questions:[
+      {q:'¿Cuántos empleados tiene nuestra empresa?',a:340,unit:'empleados',hint:'En crecimiento',emoji:'🏢'},
+      {q:'¿En qué año se fundó la empresa?',a:2008,unit:'año',hint:'El comienzo',emoji:'📅'},
+      {q:'¿En cuántos países estamos activos?',a:12,unit:'países',hint:'Global',emoji:'🌍'},
+      {q:'¿Cuántas tazas de café bebe el equipo por semana?',a:210,unit:'tazas',hint:'Motor de cafeína',emoji:'☕'},
+      {q:'¿Cuántos correos envía el equipo en un día?',a:480,unit:'correos',hint:'Bandeja llena',emoji:'📧'},
+      {q:'¿Cuántas reuniones tuvo el equipo la semana pasada?',a:27,unit:'reuniones',hint:'Podría haber sido un email',emoji:'📆'},
+      {q:'¿Cuántos años lleva el colega más veterano?',a:16,unit:'años',hint:'Veterano',emoji:'🏅'},
+      {q:'¿Cuántas nacionalidades distintas hay en el equipo?',a:8,unit:'nacionalidades',hint:'Mezcla diversa',emoji:'🌐'},
+      {q:'¿Cuántos kilómetros recorre el equipo junto al día?',a:640,unit:'km',hint:'Atasco garantizado',emoji:'🚗'},
+      {q:'¿Cuántas galletas desaparecen de la cocina por semana?',a:150,unit:'galletas',hint:'Antojos',emoji:'🍪'},
+      {q:'¿Cuántos proyectos terminó el equipo este año?',a:23,unit:'proyectos',hint:'Logrado',emoji:'✅'},
+      {q:'¿Cuántas pantallas hay en la oficina?',a:95,unit:'pantallas',hint:'Doble es mejor',emoji:'🖥️'},
+      {q:'¿Cuántos pisos tiene nuestro edificio de oficinas?',a:6,unit:'pisos',hint:'¿Escaleras o ascensor?',emoji:'🏬'},
+      {q:'¿Cuántas horas por semana pasa el equipo en llamadas?',a:88,unit:'horas',hint:'Botón de silencio',emoji:'🎧'},
+      {q:'¿Cuántas plantas hay en la oficina?',a:34,unit:'plantas',hint:'Oficina verde',emoji:'🪴'},
+      {q:'¿Cuántos colegas teletrabajan hoy?',a:11,unit:'colegas',hint:'Modo pijama',emoji:'🏠'},
+      {q:'¿Cuántos cumpleaños celebra el equipo al año?',a:38,unit:'cumpleaños',hint:'Alerta de tarta',emoji:'🎂'},
+      {q:'¿Cuántas cafeteras hay en el edificio?',a:5,unit:'cafeteras',hint:'Cuerda de vida',emoji:'☕'},
+      {q:'¿Cuántos pasos da el equipo junto en un día?',a:95000,unit:'pasos',hint:'Maratón',emoji:'👟'},
+      {q:'¿Cuántos años de experiencia tiene el equipo en total?',a:420,unit:'años',hint:'Mucho saber',emoji:'🧠'},
+      {q:'¿Cuántas herramientas distintas usa el equipo a diario?',a:14,unit:'herramientas',hint:'Caos de pestañas',emoji:'🛠️'},
+      {q:'¿Cuántos minutos dura la pausa de comida más larga?',a:75,unit:'minutos',hint:'Bien merecida',emoji:'🍽️'},
+    ]},
+    jga: { icon:'🍻', name:'🍻 Despedida de Soltero/a', questions:[
+      {q:'¿Cuántas personas hay hoy en la despedida?',a:12,unit:'personas',hint:'Equipo completo',emoji:'🎉'},
+      {q:'¿En qué año se conocieron el protagonista y su pareja?',a:2017,unit:'año',hint:'Hace tiempo',emoji:'💑'},
+      {q:'¿Cuántas horas durará hoy la despedida en total?',a:14,unit:'horas',hint:'Maratón',emoji:'⏱️'},
+      {q:'¿Cuántas copas beberá hoy el protagonista?',a:11,unit:'copas',hint:'No olvides el agua',emoji:'🍹'},
+      {q:'¿Cuántos kilómetros recorrerá hoy el grupo?',a:25,unit:'km',hint:'Tour por la ciudad',emoji:'🚕'},
+      {q:'¿Cuánto dinero gastará hoy el grupo en total?',a:850,unit:'euros',hint:'Ay, la cuenta',emoji:'💸'},
+      {q:'¿Cuántos años se conocen los mejores amigos?',a:18,unit:'años',hint:'Inseparables',emoji:'🤝'},
+      {q:'¿Cuántas tareas vergonzosas debe cumplir hoy el protagonista?',a:7,unit:'tareas',hint:'Ojos cerrados',emoji:'😳'},
+      {q:'¿A cuántos desconocidos se abordará hoy?',a:20,unit:'desconocidos',hint:'Reto',emoji:'🗣️'},
+      {q:'¿Cuántos selfies se harán hoy?',a:95,unit:'selfies',hint:'Sonrisas sin fin',emoji:'🤳'},
+      {q:'¿Cuántas horas durmió anoche el protagonista?',a:5,unit:'horas',hint:'Demasiada emoción',emoji:'😴'},
+      {q:'¿Cuántos lugares distintos visitará hoy el grupo?',a:6,unit:'lugares',hint:'De bar en bar',emoji:'📍'},
+      {q:'¿Cuántas canciones se cantarán a grito pelado hoy?',a:14,unit:'canciones',hint:'Desafinado pero alto',emoji:'🎤'},
+      {q:'¿Cuántos chupitos se tomará hoy el protagonista?',a:9,unit:'chupitos',hint:'Salud',emoji:'🥃'},
+      {q:'¿Cuántos días faltan para la boda?',a:21,unit:'días',hint:'Cuenta atrás',emoji:'📆'},
+      {q:'¿Cuántas piezas de disfraz lleva hoy el protagonista?',a:5,unit:'piezas',hint:'Disfrazado',emoji:'🎭'},
+      {q:'¿Cuántos mensajes llegan hoy al chat del grupo?',a:130,unit:'mensajes',hint:'Ping',emoji:'📱'},
+      {q:'¿Cuántos años lleva el protagonista con su pareja?',a:6,unit:'años',hint:'Pronto para siempre',emoji:'❤️'},
+      {q:'¿Cuántos bailes se marcará hoy el grupo?',a:12,unit:'bailes',hint:'Pasos',emoji:'💃'},
+      {q:'¿Cuántas fotos acaban siendo demasiado vergonzosas para redes?',a:15,unit:'fotos',hint:'Alto secreto',emoji:'🙈'},
+      {q:'¿Cuántos kilómetros condujo la persona que vino de más lejos?',a:320,unit:'km',hint:'Amigo de verdad',emoji:'🚗'},
+      {q:'¿Cuántas horas hasta que caiga la primera persona?',a:8,unit:'horas',hint:'¿Quién aguanta?',emoji:'🛌'},
+    ]},
+  },
+};
+
 /* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
 function MyQuestionsScreen({myId, t, lang, onBack}){
   const i=UI[lang]||UI.de;
@@ -5303,6 +5601,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
   const[editing,setEditing]=useState(null); // null=list, 'new'=new, {id,...}=edit
   const[shareMsg,setShareMsg]=useState('');
   const[openPacks,setOpenPacks]=useState({});
+  const[showOccasions,setShowOccasions]=useState(false);
   const fileRef=React.useRef(null);
 
   useEffect(()=>{
@@ -5473,6 +5772,33 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
 
+  // Anlass-Vorlage laden → editierbares Pack in „Meine Fragen"
+  async function loadOccasion(occId){
+    const set=OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de;
+    const tpl=set[occId];
+    if(!tpl||!Array.isArray(tpl.questions)) return;
+    const packName=tpl.name;
+    if(existingPacks.includes(packName) &&
+       !window.confirm(lang==='en'?`A pack "${packName}" already exists. Add these questions anyway?`
+        :lang==='es'?`Ya existe un paquete "${packName}". ¿Añadir estas preguntas igualmente?`
+        :`Ein Pack „${packName}" existiert bereits. Fragen trotzdem hinzufügen?`)) return;
+    const updates={};
+    tpl.questions.forEach((x,idx)=>{
+      const qId=Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+      updates[`userQuestions/${myId}/${qId}`]={
+        q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||tpl.icon||'📝',
+        category:packName,visibility:'private',lang,createdAt:Date.now(),authorId:myId,
+      };
+    });
+    try{
+      await update(ref(db),updates);
+      setShowOccasions(false);
+      setOpenPacks(o=>({...o,[packName]:true}));
+      setShareMsg(`${tpl.questions.length} → ${packName}`); setTimeout(()=>setShareMsg(''),3500);
+    }catch(e){ console.error('load occasion failed:',e);
+      window.alert(lang==='en'?'Loading failed.':lang==='es'?'Error al cargar.':'Laden fehlgeschlagen.'); }
+  }
+
   if(editing!==null){
     return <QuestionEditorScreen
       myId={myId} t={t} lang={lang}
@@ -5524,7 +5850,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
         🔗 {lang==='en'?'Link':lang==='es'?'Enlace':'Link'}
       </Btn>
     </div>
-    <div style={{display:'flex',gap:8,marginBottom:16}}>
+    <div style={{display:'flex',gap:8,marginBottom:8}}>
       <Btn t={t} variant="secondary" onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1}}>
         📄 {lang==='en'?'Import CSV':lang==='es'?'Importar CSV':'CSV importieren'}
       </Btn>
@@ -5532,6 +5858,53 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
         📋 {lang==='en'?'Template':lang==='es'?'Plantilla':'Vorlage'}
       </Btn>
     </div>
+    <button onClick={()=>setShowOccasions(true)}
+      style={{width:'100%',marginBottom:16,padding:'12px',borderRadius:t.radius,
+        background:t.gold+'18',border:`1.5px solid ${t.gold}66`,color:t.gold,
+        fontSize:14,fontWeight:800,cursor:'pointer',fontFamily:t.fontBody,
+        display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+      ✨ {lang==='en'?'Occasion templates (ready-made)':lang==='es'?'Plantillas por ocasión (listas)':'Anlass-Vorlagen (fix & fertig)'}
+    </button>
+
+    {showOccasions&&<div onClick={()=>setShowOccasions(false)}
+      style={{position:'fixed',inset:0,zIndex:600,background:'rgba(0,0,0,0.72)',
+        display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
+        border:`1.5px solid ${t.border}`,maxWidth:420,width:'100%',maxHeight:'85vh',
+        overflowY:'auto',padding:'20px',animation:'fu .25s ease both'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+          <h2 style={{fontFamily:t.fontTitle,fontSize:22,margin:0,color:t.text}}>
+            ✨ {lang==='en'?'Occasion templates':lang==='es'?'Plantillas por ocasión':'Anlass-Vorlagen'}
+          </h2>
+          <button onClick={()=>setShowOccasions(false)} style={{background:'none',border:'none',
+            color:t.muted,fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+        </div>
+        <p style={{fontSize:12,color:t.muted,margin:'0 0 14px',lineHeight:1.5}}>
+          {lang==='en'?'Pick an occasion to add ~22 ready-made questions as an editable pack. Then adjust the answers to your event!'
+            :lang==='es'?'Elige una ocasión para añadir ~22 preguntas listas como paquete editable. ¡Luego ajusta las respuestas a tu evento!'
+            :'Wähle einen Anlass – ~22 fertige Fragen landen als editierbares Pack. Danach die Antworten an euer Event anpassen!'}
+        </p>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {Object.entries(OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de).map(([occId,occ])=>(
+            <button key={occId} onClick={()=>loadOccasion(occId)}
+              style={{display:'flex',alignItems:'center',gap:12,width:'100%',
+                padding:'14px 16px',borderRadius:t.radius,background:t.surface,
+                border:`1.5px solid ${t.border}`,cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+              <span style={{fontSize:26,flexShrink:0}}>{occ.icon}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 1px'}}>
+                  {occ.name.replace(/^[^\s]+\s/,'')}
+                </p>
+                <p style={{fontSize:11,color:t.muted,margin:0}}>
+                  {occ.questions.length} {lang==='en'?'questions':lang==='es'?'preguntas':'Fragen'}
+                </p>
+              </div>
+              <span style={{color:t.gold,fontSize:18,fontWeight:800,flexShrink:0}}>+</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>}
     <p style={{fontSize:11,color:t.muted,margin:'-8px 0 16px',lineHeight:1.5}}>
       {lang==='en'
         ? 'Open the template in Excel/Sheets, fill the columns (answer = a number, decimals with a dot), save as CSV, then import. Max 50 questions.'
