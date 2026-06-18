@@ -5631,7 +5631,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
         await navigator.share({title:name, text:(lang==='en'?'Question pack: ':lang==='es'?'Paquete: ':'Fragen-Pack: ')+name, url});
       } else {
         await navigator.clipboard.writeText(url);
-        setShareMsg(name); setTimeout(()=>setShareMsg(''),2500);
+        setShareMsg((lang==='en'?'Link copied: ':lang==='es'?'Enlace copiado: ':'Link kopiert: ')+name); setTimeout(()=>setShareMsg(''),2500);
       }
     }catch(e){ if(e?.name!=='AbortError') console.error('share pack failed:',e); }
   }
@@ -5799,6 +5799,24 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
       window.alert(lang==='en'?'Loading failed.':lang==='es'?'Error al cargar.':'Laden fehlgeschlagen.'); }
   }
 
+  // Ganzes Pack löschen
+  async function deletePack(packName){
+    const qs=packs[packName]||[];
+    if(!qs.length) return;
+    if(!window.confirm(lang==='en'?`Delete the whole pack "${packName}" with ${qs.length} questions? This cannot be undone.`
+      :lang==='es'?`¿Borrar todo el paquete "${packName}" con ${qs.length} preguntas? No se puede deshacer.`
+      :`Das ganze Pack „${packName}" mit ${qs.length} Fragen löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    const updates={};
+    qs.forEach(q=>{ updates[`userQuestions/${myId}/${q.id}`]=null; });
+    try{
+      await update(ref(db),updates);
+      qs.forEach(q=>{ remove(ref(db,`communityQuestions/${q.id}`)).catch(()=>{}); });
+      setOpenPacks(o=>{ const n={...o}; delete n[packName]; return n; });
+      setShareMsg((lang==='en'?'Deleted: ':lang==='es'?'Borrado: ':'Gelöscht: ')+packName); setTimeout(()=>setShareMsg(''),2500);
+    }catch(e){ console.error('delete pack failed:',e);
+      window.alert(lang==='en'?'Delete failed.':lang==='es'?'Error al borrar.':'Löschen fehlgeschlagen.'); }
+  }
+
   if(editing!==null){
     return <QuestionEditorScreen
       myId={myId} t={t} lang={lang}
@@ -5916,7 +5934,7 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
     {shareMsg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,
       borderRadius:t.radius,padding:'10px 12px',marginBottom:12,textAlign:'center'}}>
       <p style={{fontSize:12,color:t.green,fontWeight:700,margin:0}}>
-        🔗 {lang==='en'?'Link copied':lang==='es'?'Enlace copiado':'Link kopiert'}: {shareMsg}
+        ✓ {shareMsg}
       </p>
     </div>}
 
@@ -5952,6 +5970,13 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
               color:t.accent,fontSize:11,fontWeight:700,cursor:'pointer',padding:'8px 11px',
               whiteSpace:'nowrap',fontFamily:t.fontBody,flexShrink:0}}>
             🔗 {lang==='en'?'Share':lang==='es'?'Compartir':'Teilen'}
+          </button>
+          <button onClick={()=>deletePack(packName)}
+            title={lang==='en'?'Delete pack':lang==='es'?'Borrar paquete':'Pack löschen'}
+            style={{background:'none',border:`1px solid ${t.danger}55`,borderRadius:100,
+              color:t.danger,fontSize:13,fontWeight:700,cursor:'pointer',padding:'8px 11px',
+              whiteSpace:'nowrap',fontFamily:t.fontBody,flexShrink:0}}>
+            🗑
           </button>
         </div>
 
