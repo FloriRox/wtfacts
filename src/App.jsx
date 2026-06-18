@@ -5592,8 +5592,238 @@ var OCCASION_TEMPLATES = {
   },
 };
 
+/* ─── TEAM / BUSINESS-ACCOUNT (Slice A: Mitglieder & Rollen) ── */
+function TeamScreen({myId, t, lang, onBack}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const[teams,setTeams]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[busy,setBusy]=useState(false);
+  const[name,setName]=useState('');
+  const[joinCode,setJoinCode]=useState('');
+  const[msg,setMsg]=useState('');
+  const[err,setErr]=useState('');
+  const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
+
+  const roleLabel=r=>r==='owner'?L('Inhaber','Owner','Propietario'):r==='viewer'?L('Betrachter','Viewer','Lector'):L('Editor','Editor','Editor');
+
+  async function reload(){
+    if(!myId){setLoading(false);return;}
+    try{
+      const snap=await get(ref(db,`userTeams/${myId}`));
+      const ids=Object.keys(snap.val()||{});
+      const res=await Promise.all(ids.map(id=>get(ref(db,`teams/${id}`)).then(s=>({id,val:s.val()})).catch(()=>({id,val:null}))));
+      const valid=[];
+      for(const {id,val} of res){
+        if(val&&val.ownerId) valid.push({id,...val});
+        else remove(ref(db,`userTeams/${myId}/${id}`)).catch(()=>{}); // verwaisten Eintrag heilen
+      }
+      valid.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+      setTeams(valid);
+    }catch(e){ console.error('load teams failed:',e); }
+    setLoading(false);
+  }
+  useEffect(()=>{ reload(); },[myId]);
+
+  function genTeamCode(){
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let c=''; for(let i=0;i<6;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+    return c;
+  }
+  function flash(m){ setMsg(m); setTimeout(()=>setMsg(''),2500); }
+
+  async function createTeam(){
+    if(!name.trim()){ setErr(L('Bitte einen Teamnamen eingeben.','Please enter a team name.','Introduce un nombre de equipo.')); return; }
+    setErr(''); setBusy(true);
+    try{
+      const teamId='t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const code=genTeamCode();
+      const updates={};
+      updates[`teams/${teamId}`]={name:name.trim(),code,ownerId:myId,createdAt:Date.now(),
+        members:{[myId]:{role:'owner',name:myName,joinedAt:Date.now()}}};
+      updates[`teamCodes/${code}`]=teamId;
+      updates[`userTeams/${myId}/${teamId}`]=true;
+      await update(ref(db),updates);
+      setName(''); await reload(); flash(L('Team erstellt','Team created','Equipo creado'));
+    }catch(e){ console.error('create team failed:',e); setErr(L('Erstellen fehlgeschlagen.','Creating failed.','Error al crear.')); }
+    setBusy(false);
+  }
+
+  async function joinTeam(){
+    const code=joinCode.trim().toUpperCase();
+    if(code.length<4){ setErr(L('Bitte einen gültigen Team-Code eingeben.','Please enter a valid team code.','Introduce un código válido.')); return; }
+    setErr(''); setBusy(true);
+    try{
+      const snap=await get(ref(db,`teamCodes/${code}`));
+      const teamId=snap.val();
+      if(!teamId){ setErr(L('Team nicht gefunden.','Team not found.','Equipo no encontrado.')); setBusy(false); return; }
+      if(teams.some(x=>x.id===teamId)){ setErr(L('Du bist bereits in diesem Team.','You are already in this team.','Ya estás en este equipo.')); setBusy(false); return; }
+      const updates={};
+      updates[`teams/${teamId}/members/${myId}`]={role:'editor',name:myName,joinedAt:Date.now()};
+      updates[`userTeams/${myId}/${teamId}`]=true;
+      await update(ref(db),updates);
+      setJoinCode(''); await reload(); flash(L('Team beigetreten','Joined team','Te has unido'));
+    }catch(e){ console.error('join team failed:',e); setErr(L('Beitreten fehlgeschlagen.','Joining failed.','Error al unirse.')); }
+    setBusy(false);
+  }
+
+  async function leaveTeam(team){
+    if(!window.confirm(L(`Team „${team.name}" verlassen?`,`Leave team "${team.name}"?`,`¿Salir del equipo "${team.name}"?`))) return;
+    try{
+      const updates={};
+      updates[`teams/${team.id}/members/${myId}`]=null;
+      updates[`userTeams/${myId}/${team.id}`]=null;
+      await update(ref(db),updates);
+      await reload();
+    }catch(e){ console.error('leave failed:',e); }
+  }
+
+  async function deleteTeam(team){
+    if(!window.confirm(L(`Team „${team.name}" endgültig löschen? Alle Mitglieder verlieren den Zugriff.`,`Permanently delete team "${team.name}"? All members lose access.`,`¿Borrar el equipo "${team.name}"? Todos pierden acceso.`))) return;
+    try{
+      const updates={};
+      updates[`teams/${team.id}`]=null;
+      updates[`teamCodes/${team.code}`]=null;
+      updates[`userTeams/${myId}/${team.id}`]=null;
+      await update(ref(db),updates);
+      await reload();
+    }catch(e){ console.error('delete team failed:',e); }
+  }
+
+  async function setRole(team,uid,role){
+    try{ await update(ref(db,`teams/${team.id}/members/${uid}`),{role}); await reload(); }
+    catch(e){ console.error('set role failed:',e); }
+  }
+  async function removeMember(team,uid){
+    if(!window.confirm(L('Dieses Mitglied entfernen?','Remove this member?','¿Quitar a este miembro?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/members/${uid}`)); await reload(); }
+    catch(e){ console.error('remove member failed:',e); }
+  }
+  function copyCode(code){
+    try{ navigator.clipboard.writeText(code); flash(L('Code kopiert','Code copied','Código copiado')+': '+code); }catch(e){}
+  }
+
+  const inputStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
+    borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
+    fontFamily:t.fontBody,boxSizing:'border-box'};
+
+  return <div style={{...page,animation:'fu .3s ease both'}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
+      <button onClick={onBack} style={{background:'none',border:'none',color:t.muted,
+        fontSize:20,cursor:'pointer',padding:0}}>←</button>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+        👥 {L('Team','Team','Equipo')}
+      </h2>
+    </div>
+
+    <p style={{fontSize:12,color:t.muted,margin:'0 0 16px',lineHeight:1.5}}>
+      {L('Erstellt ein Team, um Fragenpacks gemeinsam zu nutzen. Mitglieder treten per Team-Code bei. (Geteilte Packs folgen im nächsten Schritt.)',
+         'Create a team to share question packs. Members join via team code. (Shared packs coming in the next step.)',
+         'Crea un equipo para compartir paquetes de preguntas. Los miembros se unen con un código. (Los paquetes compartidos llegan en el próximo paso.)')}
+    </p>
+
+    {msg&&<div style={{background:t.green+'22',border:`1px solid ${t.green}55`,borderRadius:t.radius,
+      padding:'9px 12px',marginBottom:12,textAlign:'center'}}>
+      <p style={{fontSize:12,color:t.green,fontWeight:700,margin:0}}>✓ {msg}</p></div>}
+
+    {/* Erstellen + Beitreten */}
+    <Card t={t} style={{display:'flex',flexDirection:'column',gap:10,marginBottom:14}}>
+      <span style={{fontSize:13,fontWeight:700,color:t.text}}>➕ {L('Neues Team','New team','Nuevo equipo')}</span>
+      <div style={{display:'flex',gap:8}}>
+        <input value={name} onChange={e=>setName(e.target.value)}
+          placeholder={L('Teamname','Team name','Nombre del equipo')} style={{...inputStyle,flex:1}}/>
+        <Btn t={t} onClick={createTeam} disabled={busy}>{L('Erstellen','Create','Crear')}</Btn>
+      </div>
+      <div style={{height:1,background:t.border,margin:'2px 0'}}/>
+      <span style={{fontSize:13,fontWeight:700,color:t.text}}>🔑 {L('Team beitreten','Join team','Unirse a equipo')}</span>
+      <div style={{display:'flex',gap:8}}>
+        <input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
+          placeholder={L('Team-Code','Team code','Código')} maxLength={6}
+          style={{...inputStyle,flex:1,textTransform:'uppercase',letterSpacing:2,fontWeight:700}}/>
+        <Btn t={t} variant="secondary" onClick={joinTeam} disabled={busy}>{L('Beitreten','Join','Unirse')}</Btn>
+      </div>
+      {err&&<p style={{color:t.danger,fontSize:12,margin:0}}>{err}</p>}
+    </Card>
+
+    {loading&&<div style={{textAlign:'center',padding:20}}><Spinner t={t}/></div>}
+
+    {!loading&&teams.length===0&&<Card t={t} style={{textAlign:'center',padding:28}}>
+      <div style={{fontSize:38,marginBottom:10}}>👥</div>
+      <p style={{color:t.muted,fontSize:14,margin:0}}>
+        {L('Noch in keinem Team. Erstelle eins oder tritt mit einem Code bei.',
+           'Not in any team yet. Create one or join with a code.',
+           'Aún sin equipo. Crea uno o únete con un código.')}
+      </p>
+    </Card>}
+
+    {teams.map(team=>{
+      const myRole=team.members?.[myId]?.role;
+      const isOwner=team.ownerId===myId;
+      const members=Object.entries(team.members||{}).map(([uid,m])=>({uid,...m}))
+        .sort((a,b)=>(a.role==='owner'?-1:b.role==='owner'?1:0)||(a.joinedAt||0)-(b.joinedAt||0));
+      return <Card key={team.id} t={t} style={{marginBottom:12}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:8}}>
+          <div style={{minWidth:0}}>
+            <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{team.name}</p>
+            <p style={{fontSize:11,color:t.muted,margin:'2px 0 0'}}>{roleLabel(myRole)} · {members.length} {L('Mitglieder','members','miembros')}</p>
+          </div>
+          <button onClick={()=>copyCode(team.code)}
+            style={{background:t.gold+'18',border:`1.5px solid ${t.gold}66`,borderRadius:100,
+              color:t.gold,fontSize:13,fontWeight:800,cursor:'pointer',padding:'7px 13px',
+              whiteSpace:'nowrap',fontFamily:t.fontBody,letterSpacing:1.5,flexShrink:0}}>
+            {team.code} 📋
+          </button>
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {members.map(m=>(
+            <div key={m.uid} style={{display:'flex',alignItems:'center',gap:8,
+              padding:'7px 0',borderTop:`1px solid ${t.border}`}}>
+              <Avatar name={m.name} t={t} size={26}/>
+              <span style={{flex:1,fontSize:13,color:t.text,fontWeight:m.uid===myId?800:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                {m.name}{m.uid===myId&&<span style={{color:t.accent,fontSize:11}}> ({L('Du','You','Tú')})</span>}
+              </span>
+              {/* Rollensteuerung: nur Inhaber, nicht für sich selbst */}
+              {isOwner&&m.role!=='owner'
+                ? <div style={{display:'flex',gap:4,alignItems:'center',flexShrink:0}}>
+                    <button onClick={()=>setRole(team,m.uid,m.role==='viewer'?'editor':'viewer')}
+                      style={{background:'none',border:`1px solid ${t.border}`,borderRadius:100,
+                        color:t.text,fontSize:11,fontWeight:700,cursor:'pointer',padding:'4px 9px',fontFamily:t.fontBody}}>
+                      {roleLabel(m.role)} ⇅
+                    </button>
+                    <button onClick={()=>removeMember(team,m.uid)}
+                      style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,
+                        color:t.danger,fontSize:11,cursor:'pointer',padding:'4px 8px'}}>✕</button>
+                  </div>
+                : <span style={{fontSize:11,color:t.muted,flexShrink:0,
+                    background:m.role==='owner'?t.gold+'22':t.surface,
+                    border:`1px solid ${m.role==='owner'?t.gold+'55':t.border}`,
+                    borderRadius:100,padding:'3px 9px',fontWeight:700}}>{roleLabel(m.role)}</span>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',gap:8,marginTop:12}}>
+          {isOwner
+            ? <button onClick={()=>deleteTeam(team)}
+                style={{flex:1,padding:'8px',borderRadius:t.radius,background:'none',
+                  border:`1.5px solid ${t.danger}55`,color:t.danger,fontSize:12,fontWeight:700,
+                  cursor:'pointer',fontFamily:t.fontBody}}>
+                🗑 {L('Team löschen','Delete team','Borrar equipo')}
+              </button>
+            : <button onClick={()=>leaveTeam(team)}
+                style={{flex:1,padding:'8px',borderRadius:t.radius,background:'none',
+                  border:`1.5px solid ${t.danger}44`,color:t.danger,fontSize:12,fontWeight:700,
+                  cursor:'pointer',fontFamily:t.fontBody}}>
+                🚪 {L('Team verlassen','Leave team','Salir del equipo')}
+              </button>}
+        </div>
+      </Card>;
+    })}
+  </div>;
+}
+
 /* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
-function MyQuestionsScreen({myId, t, lang, onBack}){
+function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   const i=UI[lang]||UI.de;
   const DEFAULT_PACK = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
   const[questions,setQuestions]=useState([]);
@@ -5883,6 +6113,13 @@ function MyQuestionsScreen({myId, t, lang, onBack}){
         display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
       ✨ {lang==='en'?'Occasion templates (ready-made)':lang==='es'?'Plantillas por ocasión (listas)':'Anlass-Vorlagen (fix & fertig)'}
     </button>
+    {onTeam&&<button onClick={onTeam}
+      style={{width:'100%',marginBottom:16,padding:'12px',borderRadius:t.radius,
+        background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,
+        fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,
+        display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+      👥 {lang==='en'?'Team (share packs)':lang==='es'?'Equipo (compartir paquetes)':'Team (Packs teilen)'}
+    </button>}
 
     {showOccasions&&<div onClick={()=>setShowOccasions(false)}
       style={{position:'fixed',inset:0,zIndex:600,background:'rgba(0,0,0,0.72)',
@@ -6956,7 +7193,8 @@ function App(){
     {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
       onDone={()=>setShowOnboarding(false)}/>}
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
+    {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
+    {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('myQuestions')}/>}
     {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
