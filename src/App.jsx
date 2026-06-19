@@ -2497,12 +2497,12 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
 
   return <div style={{
     minHeight:"100vh", display:"flex", flexDirection:"column",
-    maxWidth:520, margin:"0 auto", padding:"0 0 80px 0",
+    maxWidth:520, margin:"0 auto", padding:"0 14px 80px",
     background:t.bg,
   }}>
 
     {/* ── TOP BAR ── */}
-    <div style={{padding:"12px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <div style={{padding:"12px 0 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <Pill t={t} color={t.green}>{t.id==="kids"?`🎯 ${i.question} ${(room.qIdx||0)+1}`:i.question+" "+((room.qIdx||0)+1)}</Pill>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         {(room.doubleJokers||{})[myId]&&<Pill t={t} color={t.gold}>{lang==="es"?"2× PUNTOS":lang==="en"?"2× POINTS":"2× PUNKTE"}</Pill>}
@@ -2654,7 +2654,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
         </details>}
     {/* ── TIMER BAR ── */}
     {speedMode&&myGuess==null&&timeLeft!=null&&
-      <div style={{padding:"6px 16px"}}>
+      <div style={{padding:"6px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
           <span style={{fontSize:12,fontWeight:700,
             color:timeLeft<=5?t.danger:timeLeft<=10?t.gold:t.green}}
@@ -2671,7 +2671,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
       </div>}
 
     {/* ── QUESTION CARD ── */}
-    <div style={{padding:"8px 16px 0",flex:1,display:"flex",flexDirection:"column",gap:8}}>
+    <div style={{padding:"8px 0 0",display:"flex",flexDirection:"column",gap:8}}>
       <Card t={t} glow>
         <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
           <span style={{fontSize:28,fontFamily:"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>{(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}</span>
@@ -3032,8 +3032,8 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
 
   return <div style={page}>
 
-    <div style={{textAlign:"center",marginBottom:22,animation:"fu .3s ease both"}}>
-      <div style={{fontSize:28,marginBottom:6,lineHeight:1,
+    <div style={{textAlign:"center",marginBottom:14,animation:"fu .3s ease both"}}>
+      <div style={{fontSize:26,marginBottom:4,lineHeight:1,
         fontFamily:"'Twemoji Mozilla','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"}}>
         {(q.emoji||"").replace(/\uFE0F/g,"")||"❓"}
       </div>
@@ -3043,15 +3043,15 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
       </div>
       {doubleActive&&<div style={{marginTop:8}}><Pill t={t} color={t.gold}>🎯 {i.doubleActive}</Pill></div>}
       {room.usedJokerThisRound&&room.usedJokerThisRound!=="double"&&room.usedJokerThisRound!=="hint"&&<div style={{marginTop:8,fontSize:13,color:t.gold}}>{getJokerDef(room.usedJokerThisRound,lang)?.icon} {jokerUsedName}: {getJokerDef(room.usedJokerThisRound,lang)?.name}</div>}
-      <p style={{marginTop:14,fontSize:t.id==="kids"?17:15,lineHeight:1.55,color:t.muted,maxWidth:380,margin:"14px auto 6px"}}>{q.q}</p>
-      <div style={{fontFamily:t.fontTitle,fontSize:"clamp(50px,12vw,82px)",color:t.accent,lineHeight:1,marginTop:4,animation:"pop .5s ease both"}}><CountUp value={q.a} unit={q.unit} t={t}/></div>
-      <p style={{color:t.muted,marginTop:11,fontSize:15,lineHeight:1.6,maxWidth:380,margin:"11px auto 0"}}>{q.hint}</p>
+      <p style={{fontSize:t.id==="kids"?17:15,lineHeight:1.5,color:t.muted,maxWidth:380,margin:"9px auto 3px"}}>{q.q}</p>
+      <div style={{fontFamily:t.fontTitle,fontSize:"clamp(40px,10vw,64px)",color:t.accent,lineHeight:1,marginTop:2,animation:"pop .5s ease both"}}><CountUp value={q.a} unit={q.unit} t={t}/></div>
+      <p style={{color:t.muted,fontSize:14,lineHeight:1.5,maxWidth:380,margin:"7px auto 0"}}>{q.hint}</p>
       <RevealStrip ranked={ranked} answer={q.a} unit={q.unit} t={t}/>
       <p style={{fontSize:15,fontWeight:700,color:t.text,margin:"0 auto",maxWidth:400,lineHeight:1.4,animation:"fu .4s .5s ease both"}}>{wtfComment(ranked,q,lang)}</p>
     </div>
     <Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.roundScores}</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>{i.roundScores}</p>
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"8px 12px",borderRadius:t.radius,marginBottom:6,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
               color:i===0?t.gold:i===1?"#c0c0c0":i===2?"#cd7f32":"#6e5e54",
               flexShrink:0}}>{i+1}.</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
@@ -3059,10 +3059,10 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
             <Pill t={t} color={pts>0?(exact?t.green:t.gold):pts<0?t.danger:t.muted}>
               {pts>0?'+':''}{pts}P
             </Pill></div>;})}
-      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"10px 13px",borderRadius:t.radius,marginBottom:8,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>–</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
+      {noAnswer&&noAnswer.map(p=><div key={p.id} style={{...row,padding:"8px 12px",borderRadius:t.radius,marginBottom:6,background:t.danger+"10",border:`1.5px solid ${t.danger}33`,opacity:.7}}><span style={{fontSize:18,minWidth:20}}>–</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}</span><span style={{color:t.danger,fontSize:13,fontWeight:700}}>{i.tooSlow}</span><Pill t={t} color={t.danger}>0P</Pill></div>)}
     </Card>
     {Object.keys(bets).length>0&&<Card t={t} style={{marginBottom:12}}>
-      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>{i.betting}</p>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>{i.betting}</p>
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
@@ -3094,12 +3094,12 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
         {getJokerDef(myNewJoker,lang)?.icon} {getJokerDef(myNewJoker,lang)?.name}
       </p>
     </div>}
-    <Card t={t} style={{marginBottom:18}}>
-      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:12}}>GESAMTPUNKTE</p>
+    <Card t={t} style={{marginBottom:12}}>
+      <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>GESAMTPUNKTE</p>
       {[...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0)).map((p,i)=><div key={p.id} style={{...row,padding:"10px 0",borderBottom:i<pl.length-1?`1px solid ${t.border}`:"none"}}><span style={{fontFamily:t.fontTitle,fontSize:20,color:i===0?t.gold:t.muted,minWidth:20}}>{i+1}</span><Avatar name={p.name} t={t} size={30}/><span style={{flex:1,fontWeight:p.id===myId?800:400}}>{p.name}{p.id===myId&&<span style={{color:t.accent,fontSize:12}}> (Du)</span>}</span><span style={{fontFamily:t.fontTitle,fontSize:32,color:i===0?t.gold:t.text}}>{scores[p.id]||0}</span></div>)}
     </Card>
     {isHost?<div style={{display:"flex",gap:10}}><Btn t={t} onClick={onNext} full>{i.nextQ}</Btn><Btn t={t} variant="secondary" onClick={onEnd}>{i.endGame}</Btn></div>:<div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center'}}><p style={{textAlign:"center",color:t.muted,animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>{onLeave&&<button onClick={onLeave} style={{padding:'6px 14px',borderRadius:t.radius,background:'transparent',border:`1px solid ${t.danger}33`,color:t.danger,fontSize:12,cursor:'pointer',fontFamily:t.fontBody,opacity:.7}}>🚪 {i.leaveGame||'Verlassen'}</button>}</div>}
-    {q&&<div style={{textAlign:'center',marginTop:14}}><BugReportButton t={t} lang={lang} question={q}/></div>}
+    {q&&<div style={{textAlign:'center',marginTop:10}}><BugReportButton t={t} lang={lang} question={q}/></div>}
   </div>;
 }
 
