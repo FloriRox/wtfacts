@@ -1168,13 +1168,13 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
 
   if(!enabled.length) return null;
 
-  return <Card t={t} style={{marginTop:12,padding:"14px 16px"}}>
-    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:10}}>
+  return <Card t={t} style={{marginTop:8,padding:"10px 12px"}}>
+    <p style={{fontSize:11,fontWeight:700,color:t.gold,letterSpacing:.8,marginBottom:8}}>
       🃏 JOKER ({myJokers.length})
       {usedRound && <span style={{color:t.muted,fontWeight:400}}> · {i.jokerUsed}</span>}
     </p>
 
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4,WebkitOverflowScrolling:"touch"}}>
       {enabled.map(jk=>{
         const def      = getJokerDef(jk,lang); if(!def) return null;
         const count    = counts[jk]||0;
@@ -1185,29 +1185,25 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
         const canClick = has && !afk && (jk==="skip" || !usedRound) &&
           (jk!=="sabotage" || othersGuessed);
         return(
-          <div key={jk} onClick={()=>canClick && useJoker(jk)}
-            style={{display:"flex",alignItems:"center",gap:10,
-              padding:"9px 12px",borderRadius:t.radius,
+          <button key={jk} onClick={()=>canClick && useJoker(jk)} disabled={!canClick}
+            title={def.name+' – '+shortDesc[jk]}
+            style={{flex:"0 0 auto",position:"relative",display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",gap:3,minWidth:68,padding:"8px 8px",
+              borderRadius:t.radius,fontFamily:t.fontBody,
               background: flash===jk ? t.gold+"44" : canClick ? t.gold+"18" : t.surface,
-              border:`1.5px solid ${flash===jk ? t.gold : canClick ? t.gold : t.border}`,
-              opacity: has ? 1 : 0.3,
+              border:`1.5px solid ${flash===jk||canClick ? t.gold : t.border}`,
+              opacity: has ? 1 : 0.35,
               cursor: canClick ? "pointer" : "default",
-              transform: flash===jk ? "scale(1.02)" : "scale(1)",
+              transform: flash===jk ? "scale(1.04)" : "scale(1)",
               transition:"all .15s"}}>
-            <span style={{fontSize:18,minWidth:24,textAlign:"center"}}>{def.icon}</span>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:13,
-                color: canClick ? t.gold : t.text}}>{def.name}</div>
-              <div style={{fontSize:11,color:t.muted,marginTop:1}}>{shortDesc[jk]}</div>
-            </div>
-            <div style={{minWidth:22,height:22,borderRadius:100,
-              background: has ? t.gold : t.border,
-              color: has ? t.bg : t.muted,
-              fontSize:12,fontWeight:800,flexShrink:0,
-              display:"flex",alignItems:"center",justifyContent:"center"}}>
-              {count}
-            </div>
-          </div>
+            <span style={{fontSize:22,lineHeight:1}}>{def.icon}</span>
+            <span style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",
+              color: canClick ? t.gold : t.text}}>{def.name}</span>
+            <span style={{position:"absolute",top:3,right:3,minWidth:16,height:16,borderRadius:100,
+              background: has ? t.gold : t.border, color: has ? t.bg : t.muted,
+              fontSize:10,fontWeight:800,padding:"0 3px",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>{count}</span>
+          </button>
         );
       })}
     </div>
@@ -4248,10 +4244,12 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
           </button>
         ))}
       </div>
-      {/* Comment field – shown when rating is bad */}
-      {((rating&&rating<4)||(nps!==null&&nps<7))&&<div>
+      {/* Comment field – immer sichtbar, sobald bewertet wurde (auch positiv) */}
+      {(rating||nps!==null)&&<div>
         <p style={{fontSize:12,color:t.muted,margin:'0 0 4px'}}>
-          {lang==='en'?'What can we improve?':lang==='es'?'¿Qué podemos mejorar?':'Was können wir verbessern?'}
+          {((rating&&rating>=4)||(nps!==null&&nps>=7))
+            ? (lang==='en'?'What did you love? (optional)':lang==='es'?'¿Qué te encantó? (opcional)':'Was hat dir besonders gefallen? (optional)')
+            : (lang==='en'?'What can we improve? (optional)':lang==='es'?'¿Qué podemos mejorar? (opcional)':'Was können wir verbessern? (optional)')}
         </p>
         <textarea value={ratingComment} onChange={e=>setRatingComment(e.target.value)}
           rows={2} placeholder={lang==='en'?'Your feedback...':lang==='es'?'Tu opinión...':'Dein Feedback...'}
@@ -5757,12 +5755,13 @@ function TeamScreen({myId, t, lang, onBack}){
       if(!teamId){ setErr(L('Team nicht gefunden.','Team not found.','Equipo no encontrado.')); setBusy(false); return; }
       if(teamsMap[teamId]){ setErr(L('Du bist bereits in diesem Team.','You are already in this team.','Ya estás en este equipo.')); setBusy(false); return; }
       if(pendingMap[teamId]){ setErr(L('Anfrage läuft bereits.','Request already pending.','Solicitud ya pendiente.')); setBusy(false); return; }
-      const updates={};
-      updates[`teams/${teamId}/joinRequests/${myId}`]={name:myName,requestedAt:Date.now()};
-      updates[`userTeams/${myId}/${teamId}`]={status:'pending',name:tName};
-      await update(ref(db),updates);
+      // 1) Anfrage beim Team anlegen – MUSS serverseitig erlaubt sein (Rules!)
+      await update(ref(db,`teams/${teamId}/joinRequests/${myId}`),{name:myName,requestedAt:Date.now()});
+      // 2) erst nach Erfolg lokal als „ausstehend" vormerken
+      await update(ref(db,`userTeams/${myId}`),{[teamId]:{status:'pending',name:tName}});
       setJoinCode(''); flash(L('Anfrage gesendet – warte auf Bestätigung','Request sent – waiting for approval','Solicitud enviada – esperando aprobación'));
-    }catch(e){ console.error('request join failed:',e); setErr(L('Anfrage fehlgeschlagen.','Request failed.','Error en la solicitud.')); }
+    }catch(e){ console.error('request join failed:',e);
+      setErr(L('Anfrage fehlgeschlagen – sind die aktuellen Firebase-Rules deployed?','Request failed – are the latest Firebase rules deployed?','Solicitud fallida – ¿están desplegadas las reglas de Firebase?')); }
     setBusy(false);
   }
 
@@ -6551,6 +6550,13 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
               whiteSpace:'nowrap',fontFamily:t.fontBody,flexShrink:0}}>
             🔗 {lang==='en'?'Share':lang==='es'?'Compartir':'Teilen'}
           </button>
+          {onTeam&&<button onClick={()=>openPushPicker(packName)}
+            title={lang==='en'?'Share to team':lang==='es'?'Compartir al equipo':'Ins Team teilen'}
+            style={{background:'none',border:`1px solid ${t.gold}66`,borderRadius:100,
+              color:t.gold,fontSize:13,cursor:'pointer',padding:'8px 11px',
+              whiteSpace:'nowrap',fontFamily:t.fontBody,flexShrink:0}}>
+            👥
+          </button>}
           <button onClick={()=>deletePack(packName)}
             title={lang==='en'?'Delete pack':lang==='es'?'Borrar paquete':'Pack löschen'}
             style={{background:'none',border:`1px solid ${t.danger}55`,borderRadius:100,
@@ -6601,12 +6607,6 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
                 : <span style={{fontSize:10,color:t.muted}}>🔒 {lang==='en'?'Private':lang==='es'?'Privada':'Privat'}</span>}
             </div>
           </Card>)}
-          {onTeam&&<button onClick={()=>openPushPicker(packName)}
-            style={{alignSelf:'flex-start',background:'none',border:`1px dashed ${t.border}`,
-              borderRadius:t.radius,color:t.muted,fontSize:12,fontWeight:700,cursor:'pointer',
-              padding:'7px 12px',fontFamily:t.fontBody}}>
-            👥 {lang==='en'?'Share to team':lang==='es'?'Compartir al equipo':'Ins Team teilen'}
-          </button>}
         </div>}
       </div>;
     })}
