@@ -135,10 +135,17 @@ function applyLargeText(){ try{ document.documentElement.style.zoom = A11Y.large
 function setA11yPref(key,val){ A11Y={...A11Y,[key]:val}; try{ localStorage.setItem('em_a11y',JSON.stringify(A11Y)); }catch(e){} applyLargeText(); }
 var _a11yCache={};
 function applyA11y(base){
-  if(!A11Y || (!A11Y.cb && !A11Y.contrast)) return base;
-  var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0);
+  if(!A11Y || (!A11Y.cb && !A11Y.contrast && !A11Y.light)) return base;
+  var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0)+'|'+(A11Y.light?1:0);
   if(_a11yCache[key]) return _a11yCache[key];
   var t={...base};
+  // Heller/freundlicher Modus (nur Adult): warme, einladende Palette – ersetzt den Dark-Look
+  if(A11Y.light && base.id==='adult'){
+    t={...t, bg:'#faf5ee', surface:'#ffffff', card:'#ffffff', border:'#e7dccd',
+      accent:'#e8470a', gold:'#dd7d12', green:'#1f9d63', text:'#2b211a', muted:'#9b8b7b'};
+    if(A11Y.cb) t.green='#2f7fe0';
+    _a11yCache[key]=t; return t; // im hellen Modus kein zusätzlicher Dark-Kontrast
+  }
   if(A11Y.cb){
     // Rot/Grün-Schwäche: "richtig/nah" wird Blau statt Grün (klar von Rot unterscheidbar)
     t.green = '#3b9dff';
@@ -155,6 +162,7 @@ function applyA11y(base){
 function A11yMenu({t, lang, onA11y, compact=false}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const items=[
+    {k:'light', icon:'☀️', label:L('Heller Modus','Light mode','Modo claro')},
     {k:'cb', icon:'🎨', label:L('Rot/Grün-Schwäche','Red/green colorblind','Daltonismo rojo/verde')},
     {k:'large', icon:'🔠', label:L('Große Schrift','Large text','Texto grande')},
     {k:'contrast', icon:'◐', label:L('Hoher Kontrast','High contrast','Alto contraste')},
@@ -5701,6 +5709,7 @@ function TeamScreen({myId, t, lang, onBack}){
   const[msg,setMsg]=useState('');
   const[err,setErr]=useState('');
   const[openTeamPacks,setOpenTeamPacks]=useState({});
+  const[newPackMenu,setNewPackMenu]=useState(null); // team-Objekt für Vorlagen-Auswahl
   const[qEdit,setQEdit]=useState(null); // {teamId,packId,qId|null,q,a,unit,hint,emoji}
   const[pendingMap,setPendingMap]=useState({}); // teamId -> {name} (eigene ausstehende Anfragen)
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
@@ -5854,15 +5863,44 @@ function TeamScreen({myId, t, lang, onBack}){
   }
 
   // ── Team-Packs LIVE bearbeiten (gemeinsame Daten, keine Kopien) ──
-  async function createTeamPack(team){
-    const nm=window.prompt(L('Name des neuen Packs:','Name of the new pack:','Nombre del nuevo paquete:'));
-    if(!nm||!nm.trim()) return;
+  async function createTeamPack(team, occId){
+    let name, questions={};
+    if(occId){
+      const set=OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de;
+      const tpl=set[occId]; if(!tpl||!Array.isArray(tpl.questions)) return;
+      name=tpl.name;
+      tpl.questions.forEach((x,idx)=>{
+        const qId='q'+Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+        questions[qId]={q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||tpl.icon||'📝',lang,createdAt:Date.now(),authorId:myId};
+      });
+    } else {
+      const nm=window.prompt(L('Name des neuen Packs:','Name of the new pack:','Nombre del nuevo paquete:'));
+      if(!nm||!nm.trim()) return; name=nm.trim();
+    }
     try{
       const packId='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
       await update(ref(db,`teams/${team.id}/packs/${packId}`),
-        {name:nm.trim(),createdAt:Date.now(),createdBy:myId,createdByName:myName,questions:{}});
+        {name,createdAt:Date.now(),createdBy:myId,createdByName:myName,questions});
       setOpenTeamPacks(o=>({...o,[packId]:true}));
+      setNewPackMenu(null);
     }catch(e){ console.error('create team pack failed:',e); }
+  }
+  // Team-Pack → „Meine Fragen" kopieren (nicht-destruktiv)
+  async function copyToMine(pk){
+    const qs=Object.values(pk.questions||{});
+    if(!qs.length){ flash(L('Pack ist leer.','Pack is empty.','El paquete está vacío.')); return; }
+    try{
+      const updates={};
+      qs.forEach((x,idx)=>{
+        const qId=Date.now().toString(36)+idx.toString(36)+Math.random().toString(36).slice(2,4);
+        updates[`userQuestions/${myId}/${qId}`]={
+          q:x.q,a:x.a,unit:x.unit,hint:x.hint||'',emoji:x.emoji||'📝',
+          category:pk.name,visibility:'private',lang:x.lang||lang,createdAt:Date.now(),authorId:myId,
+        };
+      });
+      await update(ref(db),updates);
+      flash(L('In „Meine Fragen" kopiert','Copied to "My questions"','Copiado a "Mis preguntas"')+': '+pk.name);
+    }catch(e){ console.error('copy to mine failed:',e); }
   }
   async function deleteTeamPack(team,pid){
     if(!window.confirm(L('Dieses geteilte Pack für ALLE löschen?','Delete this shared pack for EVERYONE?','¿Borrar este paquete para TODOS?'))) return;
@@ -6023,7 +6061,7 @@ function TeamScreen({myId, t, lang, onBack}){
             <p style={{fontSize:12,fontWeight:800,color:t.text,margin:0}}>
               📦 {L('Geteilte Packs','Shared packs','Paquetes compartidos')} ({Object.keys(team.packs||{}).length})
             </p>
-            {myRole!=='viewer'&&<button onClick={()=>createTeamPack(team)}
+            {myRole!=='viewer'&&<button onClick={()=>setNewPackMenu(team)}
               style={{background:'none',border:`1px solid ${t.accent}55`,borderRadius:100,color:t.accent,
                 fontSize:11,fontWeight:700,cursor:'pointer',padding:'4px 10px',fontFamily:t.fontBody}}>
               ➕ {L('Neues Pack','New pack','Nuevo paquete')}
@@ -6047,6 +6085,8 @@ function TeamScreen({myId, t, lang, onBack}){
                       <span style={{display:'block',fontSize:10,color:t.muted}}>{qList.length} {L('Fragen','questions','preguntas')}{pk.createdByName?` · ${pk.createdByName}`:''}</span>
                     </span>
                   </button>
+                  <button onClick={()=>copyToMine(pk)} title={L('In „Meine Fragen" kopieren','Copy to "My questions"','Copiar a "Mis preguntas"')}
+                    style={{background:'none',border:`1px solid ${t.gold}55`,borderRadius:100,color:t.gold,fontSize:13,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>📥</button>
                   {myRole!=='viewer'&&<button onClick={()=>deleteTeamPack(team,pid)} title={L('Pack löschen','Delete pack','Borrar paquete')}
                     style={{background:'none',border:`1px solid ${t.danger}44`,borderRadius:100,color:t.danger,fontSize:13,cursor:'pointer',padding:'5px 8px',flexShrink:0}}>🗑</button>}
                 </div>
@@ -6115,6 +6155,47 @@ function TeamScreen({myId, t, lang, onBack}){
         </div>
       </Card>
     ))}
+
+    {/* Vorlagen-Auswahl für neues Team-Pack */}
+    {newPackMenu&&<div onClick={()=>setNewPackMenu(null)}
+      style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,.6)',
+        display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
+        borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',
+        maxHeight:'80vh',overflowY:'auto'}}>
+        <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 4px'}}>
+          {L('Neues Pack','New pack','Nuevo paquete')} · {newPackMenu.name}
+        </p>
+        <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>
+          {L('Leer starten oder eine Anlass-Vorlage nutzen','Start empty or use an occasion template','Empieza vacío o usa una plantilla')}
+        </p>
+        <button onClick={()=>createTeamPack(newPackMenu)}
+          style={{width:'100%',display:'flex',alignItems:'center',gap:10,marginBottom:8,
+            padding:'12px 14px',borderRadius:t.radius,background:t.surface,
+            border:`1.5px solid ${t.border}`,color:t.text,fontSize:14,fontWeight:700,
+            cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+          <span style={{fontSize:20}}>📄</span>
+          <span style={{flex:1}}>{L('Leeres Pack','Empty pack','Paquete vacío')}</span>
+          <span style={{color:t.muted}}>›</span>
+        </button>
+        {Object.entries(OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de).map(([occId,occ])=>(
+          <button key={occId} onClick={()=>createTeamPack(newPackMenu,occId)}
+            style={{width:'100%',display:'flex',alignItems:'center',gap:10,marginBottom:8,
+              padding:'12px 14px',borderRadius:t.radius,background:t.surface,
+              border:`1.5px solid ${t.gold}44`,color:t.text,fontSize:14,fontWeight:700,
+              cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+            <span style={{fontSize:20}}>{occ.icon||'📋'}</span>
+            <span style={{flex:1}}>{occ.name}</span>
+            <span style={{fontSize:11,color:t.muted}}>{(occ.questions||[]).length} {L('Fragen','Q','preg.')}</span>
+          </button>
+        ))}
+        <button onClick={()=>setNewPackMenu(null)}
+          style={{width:'100%',marginTop:6,padding:'10px',borderRadius:t.radius,background:'none',
+            border:`1px solid ${t.border}`,color:t.muted,fontSize:13,cursor:'pointer',fontFamily:t.fontBody}}>
+          {L('Abbrechen','Cancel','Cancelar')}
+        </button>
+      </div>
+    </div>}
 
     {/* Team-Frage bearbeiten/hinzufügen (live, gemeinsame Daten) */}
     {qEdit&&<div onClick={()=>setQEdit(null)}
