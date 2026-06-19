@@ -1069,6 +1069,7 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
 
   const [showSabotage,   setShowSabotage]   = useState(false);
   const [sabotageTarget, setSabotageTarget] = useState("");
+  const [sel,            setSel]            = useState(null); // angetippter Joker (Beschreibung)
 
   // Count how many of each type the player holds
   const counts = {};
@@ -1174,7 +1175,7 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
       {usedRound && <span style={{color:t.muted,fontWeight:400}}> · {i.jokerUsed}</span>}
     </p>
 
-    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4,WebkitOverflowScrolling:"touch"}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
       {enabled.map(jk=>{
         const def      = getJokerDef(jk,lang); if(!def) return null;
         const count    = counts[jk]||0;
@@ -1184,21 +1185,19 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
           .some(id=>(room.guesses||{})[id]!=null&&(room.guesses||{})[id]!==-999999);
         const canClick = has && !afk && (jk==="skip" || !usedRound) &&
           (jk!=="sabotage" || othersGuessed);
+        const isSel    = sel===jk;
         return(
-          <button key={jk} onClick={()=>canClick && useJoker(jk)} disabled={!canClick}
-            title={def.name+' – '+shortDesc[jk]}
-            style={{flex:"0 0 auto",position:"relative",display:"flex",flexDirection:"column",
-              alignItems:"center",justifyContent:"center",gap:3,minWidth:68,padding:"8px 8px",
+          <button key={jk} onClick={()=>setSel(isSel?null:jk)}
+            style={{position:"relative",display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",gap:3,padding:"9px 6px",
               borderRadius:t.radius,fontFamily:t.fontBody,
-              background: flash===jk ? t.gold+"44" : canClick ? t.gold+"18" : t.surface,
-              border:`1.5px solid ${flash===jk||canClick ? t.gold : t.border}`,
-              opacity: has ? 1 : 0.35,
-              cursor: canClick ? "pointer" : "default",
-              transform: flash===jk ? "scale(1.04)" : "scale(1)",
-              transition:"all .15s"}}>
+              background: flash===jk ? t.gold+"44" : isSel ? t.gold+"22" : has ? t.gold+"12" : t.surface,
+              border:`1.5px solid ${flash===jk||isSel ? t.gold : has ? t.gold+"77" : t.border}`,
+              opacity: has ? 1 : 0.4, cursor:"pointer",
+              transform: flash===jk ? "scale(1.04)" : "scale(1)", transition:"all .15s"}}>
             <span style={{fontSize:22,lineHeight:1}}>{def.icon}</span>
             <span style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",
-              color: canClick ? t.gold : t.text}}>{def.name}</span>
+              color: has ? t.gold : t.text}}>{def.name}</span>
             <span style={{position:"absolute",top:3,right:3,minWidth:16,height:16,borderRadius:100,
               background: has ? t.gold : t.border, color: has ? t.bg : t.muted,
               fontSize:10,fontWeight:800,padding:"0 3px",
@@ -1207,6 +1206,35 @@ function JokerBar({room, myId, code, t, onSkip, lang}){
         );
       })}
     </div>
+
+    {/* Beschreibung + Verwenden des angetippten Jokers */}
+    {sel&&(()=>{
+      const def=getJokerDef(sel,lang); if(!def) return null;
+      const count=counts[sel]||0, has=count>0;
+      const othersGuessed=(room.order||[]).filter(id=>id!==myId&&!(room.afkPlayers||{})[id])
+        .some(id=>(room.guesses||{})[id]!=null&&(room.guesses||{})[id]!==-999999);
+      const canClick=has&&!afk&&(sel==="skip"||!usedRound)&&(sel!=="sabotage"||othersGuessed);
+      const reason = afk ? i.jokerUsed
+        : !has ? (lang==='en'?'You don\u2019t have this joker':lang==='es'?'No tienes este comodín':'Diesen Joker hast du nicht')
+        : (sel!=="skip"&&usedRound) ? i.jokerUsed
+        : (sel==="sabotage"&&!othersGuessed) ? (lang==='en'?'Wait until others have guessed':lang==='es'?'Espera a que otros adivinen':'Erst wenn andere getippt haben')
+        : null;
+      return <div style={{marginTop:8,padding:"10px 12px",borderRadius:t.radius,
+        background:t.surface,border:`1.5px solid ${t.gold}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+          <span style={{fontSize:18}}>{def.icon}</span>
+          <span style={{fontSize:13,fontWeight:800,color:t.gold,flex:1}}>{def.name}</span>
+        </div>
+        <p style={{fontSize:12,color:t.text,margin:"0 0 8px",lineHeight:1.4}}>{shortDesc[sel]}</p>
+        <button onClick={()=>{ if(canClick){ useJoker(sel); setSel(null); } }} disabled={!canClick}
+          style={{width:"100%",padding:"8px",borderRadius:t.radius,border:"none",
+            background:canClick?t.gold:t.surface,color:canClick?t.bg:t.muted,
+            fontSize:13,fontWeight:800,cursor:canClick?"pointer":"default",
+            fontFamily:t.fontBody,border:canClick?"none":`1px solid ${t.border}`}}>
+          {canClick ? (lang==='en'?'Use ✓':lang==='es'?'Usar ✓':'Verwenden ✓') : (reason||'—')}
+        </button>
+      </div>;
+    })()}
 
     {/* 50/50 hint – only visible to the player who used it */}
     {room.extraHint && room.extraHintFor===myId &&
@@ -1578,14 +1606,14 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
     onDone();
   }
 
-  return <div style={{position:'fixed',inset:0,zIndex:200,background:t.bg,overflowY:'auto',display:'flex',flexDirection:'column',maxWidth:520,margin:'0 auto',padding:'20px 16px 40px'}}>
+  return <div style={{position:'fixed',inset:0,zIndex:200,background:t.bg,overflowY:'auto',display:'flex',flexDirection:'column',maxWidth:520,margin:'0 auto',padding:'14px 16px 24px'}}>
     <h2 style={{fontSize:20,fontWeight:900,color:t.accent,margin:'0 0 4px',
       fontFamily:t.fontTitle}}>{i.steckbriefTitle}</h2>
-    <p style={{fontSize:13,color:t.muted,margin:'0 0 20px'}}>
+    <p style={{fontSize:13,color:t.muted,margin:'0 0 12px'}}>
       {playerName} · {lang==='de'?'wird auf dem Beamer gezeigt':'shown on the big screen'}
     </p>
     {/* Selfie */}
-    <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:16}}>
+    <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}>
       <div style={{width:72,height:72,borderRadius:'50%',overflow:'hidden',
         background:t.surface,border:`2px solid ${selfie?t.accent:t.border}`,
         flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -1607,21 +1635,21 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
             </div>}
       </div>
     </div>
-    <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
+    <div style={{display:'flex',flexDirection:'column',gap:8,flex:1}}>
       {fields.map(f=>(
         <div key={f.key}>
-          <p style={{fontSize:12,color:t.muted,margin:'0 0 4px',fontWeight:600}}>
+          <p style={{fontSize:12,color:t.muted,margin:'0 0 3px',fontWeight:600}}>
             {f.emoji} {f.label}
           </p>
           <input value={vals[f.key]||''} onChange={e=>setVals(v=>({...v,[f.key]:e.target.value}))}
             placeholder={f.placeholder}
-            style={{width:'100%',padding:'10px 12px',background:t.surface,
+            style={{width:'100%',padding:'9px 12px',background:t.surface,
               border:`1.5px solid ${t.border}`,borderRadius:t.radius,
               color:t.text,fontSize:14,fontFamily:t.fontBody,boxSizing:'border-box'}}/>
         </div>
       ))}
     </div>
-    <div style={{display:'flex',gap:10,marginTop:20}}>
+    <div style={{display:'flex',gap:10,marginTop:14}}>
       <button onClick={onDone}
         style={{flex:1,padding:'11px',borderRadius:t.radius,background:'none',
           border:`1px solid ${t.border}`,color:t.muted,fontSize:13,cursor:'pointer',
@@ -1959,10 +1987,10 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   function ToggleRow({label, desc, checked, onChange, color, children}){
     const c=color||t.accent;
     return <div onClick={onChange} style={{display:'flex',alignItems:'center',gap:12,
-      padding:'10px 14px',borderRadius:t.radius,cursor:'pointer',
+      padding:'7px 12px',borderRadius:t.radius,cursor:'pointer',
       background:checked?c+'18':t.surface,
       border:`1.5px solid ${checked?c:t.border}`,
-      transition:'all .15s',marginBottom:6}}>
+      transition:'all .15s',marginBottom:4}}>
       <div style={{flex:1}}>
         <div style={{fontWeight:700,fontSize:13,color:checked?c:t.text}}>{label}</div>
         {desc&&<div style={{fontSize:11,color:t.muted,marginTop:1}}>{desc}</div>}
@@ -1980,13 +2008,13 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
 
   return <div style={{
     minHeight:'100vh',display:'flex',flexDirection:'column',
-    maxWidth:520,margin:'0 auto',padding:'16px 16px 32px',
-    background:t.bg,gap:6,
+    maxWidth:520,margin:'0 auto',padding:'14px 16px 28px',
+    background:t.bg,gap:3,
   }}>
     <Logo t={t} size="sm"/>
 
     {/* ── Speed ── */}
-    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'14px 0 4px'}}>⚡ SPEED-MODUS</p>
+    <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,margin:'10px 0 3px'}}>⚡ SPEED-MODUS</p>
     <ToggleRow label={speedMode?i.speed:i.noTimer} desc={speedMode?`Timer: ${timerSecs}s`:'Kein Zeitlimit'}
       checked={speedMode} onChange={()=>setSpeedMode(p=>!p)} color={t.accent}/>
     {speedMode&&<div style={{display:'flex',gap:6,marginTop:-2,marginBottom:4}}>
