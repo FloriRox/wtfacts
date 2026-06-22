@@ -134,7 +134,20 @@ var A11Y = loadA11y();
 function applyLargeText(){ try{ document.documentElement.style.zoom = A11Y.large ? '1.12' : ''; }catch(e){} }
 function setA11yPref(key,val){ A11Y={...A11Y,[key]:val}; try{ localStorage.setItem('em_a11y',JSON.stringify(A11Y)); }catch(e){} applyLargeText(); }
 var _a11yCache={};
+/* ─── EIGENE FARBEN (global, persistent) ── */
+function loadCustomColors(){ try{ return JSON.parse(localStorage.getItem('em_colors')||'{}')||{}; }catch(e){ return {}; } }
+var CUSTOM_COLORS = loadCustomColors();
+function setCustomColor(key,val){ CUSTOM_COLORS={...CUSTOM_COLORS,[key]:val}; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
+function clearCustomColor(key){ var c={...CUSTOM_COLORS}; delete c[key]; CUSTOM_COLORS=c; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
+function resetCustomColors(){ CUSTOM_COLORS={}; try{ localStorage.removeItem('em_colors'); }catch(e){} }
+// Wrapper: erst Barrierefreiheit/Heller Modus, dann eigene Farben drüberlegen
 function applyA11y(base){
+  var th=applyBaseA11y(base);
+  var ks=CUSTOM_COLORS?Object.keys(CUSTOM_COLORS):[];
+  if(!ks.length) return th;
+  var o={...th}; ks.forEach(function(k){ if(CUSTOM_COLORS[k]) o[k]=CUSTOM_COLORS[k]; }); return o;
+}
+function applyBaseA11y(base){
   if(!A11Y || (!A11Y.cb && !A11Y.contrast && !A11Y.light)) return base;
   var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0)+'|'+(A11Y.light?1:0);
   if(_a11yCache[key]) return _a11yCache[key];
@@ -159,7 +172,7 @@ function applyA11y(base){
 }
 
 /* ─── BARRIEREFREIHEIT-MENÜ ──────────────────────── */
-function A11yMenu({t, lang, onA11y, compact=false}){
+function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const items=[
     {k:'light', icon:'☀️', label:L('Heller Modus','Light mode','Modo claro')},
@@ -188,6 +201,76 @@ function A11yMenu({t, lang, onA11y, compact=false}){
         </span>
       </button>;
     })}
+    {onOpenColors&&<button onClick={onOpenColors}
+      style={{width:'100%',display:'flex',alignItems:'center',gap:10,justifyContent:'flex-start',
+        background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:rad,padding:pad,
+        color:t.text,fontSize:fs,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+      <span style={{fontSize:compact?15:16,width:20,textAlign:'center'}}>🎨</span>
+      <span style={{flex:1,textAlign:'left'}}>{L('Farben anpassen','Customize colors','Personalizar colores')}</span>
+      <span style={{color:t.muted}}>›</span>
+    </button>}
+  </div>;
+}
+
+function ColorEditor({t, lang, onChange, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const[,setTick]=useState(0); const rerender=()=>setTick(x=>x+1);
+  const tokens=[
+    {k:'bg',     label:L('Hintergrund','Background','Fondo')},
+    {k:'surface',label:L('Felder / Oberfläche','Fields / surface','Campos / superficie')},
+    {k:'card',   label:L('Karten','Cards','Tarjetas')},
+    {k:'border', label:L('Feldumrandung','Field border','Borde de campo')},
+    {k:'accent', label:L('Buttons / Akzent','Buttons / accent','Botones / acento')},
+    {k:'gold',   label:L('Highlight (Gold)','Highlight (gold)','Resaltado (oro)')},
+    {k:'green',  label:L('Richtig (Grün)','Correct (green)','Correcto (verde)')},
+    {k:'danger', label:L('Fehler (Rot)','Error (red)','Error (rojo)')},
+    {k:'text',   label:L('Text','Text','Texto')},
+    {k:'muted',  label:L('Text gedämpft','Muted text','Texto atenuado')},
+  ];
+  const norm=v=>(v&&/^#[0-9a-fA-F]{6}$/.test(v))?v:'#000000';
+  const change=(k,v)=>{ setCustomColor(k,v); onChange&&onChange(); rerender(); };
+  const resetOne=k=>{ clearCustomColor(k); onChange&&onChange(); rerender(); };
+  const resetAll=()=>{ resetCustomColors(); onChange&&onChange(); rerender(); };
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
+    display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
+      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',maxHeight:'88vh',overflowY:'auto'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+        <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🎨 {L('Farben anpassen','Customize colors','Personalizar colores')}</p>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
+      </div>
+      <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>{L('Änderungen sind sofort sichtbar und bleiben gespeichert.','Changes apply live and are saved.','Los cambios se aplican al instante y se guardan.')}</p>
+      <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:12,marginBottom:14,
+        display:'flex',alignItems:'center',gap:10}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{color:t.text,fontWeight:700,fontSize:14}}>{L('Vorschau','Preview','Vista previa')}</div>
+          <div style={{color:t.muted,fontSize:12}}>{L('So sieht es aus','Looks like this','Se ve así')}</div>
+        </div>
+        <span style={{background:t.gold,color:t.bg,fontWeight:800,fontSize:12,padding:'3px 8px',borderRadius:100,flexShrink:0}}>★</span>
+        <button style={{background:t.accent,color:'#fff',border:'none',borderRadius:t.radius,padding:'8px 14px',fontWeight:800,fontSize:13,flexShrink:0,fontFamily:t.fontBody}}>{L('Button','Button','Botón')}</button>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {tokens.map(tok=>{
+          const cur=norm(t[tok.k]);
+          const custom=CUSTOM_COLORS[tok.k]!=null;
+          return <div key={tok.k} style={{display:'flex',alignItems:'center',gap:12,
+            background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:'8px 12px'}}>
+            <input type="color" value={cur} onChange={e=>change(tok.k,e.target.value)}
+              style={{width:38,height:38,border:'none',background:'none',cursor:'pointer',padding:0,flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:700,color:t.text}}>{tok.label}{custom&&<span style={{color:t.gold}}> •</span>}</div>
+              <div style={{fontSize:11,color:t.muted,fontFamily:t.fontMono}}>{cur}</div>
+            </div>
+            {custom&&<button onClick={()=>resetOne(tok.k)}
+              style={{background:'none',border:`1px solid ${t.border}`,borderRadius:100,color:t.muted,
+                fontSize:13,cursor:'pointer',padding:'4px 9px',fontFamily:t.fontBody,flexShrink:0}}>↺</button>}
+          </div>;
+        })}
+      </div>
+      <button onClick={resetAll} style={{width:'100%',marginTop:14,padding:'11px',borderRadius:t.radius,
+        background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:t.fontBody}}>{L('Alle Farben zurücksetzen','Reset all colors','Restablecer todo')}</button>
+    </div>
   </div>;
 }
 
@@ -1734,7 +1817,7 @@ function parseRoomFromQR(data){
   return null;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -1961,7 +2044,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
                 margin:'2px 0 0',textTransform:'uppercase'}}>
                 {lang==='en'?'Display & accessibility':lang==='es'?'Pantalla y accesibilidad':'Anzeige & Barrierefreiheit'}
               </p>
-              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact/>
+              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact onOpenColors={onOpenColors}/>
             </div>}
           </div>}
         </div>
@@ -3343,7 +3426,7 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
 /* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
 
 /* ─── CHAT FEED (Display Mode) ─────────────────────── */
-function ChatFeed({room, pl, gold, jokerIcon, i}) {
+function ChatFeed({room, pl, gold, jokerIcon, i, pal={bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'}}) {
   const [events, setEvents] = useState([]);
   const feedRef = useRef(null);
   const prevRoom = useRef(null);
@@ -3366,8 +3449,8 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
         const used=(prevJokers[p.id]||[]).find(j=>!(curJokers[p.id]||[]).includes(j)||
           (prevJokers[p.id]||[]).filter(x=>x===j).length>(curJokers[p.id]||[]).filter(x=>x===j).length);
         if(used){
-          const colors={sabotage:'#ff3355',skip:'#ff8855',hint:'#aaaaaa',
-                        double:'#55ffaa',change:'#aaaaaa',extra:'#aaaaaa'};
+          const colors={sabotage:'#ff3355',skip:'#ff8855',hint:pal.muted,
+                        double:'#55ffaa',change:pal.muted,extra:pal.muted};
           const verbs=i?.jokerVerbs||{};
           let text;
           if(used==='sabotage'){
@@ -3446,7 +3529,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
           newEvents.push({id:now+Math.random(),type:'guess',
             emoji:'✏',
             text:p.name+' '+i.dispGuessed,
-            color:'#6e5e54',ts:now});
+            color:pal.muted,ts:now});
     });
 
     // Sabotage Ziel – DUNKELROT
@@ -3474,7 +3557,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
         newEvents.push({id:now+Math.random(),type:'phase',
           emoji:emojis[room.phase]||'🔔',
           text:labels[room.phase],
-          color:'#f2ece6',ts:now});
+          color:pal.text,ts:now});
     }
 
     if(newEvents.length>0){
@@ -3490,12 +3573,12 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
 
   return <div ref={feedRef} style={{flex:1,overflowY:'auto',display:'flex',
     flexDirection:'column',gap:5}}>
-    {events.length===0&&<p style={{fontSize:11,color:'#3a2a1e',textAlign:'center',
+    {events.length===0&&<p style={{fontSize:11,color:pal.border,textAlign:'center',
       marginTop:12}}>Noch keine Events...</p>}
     {events.map(ev=>(
       <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:7,
-        background:ev.type==='phase'?'#221a0e':ev.type==='exact'?'#0d2218':
-                   ev.type==='joker_earned'?'#1f1408':ev.type==='joker_used'?'#1a0a0a':'#181310',
+        background:ev.type==='phase'?pal.surface:ev.type==='exact'?pal.card:
+                   ev.type==='joker_earned'?pal.card:ev.type==='joker_used'?pal.card:pal.card,
         borderRadius:8,padding:'7px 10px',
         borderLeft:`3px solid ${ev.color}`,
         animation:'slideUp .3s ease both',flexShrink:0}}>
@@ -3514,7 +3597,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i}) {
 
 
 /* ─── HISTOGRAM ─────────────────────────────────── */
-function TippHistogram({room, t, lang, gold}) {
+function TippHistogram({room, t, lang, gold, pal={bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'}}) {
   const q = room.q;
   const guesses = room.guesses||{};
   const players = room.players||{};
@@ -3569,12 +3652,12 @@ function TippHistogram({room, t, lang, gold}) {
   const maxRound = Math.max(...roundBins.map(b=>b.length), 1);
   const answerPct = Math.min(100, Math.max(0, ((answer - min) / (max - min)) * 100));
 
-  return <div style={{padding:'12px 14px',background:'#0f0a06',
-    borderRadius:12,border:`1px solid #2a1a0e`,marginBottom:8}}>
-    <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,
+  return <div style={{padding:'12px 14px',background:pal.bg,
+    borderRadius:12,border:`1px solid ${pal.border}`,marginBottom:8}}>
+    <p style={{fontSize:11,fontWeight:700,color:pal.muted,letterSpacing:1,
       margin:'0 0 10px',textTransform:'uppercase'}}>
       📊 Tipp-Verteilung
-      {globalVals.length>0&&<span style={{fontWeight:400,marginLeft:6,color:'#3a2a1e'}}>
+      {globalVals.length>0&&<span style={{fontWeight:400,marginLeft:6,color:pal.border}}>
         ({globalVals.length} globale Tipps)
       </span>}
     </p>
@@ -3589,7 +3672,7 @@ function TippHistogram({room, t, lang, gold}) {
           {globalBins[i]>0&&<div style={{
             position:'absolute',bottom:0,left:0,right:0,
             height:`${Math.max(gH,3)}%`,
-            background:'#2a1a0e',borderRadius:'3px 3px 0 0',
+            background:pal.border,borderRadius:'3px 3px 0 0',
           }}/>}
           {/* Round bar (foreground, colored) */}
           {roundBins[i].length>0&&<div style={{
@@ -3631,10 +3714,10 @@ function TippHistogram({room, t, lang, gold}) {
     </div>
     {/* Legend */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
-      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(Math.round(min))}</span>
+      <span style={{fontSize:10,color:pal.muted}}>{fmtNum(Math.round(min))}</span>
       <div style={{display:'flex',gap:10,alignItems:'center'}}>
-        {globalVals.length>0&&<span style={{fontSize:9,color:'#3a2a1e',display:'flex',alignItems:'center',gap:3}}>
-          <div style={{width:10,height:8,background:'#2a1a0e',borderRadius:2}}/> Historisch
+        {globalVals.length>0&&<span style={{fontSize:9,color:pal.border,display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:10,height:8,background:pal.border,borderRadius:2}}/> Historisch
         </span>}
         <span style={{fontSize:9,color:gold,display:'flex',alignItems:'center',gap:3}}>
           <div style={{width:10,height:8,background:t.gold+'cc',borderRadius:2}}/> Diese Runde
@@ -3646,7 +3729,7 @@ function TippHistogram({room, t, lang, gold}) {
           <div style={{width:2,height:10,background:'#a78bfa'}}/> Schwarmintelligenz ({crowdsCount})
         </span>}
       </div>
-      <span style={{fontSize:10,color:'#6e5e54'}}>{fmtNum(Math.round(max))}</span>
+      <span style={{fontSize:10,color:pal.muted}}>{fmtNum(Math.round(max))}</span>
     </div>
   </div>;
 }
@@ -3670,7 +3753,7 @@ function BeamerRevealStrip({ranked, answer, gold}){
   const pos=v=>Math.max(0,Math.min(100,((v-a)/span)*100));
   const minDiff=ranked[0].diff;
   return <div style={{position:'relative',height:80,margin:'4px 2px 10px'}}>
-    <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:'#2a1a0e'}}/>
+    <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:pal.border}}/>
     <div style={{position:'absolute',top:30,left:`calc(8px + (100% - 16px) * ${pos(answer)/100})`,
       width:2,height:28,background:'#39d98a',zIndex:1,transform:'translateX(-1px)'}}>
       <div style={{position:'absolute',top:-14,left:'50%',transform:'translateX(-50%)',
@@ -3681,9 +3764,9 @@ function BeamerRevealStrip({ranked, answer, gold}){
       return <div key={r.id} style={{position:'absolute',top:34,
         left:`calc(8px + (100% - 16px) * ${pos(r.guess)/100})`,
         zIndex:close?3:2,animation:`revealSlide .55s ${0.15+idx*0.09}s ease both`}}>
-        <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:'#3a2a1e',
-          border:`2px solid ${close?gold:'#6e5e54'}`,display:'flex',alignItems:'center',
-          justifyContent:'center',fontSize:11,fontWeight:800,color:close?'#0f0a06':'#f2ece6',
+        <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:pal.border,
+          border:`2px solid ${close?gold:pal.muted}`,display:'flex',alignItems:'center',
+          justifyContent:'center',fontSize:11,fontWeight:800,color:close?pal.bg:pal.text,
           ...(close?{animation:'pulseGold 1.3s ease-in-out infinite'}:{})}}>
           {(r.name||'?')[0].toUpperCase()}
         </div>
@@ -3993,7 +4076,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           </p>
 
           {/* Histogram */}
-          <TippHistogram room={room} t={{surface:D.surface,border:D.border,radius:12,muted:D.muted,text:D.text}} lang={lang} gold={gold}/>
+          <TippHistogram room={room} t={{surface:D.surface,border:D.border,radius:12,muted:D.muted,text:D.text}} lang={lang} gold={gold} pal={D}/>
 
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
@@ -4135,7 +4218,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           display:'flex',flexDirection:'column',minHeight:0}}>
           <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase',flexShrink:0}}>{i.dispEvents}</p>
-          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i}/>
+          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i} pal={D}/>
         </div>
 
         {/* ── QR ── */}
@@ -7283,6 +7366,7 @@ function App(){
   const hasDroppedRef=useRef(false);
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[showSteckbrief,setShowSteckbrief]=useState(false);
+  const[showColorEditor,setShowColorEditor]=useState(false);
   const[gamePaused,setGamePaused]=useState(false);
   const[soundOn,setSoundOn]=useState(isSoundOn());
   const[showCountdown,setShowCountdown]=useState(false);
@@ -7951,7 +8035,7 @@ function App(){
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
     {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
@@ -7972,6 +8056,7 @@ function App(){
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)} initial={profile} onSaveProfile={isAnonymous?null:saveProfile}/>}
+    {showColorEditor&&<ColorEditor t={t} lang={lang} onChange={()=>setA11yTick(x=>x+1)} onClose={()=>setShowColorEditor(false)}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?async()=>{
       // Set all non-host players to AFK
       const updates={};
@@ -8024,7 +8109,7 @@ function App(){
           <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,margin:'0 0 8px'}}>
             {lang==='en'?'DISPLAY & ACCESSIBILITY':lang==='es'?'PANTALLA Y ACCESIBILIDAD':'ANZEIGE & BARRIEREFREIHEIT'}
           </p>
-          <A11yMenu t={t} lang={lang} onA11y={handleA11y}/>
+          <A11yMenu t={t} lang={lang} onA11y={handleA11y} onOpenColors={()=>setShowColorEditor(true)}/>
         </div>
       </div>}
     </>}
