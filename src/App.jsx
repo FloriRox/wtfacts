@@ -3537,8 +3537,8 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
 /* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
 
 /* ─── CHAT FEED (Display Mode) ─────────────────────── */
-function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
-  pal = pal || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
+function ChatFeed({room, pl, gold, jokerIcon, i, t}) {
+  t = t || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
   const [events, setEvents] = useState([]);
   const feedRef = useRef(null);
   const prevRoom = useRef(null);
@@ -3561,8 +3561,8 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
         const used=(prevJokers[p.id]||[]).find(j=>!(curJokers[p.id]||[]).includes(j)||
           (prevJokers[p.id]||[]).filter(x=>x===j).length>(curJokers[p.id]||[]).filter(x=>x===j).length);
         if(used){
-          const colors={sabotage:'#ff3355',skip:'#ff8855',hint:pal.muted,
-                        double:'#55ffaa',change:pal.muted,extra:pal.muted};
+          const colors={sabotage:'#ff3355',skip:'#ff8855',hint:t.muted,
+                        double:'#55ffaa',change:t.muted,extra:t.muted};
           const verbs=i?.jokerVerbs||{};
           let text;
           if(used==='sabotage'){
@@ -3641,7 +3641,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
           newEvents.push({id:now+Math.random(),type:'guess',
             emoji:'✏',
             text:p.name+' '+i.dispGuessed,
-            color:pal.muted,ts:now});
+            color:t.muted,ts:now});
     });
 
     // Sabotage Ziel – DUNKELROT
@@ -3669,7 +3669,7 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
         newEvents.push({id:now+Math.random(),type:'phase',
           emoji:emojis[room.phase]||'🔔',
           text:labels[room.phase],
-          color:pal.text,ts:now});
+          color:t.text,ts:now});
     }
 
     if(newEvents.length>0){
@@ -3685,12 +3685,12 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
 
   return <div ref={feedRef} style={{flex:1,overflowY:'auto',display:'flex',
     flexDirection:'column',gap:5}}>
-    {events.length===0&&<p style={{fontSize:11,color:pal.border,textAlign:'center',
+    {events.length===0&&<p style={{fontSize:11,color:t.border,textAlign:'center',
       marginTop:12}}>Noch keine Events...</p>}
     {events.map(ev=>(
       <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:7,
-        background:ev.type==='phase'?pal.surface:ev.type==='exact'?pal.card:
-                   ev.type==='joker_earned'?pal.card:ev.type==='joker_used'?pal.card:pal.card,
+        background:ev.type==='phase'?t.surface:ev.type==='exact'?t.card:
+                   ev.type==='joker_earned'?t.card:ev.type==='joker_used'?t.card:t.card,
         borderRadius:8,padding:'7px 10px',
         borderLeft:`3px solid ${ev.color}`,
         animation:'slideUp .3s ease both',flexShrink:0}}>
@@ -3709,8 +3709,8 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
 
 
 /* ─── HISTOGRAM ─────────────────────────────────── */
-function TippHistogram({room, t, lang, gold, pal}) {
-  pal = pal || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
+function TippHistogram({room, t, lang, gold}) {
+  t = t || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54',gold:gold};
   const q = room.q;
   const guesses = room.guesses||{};
   const players = room.players||{};
@@ -3765,12 +3765,12 @@ function TippHistogram({room, t, lang, gold, pal}) {
   const maxRound = Math.max(...roundBins.map(b=>b.length), 1);
   const answerPct = Math.min(100, Math.max(0, ((answer - min) / (max - min)) * 100));
 
-  return <div style={{padding:'12px 14px',background:pal.bg,
-    borderRadius:12,border:`1px solid ${pal.border}`,marginBottom:8}}>
-    <p style={{fontSize:11,fontWeight:700,color:pal.muted,letterSpacing:1,
+  return <div style={{padding:'12px 14px',background:t.bg,
+    borderRadius:12,border:`1px solid ${t.border}`,marginBottom:8}}>
+    <p style={{fontSize:11,fontWeight:700,color:t.muted,letterSpacing:1,
       margin:'0 0 10px',textTransform:'uppercase'}}>
       📊 Tipp-Verteilung
-      {globalVals.length>0&&<span style={{fontWeight:400,marginLeft:6,color:pal.border}}>
+      {globalVals.length>0&&<span style={{fontWeight:400,marginLeft:6,color:t.border}}>
         ({globalVals.length} globale Tipps)
       </span>}
     </p>
@@ -3785,7 +3785,7 @@ function TippHistogram({room, t, lang, gold, pal}) {
           {globalBins[i]>0&&<div style={{
             position:'absolute',bottom:0,left:0,right:0,
             height:`${Math.max(gH,3)}%`,
-            background:pal.border,borderRadius:'3px 3px 0 0',
+            background:t.border,borderRadius:'3px 3px 0 0',
           }}/>}
           {/* Round bar (foreground, colored) */}
           {roundBins[i].length>0&&<div style={{
@@ -3827,10 +3827,10 @@ function TippHistogram({room, t, lang, gold, pal}) {
     </div>
     {/* Legend */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
-      <span style={{fontSize:10,color:pal.muted}}>{fmtNum(Math.round(min))}</span>
+      <span style={{fontSize:10,color:t.muted}}>{fmtNum(Math.round(min))}</span>
       <div style={{display:'flex',gap:10,alignItems:'center'}}>
-        {globalVals.length>0&&<span style={{fontSize:9,color:pal.border,display:'flex',alignItems:'center',gap:3}}>
-          <div style={{width:10,height:8,background:pal.border,borderRadius:2}}/> Historisch
+        {globalVals.length>0&&<span style={{fontSize:9,color:t.border,display:'flex',alignItems:'center',gap:3}}>
+          <div style={{width:10,height:8,background:t.border,borderRadius:2}}/> Historisch
         </span>}
         <span style={{fontSize:9,color:gold,display:'flex',alignItems:'center',gap:3}}>
           <div style={{width:10,height:8,background:t.gold+'cc',borderRadius:2}}/> Diese Runde
@@ -3842,7 +3842,7 @@ function TippHistogram({room, t, lang, gold, pal}) {
           <div style={{width:2,height:10,background:'#a78bfa'}}/> Schwarmintelligenz ({crowdsCount})
         </span>}
       </div>
-      <span style={{fontSize:10,color:pal.muted}}>{fmtNum(Math.round(max))}</span>
+      <span style={{fontSize:10,color:t.muted}}>{fmtNum(Math.round(max))}</span>
     </div>
   </div>;
 }
@@ -3866,7 +3866,7 @@ function BeamerRevealStrip({ranked, answer, gold}){
   const pos=v=>Math.max(0,Math.min(100,((v-a)/span)*100));
   const minDiff=ranked[0].diff;
   return <div style={{position:'relative',height:80,margin:'4px 2px 10px'}}>
-    <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:pal.border}}/>
+    <div style={{position:'absolute',left:8,right:8,top:50,height:2,background:t.border}}/>
     <div style={{position:'absolute',top:30,left:`calc(8px + (100% - 16px) * ${pos(answer)/100})`,
       width:2,height:28,background:'#39d98a',zIndex:1,transform:'translateX(-1px)'}}>
       <div style={{position:'absolute',top:-14,left:'50%',transform:'translateX(-50%)',
@@ -3877,9 +3877,9 @@ function BeamerRevealStrip({ranked, answer, gold}){
       return <div key={r.id} style={{position:'absolute',top:34,
         left:`calc(8px + (100% - 16px) * ${pos(r.guess)/100})`,
         zIndex:close?3:2,animation:`revealSlide .55s ${0.15+idx*0.09}s ease both`}}>
-        <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:pal.border,
-          border:`2px solid ${close?gold:pal.muted}`,display:'flex',alignItems:'center',
-          justifyContent:'center',fontSize:11,fontWeight:800,color:close?pal.bg:pal.text,
+        <div style={{width:28,height:28,borderRadius:'50%',background:close?gold:t.border,
+          border:`2px solid ${close?gold:t.muted}`,display:'flex',alignItems:'center',
+          justifyContent:'center',fontSize:11,fontWeight:800,color:close?t.bg:t.text,
           ...(close?{animation:'pulseGold 1.3s ease-in-out infinite'}:{})}}>
           {(r.name||'?')[0].toUpperCase()}
         </div>
@@ -4189,7 +4189,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           </p>
 
           {/* Histogram */}
-          <TippHistogram room={room} t={{surface:D.surface,border:D.border,radius:12,muted:D.muted,text:D.text}} lang={lang} gold={gold} pal={D}/>
+          <TippHistogram room={room} t={{bg:D.bg,surface:D.surface,card:D.card,border:D.border,text:D.text,muted:D.muted,gold:gold,radius:12}} lang={lang} gold={gold}/>
 
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
@@ -4331,7 +4331,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           display:'flex',flexDirection:'column',minHeight:0}}>
           <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase',flexShrink:0}}>{i.dispEvents}</p>
-          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i} pal={D}/>
+          <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i} t={{bg:D.bg,surface:D.surface,card:D.card,border:D.border,text:D.text,muted:D.muted}}/>
         </div>
 
         {/* ── QR ── */}
