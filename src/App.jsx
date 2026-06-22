@@ -212,6 +212,26 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
   </div>;
 }
 
+var COLOR_PRESETS = [
+  {id:'dark',    emoji:'🌙', name:{de:'Standard Dunkel',en:'Default Dark',es:'Oscuro estándar'},
+    colors:{bg:'#0d0b0a',surface:'#181310',card:'#211c18',border:'#32261e',accent:'#e8360a',gold:'#ff8c2a',green:'#39d98a',danger:'#cc2244',text:'#f2ece6',muted:'#6e5e54'}},
+  {id:'light',   emoji:'☀️', name:{de:'Standard Hell',en:'Default Light',es:'Claro estándar'},
+    colors:{bg:'#faf5ee',surface:'#ffffff',card:'#ffffff',border:'#e7dccd',accent:'#e8470a',gold:'#dd7d12',green:'#1f9d63',danger:'#d6334e',text:'#2b211a',muted:'#9b8b7b'}},
+  {id:'midnight',emoji:'🌌', name:{de:'Mitternachtsblau',en:'Midnight Blue',es:'Azul medianoche'},
+    colors:{bg:'#0F1525',surface:'#182034',card:'#202B45',border:'#2E3B57',accent:'#3B82F6',gold:'#FFB84D',green:'#34D399',danger:'#F1566B',text:'#EDF1FB',muted:'#8B97AE'}},
+  {id:'violet',  emoji:'🔮', name:{de:'Königsviolett',en:'Royal Violet',es:'Violeta real'},
+    colors:{bg:'#150F22',surface:'#1F1733',card:'#2A1E45',border:'#3C2C5A',accent:'#8B5CF6',gold:'#FFC24D',green:'#34D399',danger:'#FB5E7E',text:'#F1ECFB',muted:'#978BB0'}},
+  {id:'forest',  emoji:'🌲', name:{de:'Waldgrün',en:'Forest Green',es:'Verde bosque'},
+    colors:{bg:'#0E1613',surface:'#15201C',card:'#1D2C26',border:'#2A3F37',accent:'#F0852B',gold:'#FFD24D',green:'#2FBF86',danger:'#EF5350',text:'#EAF3EE',muted:'#809585'}},
+  {id:'sunset',  emoji:'🌅', name:{de:'Warmer Sonnenuntergang',en:'Warm Sunset',es:'Atardecer cálido'},
+    colors:{bg:'#15100E',surface:'#201713',card:'#2B1F18',border:'#3D2A20',accent:'#FF5A36',gold:'#FFB13C',green:'#36D39A',danger:'#FF4770',text:'#F7EFE9',muted:'#9C8678'}},
+  {id:'freshday',emoji:'🌤️', name:{de:'Frischer Tag',en:'Fresh Day',es:'Día fresco'},
+    colors:{bg:'#F5F7FB',surface:'#FFFFFF',card:'#FFFFFF',border:'#E0E6F0',accent:'#3B82F6',gold:'#F59E0B',green:'#16A34A',danger:'#E11D48',text:'#1B2536',muted:'#6B7689'}},
+  {id:'cream',   emoji:'🍦', name:{de:'Warme Creme',en:'Warm Cream',es:'Crema cálida'},
+    colors:{bg:'#FAF5EE',surface:'#FFFFFF',card:'#FFFAF3',border:'#EBDFCE',accent:'#E8551F',gold:'#D9870F',green:'#1F9D63',danger:'#D6334E',text:'#2B211A',muted:'#978979'}},
+];
+function applyColorPreset(colors){ CUSTOM_COLORS={...colors}; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
+
 function ColorEditor({t, lang, onChange, onClose}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const[,setTick]=useState(0); const rerender=()=>setTick(x=>x+1);
@@ -231,6 +251,7 @@ function ColorEditor({t, lang, onChange, onClose}){
   const change=(k,v)=>{ setCustomColor(k,v); onChange&&onChange(); rerender(); };
   const resetOne=k=>{ clearCustomColor(k); onChange&&onChange(); rerender(); };
   const resetAll=()=>{ resetCustomColors(); onChange&&onChange(); rerender(); };
+  const pickPreset=p=>{ applyColorPreset(p.colors); onChange&&onChange(); rerender(); };
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
     display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
     <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
@@ -240,6 +261,28 @@ function ColorEditor({t, lang, onChange, onClose}){
         <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
       </div>
       <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>{L('Änderungen sind sofort sichtbar und bleiben gespeichert.','Changes apply live and are saved.','Los cambios se aplican al instante y se guardan.')}</p>
+      {/* ── Vorlagen / Presets ── */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 8px',textTransform:'uppercase'}}>
+        {L('Vorlagen','Presets','Plantillas')}
+      </p>
+      <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:6,marginBottom:16,WebkitOverflowScrolling:'touch'}}>
+        {COLOR_PRESETS.map(p=>{
+          const active=Object.keys(p.colors).every(k=>(CUSTOM_COLORS[k]||'').toLowerCase()===p.colors[k].toLowerCase());
+          return <button key={p.id} onClick={()=>pickPreset(p)}
+            style={{flex:'0 0 auto',display:'flex',flexDirection:'column',gap:7,padding:'9px 11px',borderRadius:t.radius,
+              background:t.surface,border:`2px solid ${active?t.accent:t.border}`,cursor:'pointer',
+              fontFamily:t.fontBody,minWidth:104,alignItems:'flex-start'}}>
+            <div style={{display:'flex',gap:3}}>
+              {[p.colors.bg,p.colors.accent,p.colors.gold,p.colors.green].map((c,ci)=>(
+                <span key={ci} style={{width:17,height:17,borderRadius:5,background:c,
+                  border:`1px solid ${t.border}`,display:'inline-block'}}/>
+              ))}
+            </div>
+            <span style={{fontSize:11,fontWeight:700,color:active?t.accent:t.text,whiteSpace:'nowrap',
+              overflow:'hidden',textOverflow:'ellipsis',maxWidth:130}}>{p.emoji} {p.name[lang]||p.name.de}</span>
+          </button>;
+        })}
+      </div>
       <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:12,marginBottom:14,
         display:'flex',alignItems:'center',gap:10}}>
         <div style={{flex:1,minWidth:0}}>
