@@ -213,22 +213,20 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
 }
 
 var COLOR_PRESETS = [
-  {id:'dark',    emoji:'🌙', name:{de:'Standard Dunkel',en:'Default Dark',es:'Oscuro estándar'},
+  {id:'dark',      emoji:'🌙', name:{de:'Standard Dunkel',en:'Default Dark',es:'Oscuro estándar'},
     colors:{bg:'#0d0b0a',surface:'#181310',card:'#211c18',border:'#32261e',accent:'#e8360a',gold:'#ff8c2a',green:'#39d98a',danger:'#cc2244',text:'#f2ece6',muted:'#6e5e54'}},
-  {id:'light',   emoji:'☀️', name:{de:'Standard Hell',en:'Default Light',es:'Claro estándar'},
+  {id:'light',     emoji:'☀️', name:{de:'Standard Hell',en:'Default Light',es:'Claro estándar'},
     colors:{bg:'#faf5ee',surface:'#ffffff',card:'#ffffff',border:'#e7dccd',accent:'#e8470a',gold:'#dd7d12',green:'#1f9d63',danger:'#d6334e',text:'#2b211a',muted:'#9b8b7b'}},
-  {id:'midnight',emoji:'🌌', name:{de:'Mitternachtsblau',en:'Midnight Blue',es:'Azul medianoche'},
+  {id:'midnight',  emoji:'🌌', name:{de:'Mitternachtsblau',en:'Midnight Blue',es:'Azul medianoche'},
     colors:{bg:'#0F1525',surface:'#182034',card:'#202B45',border:'#2E3B57',accent:'#3B82F6',gold:'#FFB84D',green:'#34D399',danger:'#F1566B',text:'#EDF1FB',muted:'#8B97AE'}},
-  {id:'violet',  emoji:'🔮', name:{de:'Königsviolett',en:'Royal Violet',es:'Violeta real'},
-    colors:{bg:'#150F22',surface:'#1F1733',card:'#2A1E45',border:'#3C2C5A',accent:'#8B5CF6',gold:'#FFC24D',green:'#34D399',danger:'#FB5E7E',text:'#F1ECFB',muted:'#978BB0'}},
-  {id:'forest',  emoji:'🌲', name:{de:'Waldgrün',en:'Forest Green',es:'Verde bosque'},
-    colors:{bg:'#0E1613',surface:'#15201C',card:'#1D2C26',border:'#2A3F37',accent:'#F0852B',gold:'#FFD24D',green:'#2FBF86',danger:'#EF5350',text:'#EAF3EE',muted:'#809585'}},
-  {id:'sunset',  emoji:'🌅', name:{de:'Warmer Sonnenuntergang',en:'Warm Sunset',es:'Atardecer cálido'},
-    colors:{bg:'#15100E',surface:'#201713',card:'#2B1F18',border:'#3D2A20',accent:'#FF5A36',gold:'#FFB13C',green:'#36D39A',danger:'#FF4770',text:'#F7EFE9',muted:'#9C8678'}},
-  {id:'freshday',emoji:'🌤️', name:{de:'Frischer Tag',en:'Fresh Day',es:'Día fresco'},
-    colors:{bg:'#F5F7FB',surface:'#FFFFFF',card:'#FFFFFF',border:'#E0E6F0',accent:'#3B82F6',gold:'#F59E0B',green:'#16A34A',danger:'#E11D48',text:'#1B2536',muted:'#6B7689'}},
-  {id:'cream',   emoji:'🍦', name:{de:'Warme Creme',en:'Warm Cream',es:'Crema cálida'},
-    colors:{bg:'#FAF5EE',surface:'#FFFFFF',card:'#FFFAF3',border:'#EBDFCE',accent:'#E8551F',gold:'#D9870F',green:'#1F9D63',danger:'#D6334E',text:'#2B211A',muted:'#978979'}},
+  {id:'coral',     emoji:'🪸', name:{de:'Koralle',en:'Coral',es:'Coral'},
+    colors:{bg:'#FFF4EF',surface:'#FFFFFF',card:'#FFF9F5',border:'#F3DBCF',accent:'#F15B4C',gold:'#EFA13A',green:'#2FB083',danger:'#E0466A',text:'#3A2B27',muted:'#A98B80'}},
+  {id:'mint',      emoji:'🌿', name:{de:'Mint Frisch',en:'Fresh Mint',es:'Menta fresca'},
+    colors:{bg:'#F0FAF5',surface:'#FFFFFF',card:'#F6FDF9',border:'#CFE9DD',accent:'#0FA98E',gold:'#F2A93B',green:'#17B26A',danger:'#E5484D',text:'#1E2B27',muted:'#6E8A80'}},
+  {id:'eucalyptus',emoji:'🍃', name:{de:'Eukalyptus',en:'Eucalyptus',es:'Eucalipto'},
+    colors:{bg:'#EEF2ED',surface:'#FFFFFF',card:'#F6F8F4',border:'#D6DED1',accent:'#4F8A78',gold:'#C99A4A',green:'#4CA578',danger:'#C75D63',text:'#2C352F',muted:'#8A988E'}},
+  {id:'pastel',    emoji:'🌸', name:{de:'Pastelltraum',en:'Pastel Dream',es:'Sueño pastel'},
+    colors:{bg:'#14131C',surface:'#1E1C28',card:'#272433',border:'#383447',accent:'#8E7BF0',gold:'#FFC98C',green:'#6EE7B7',danger:'#FB7185',text:'#ECEAF6',muted:'#8E8AA3'}},
 ];
 function applyColorPreset(colors){ CUSTOM_COLORS={...colors}; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
 
