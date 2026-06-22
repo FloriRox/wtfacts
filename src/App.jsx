@@ -3537,7 +3537,8 @@ function WinnerPhotoCapture({t, lang, onCapture, onSkip}) {
 /* ─── GASTGEBER / DISPLAY MODE ─────────────────────────── */
 
 /* ─── CHAT FEED (Display Mode) ─────────────────────── */
-function ChatFeed({room, pl, gold, jokerIcon, i, pal={bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'}}) {
+function ChatFeed({room, pl, gold, jokerIcon, i, pal}) {
+  pal = pal || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
   const [events, setEvents] = useState([]);
   const feedRef = useRef(null);
   const prevRoom = useRef(null);
@@ -3708,7 +3709,8 @@ function ChatFeed({room, pl, gold, jokerIcon, i, pal={bg:'#0f0a06',surface:'#1a1
 
 
 /* ─── HISTOGRAM ─────────────────────────────────── */
-function TippHistogram({room, t, lang, gold, pal={bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'}}) {
+function TippHistogram({room, t, lang, gold, pal}) {
+  pal = pal || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
   const q = room.q;
   const guesses = room.guesses||{};
   const players = room.players||{};
