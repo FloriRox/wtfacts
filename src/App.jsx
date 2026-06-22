@@ -140,12 +140,26 @@ var CUSTOM_COLORS = loadCustomColors();
 function setCustomColor(key,val){ CUSTOM_COLORS={...CUSTOM_COLORS,[key]:val}; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
 function clearCustomColor(key){ var c={...CUSTOM_COLORS}; delete c[key]; CUSTOM_COLORS=c; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
 function resetCustomColors(){ CUSTOM_COLORS={}; try{ localStorage.removeItem('em_colors'); }catch(e){} }
-// Wrapper: erst Barrierefreiheit/Heller Modus, dann eigene Farben drüberlegen
+/* ─── BUTTON-STIL (global, persistent): Ecken, Tiefe, Glanz ── */
+function loadCustomStyle(){ try{ return JSON.parse(localStorage.getItem('em_btnstyle')||'{}')||{}; }catch(e){ return {}; } }
+var CUSTOM_STYLE = loadCustomStyle();
+function setCustomStyle(key,val){ CUSTOM_STYLE={...CUSTOM_STYLE,[key]:val}; try{ localStorage.setItem('em_btnstyle',JSON.stringify(CUSTOM_STYLE)); }catch(e){} }
+function resetCustomStyle(){ CUSTOM_STYLE={}; try{ localStorage.removeItem('em_btnstyle'); }catch(e){} }
+function btnShadowFor(depth){ return depth==='shadow' ? '0 4px 14px rgba(0,0,0,.28)' : depth==='3d' ? '0 5px 0 rgba(0,0,0,.32)' : 'none'; }
+// Wrapper: erst Barrierefreiheit/Heller Modus, dann eigene Farben + Button-Stil drüberlegen
 function applyA11y(base){
   var th=applyBaseA11y(base);
   var ks=CUSTOM_COLORS?Object.keys(CUSTOM_COLORS):[];
-  if(!ks.length) return th;
-  var o={...th}; ks.forEach(function(k){ if(CUSTOM_COLORS[k]) o[k]=CUSTOM_COLORS[k]; }); return o;
+  var hasStyle=CUSTOM_STYLE && (CUSTOM_STYLE.radius!=null || CUSTOM_STYLE.depth || CUSTOM_STYLE.gloss);
+  if(!ks.length && !hasStyle) return th;
+  var o={...th};
+  ks.forEach(function(k){ if(CUSTOM_COLORS[k]) o[k]=CUSTOM_COLORS[k]; });
+  if(hasStyle){
+    if(CUSTOM_STYLE.radius!=null) o.radius=CUSTOM_STYLE.radius;
+    o.btnShadow=btnShadowFor(CUSTOM_STYLE.depth);
+    o.btnGloss=!!CUSTOM_STYLE.gloss;
+  }
+  return o;
 }
 function applyBaseA11y(base){
   if(!A11Y || (!A11Y.cb && !A11Y.contrast && !A11Y.light)) return base;
@@ -206,7 +220,7 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
         background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:rad,padding:pad,
         color:t.text,fontSize:fs,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
       <span style={{fontSize:compact?15:16,width:20,textAlign:'center'}}>🎨</span>
-      <span style={{flex:1,textAlign:'left'}}>{L('Farben anpassen','Customize colors','Personalizar colores')}</span>
+      <span style={{flex:1,textAlign:'left'}}>{L('Farben & Stil','Colors & style','Colores y estilo')}</span>
       <span style={{color:t.muted}}>›</span>
     </button>}
   </div>;
@@ -248,14 +262,18 @@ function ColorEditor({t, lang, onChange, onClose}){
   const norm=v=>(v&&/^#[0-9a-fA-F]{6}$/.test(v))?v:'#000000';
   const change=(k,v)=>{ setCustomColor(k,v); onChange&&onChange(); rerender(); };
   const resetOne=k=>{ clearCustomColor(k); onChange&&onChange(); rerender(); };
-  const resetAll=()=>{ resetCustomColors(); onChange&&onChange(); rerender(); };
+  const resetAll=()=>{ resetCustomColors(); resetCustomStyle(); onChange&&onChange(); rerender(); };
   const pickPreset=p=>{ applyColorPreset(p.colors); onChange&&onChange(); rerender(); };
+  const setStyle=(k,v)=>{ setCustomStyle(k,v); onChange&&onChange(); rerender(); };
+  const curRadius=CUSTOM_STYLE.radius!=null?CUSTOM_STYLE.radius:(t.radius!=null?t.radius:12);
+  const curDepth=CUSTOM_STYLE.depth||'flat';
+  const curGloss=!!CUSTOM_STYLE.gloss;
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
     display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
     <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
       borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',maxHeight:'88vh',overflowY:'auto'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-        <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🎨 {L('Farben anpassen','Customize colors','Personalizar colores')}</p>
+        <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🎨 {L('Farben & Stil','Colors & style','Colores y estilo')}</p>
         <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
       </div>
       <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>{L('Änderungen sind sofort sichtbar und bleiben gespeichert.','Changes apply live and are saved.','Los cambios se aplican al instante y se guardan.')}</p>
@@ -288,7 +306,7 @@ function ColorEditor({t, lang, onChange, onClose}){
           <div style={{color:t.muted,fontSize:12}}>{L('So sieht es aus','Looks like this','Se ve así')}</div>
         </div>
         <span style={{background:t.gold,color:t.bg,fontWeight:800,fontSize:12,padding:'3px 8px',borderRadius:100,flexShrink:0}}>★</span>
-        <button style={{background:t.accent,color:'#fff',border:'none',borderRadius:t.radius,padding:'8px 14px',fontWeight:800,fontSize:13,flexShrink:0,fontFamily:t.fontBody}}>{L('Button','Button','Botón')}</button>
+        <button style={{background:t.accent,color:'#fff',border:'none',borderRadius:t.radius,padding:'8px 14px',fontWeight:800,fontSize:13,flexShrink:0,fontFamily:t.fontBody,boxShadow:(t.btnShadow&&t.btnShadow!=='none')?t.btnShadow:undefined,backgroundImage:t.btnGloss?'linear-gradient(to bottom, rgba(255,255,255,.28), rgba(255,255,255,0) 55%)':undefined}}>{L('Button','Button','Botón')}</button>
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:8}}>
         {tokens.map(tok=>{
@@ -308,9 +326,52 @@ function ColorEditor({t, lang, onChange, onClose}){
           </div>;
         })}
       </div>
-      <button onClick={resetAll} style={{width:'100%',marginTop:14,padding:'11px',borderRadius:t.radius,
+      {/* ── Button-Stil ── */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'18px 0 8px',textTransform:'uppercase'}}>
+        🔘 {L('Button-Stil','Button style','Estilo de botón')}
+      </p>
+      <div style={{marginBottom:10}}>
+        <p style={{fontSize:11,color:t.muted,margin:'0 0 5px'}}>{L('Ecken','Corners','Esquinas')}</p>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {[{l:L('Eckig','Square','Recto'),v:4},{l:'Soft',v:10},{l:L('Rund','Round','Redondo'),v:16},{l:'Pill',v:999}].map(o=>{
+            const on=curRadius===o.v;
+            return <button key={o.v} onClick={()=>setStyle('radius',o.v)}
+              style={{padding:'6px 13px',borderRadius:Math.min(o.v,22),background:on?t.accent+'22':t.surface,
+                border:`1.5px solid ${on?t.accent:t.border}`,color:on?t.accent:t.text,fontSize:12,
+                fontWeight:700,cursor:'pointer',fontFamily:t.fontBody}}>{o.l}</button>;
+          })}
+        </div>
+      </div>
+      <div style={{marginBottom:10}}>
+        <p style={{fontSize:11,color:t.muted,margin:'0 0 5px'}}>{L('Tiefe / Schatten','Depth / shadow','Profundidad / sombra')}</p>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {[{l:L('Flach','Flat','Plano'),v:'flat'},{l:L('Schatten','Shadow','Sombra'),v:'shadow'},{l:'3D',v:'3d'}].map(o=>{
+            const on=curDepth===o.v;
+            return <button key={o.v} onClick={()=>setStyle('depth',o.v)}
+              style={{padding:'6px 13px',borderRadius:t.radius,background:on?t.accent+'22':t.surface,
+                border:`1.5px solid ${on?t.accent:t.border}`,color:on?t.accent:t.text,fontSize:12,
+                fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,
+                boxShadow:o.v==='shadow'?'0 3px 8px rgba(0,0,0,.25)':o.v==='3d'?'0 3px 0 rgba(0,0,0,.3)':'none'}}>{o.l}</button>;
+          })}
+        </div>
+      </div>
+      <div style={{marginBottom:4}}>
+        <p style={{fontSize:11,color:t.muted,margin:'0 0 5px'}}>{L('Glanz / Reflektion','Gloss / reflection','Brillo / reflejo')}</p>
+        <div style={{display:'flex',gap:6}}>
+          {[{l:L('Aus','Off','No'),v:false},{l:L('An','On','Sí'),v:true}].map(o=>{
+            const on=curGloss===o.v;
+            return <button key={String(o.v)} onClick={()=>setStyle('gloss',o.v)}
+              style={{padding:'6px 16px',borderRadius:t.radius,
+                background:on?t.accent:t.surface,
+                backgroundImage:(o.v&&on)?'linear-gradient(to bottom, rgba(255,255,255,.3), rgba(255,255,255,0) 55%)':undefined,
+                border:`1.5px solid ${on?t.accent:t.border}`,color:on?'#fff':t.text,fontSize:12,
+                fontWeight:700,cursor:'pointer',fontFamily:t.fontBody}}>{o.l}</button>;
+          })}
+        </div>
+      </div>
+      <button onClick={resetAll} style={{width:'100%',marginTop:16,padding:'11px',borderRadius:t.radius,
         background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
-        cursor:'pointer',fontFamily:t.fontBody}}>{L('Alle Farben zurücksetzen','Reset all colors','Restablecer todo')}</button>
+        cursor:'pointer',fontFamily:t.fontBody}}>{L('Alles zurücksetzen','Reset everything','Restablecer todo')}</button>
     </div>
   </div>;
 }
@@ -841,7 +902,7 @@ async function shareResult(room, t, lang, winnerPhoto=null) {
     const qrSize=64;
     const qrX=W-PAD-qrSize;
     const qrY=y+4;
-    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://playestimates.app&bgcolor=${isDark?'211c18':'fffaf2'}&color=${isDark?'e8360a':'e8360a'}`;
+    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://playestimates.app&bgcolor=${(t.surface||(isDark?'#211c18':'#fffaf2')).replace('#','')}&color=${(t.accent||'#e8360a').replace('#','')}`;
     const qrImg=new Image();
     qrImg.crossOrigin='anonymous';
     qrImg.onload=async()=>{
@@ -1143,7 +1204,12 @@ function Spinner({t}){return <div style={{width:28,height:28,border:`3px solid $
 function Btn({children,onClick,variant="primary",disabled,t,full,style:sx={}}){
   const base={display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6,padding:"13px 22px",border:"none",borderRadius:t.radius,fontSize:15,fontWeight:700,letterSpacing:.3,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.38:1,transition:"all .15s",width:full?"100%":undefined,WebkitTapHighlightColor:"transparent",userSelect:"none"};
   const v={primary:{background:t.accent,color:"#fff"},secondary:{background:"transparent",color:t.text,border:`2px solid ${t.border}`},ghost:{background:"transparent",color:t.muted},warning:{background:t.gold,color:"#fff"}};
-  return <button onClick={disabled?undefined:onClick} style={{...base,...v[variant],...sx}}>{children}</button>;
+  const filled = variant==="primary"||variant==="warning";
+  const styl = filled ? {
+    boxShadow: (t.btnShadow && t.btnShadow!=="none") ? t.btnShadow : undefined,
+    backgroundImage: t.btnGloss ? "linear-gradient(to bottom, rgba(255,255,255,.28), rgba(255,255,255,0) 55%)" : undefined,
+  } : {};
+  return <button onClick={disabled?undefined:onClick} style={{...base,...v[variant],...styl,...sx}}>{children}</button>;
 }
 function Inp({value,onChange,placeholder,type="text",t,autoFocus,style:sx={}}){
   const[foc,setFoc]=useState(false);
@@ -1178,8 +1244,8 @@ function LoadingOverlay({t,text}){
   return <div style={{position:"fixed",inset:0,background:t.bg+"ee",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>{t.id==="kids"?<div style={{fontSize:48,animation:"bop .6s ease infinite"}}>🤔</div>:<Spinner t={t}/>}<p style={{color:t.muted,fontSize:15}}>{text}</p></div>;
 }
 function QRCode({url,t,lang,size=130}){
-  const bg=t.id==="adult"?"211c18":"ffffff";
-  const fg=t.id==="adult"?"e8360a":"ff5c5c";
+  const bg=(t.surface||'#211c18').replace('#','');
+  const fg=(t.accent||'#e8360a').replace('#','');
   const label=(UI[lang]||UI.de).scanJoin;
   const px=size;
   return <div style={{textAlign:"center",marginTop:10}}>
@@ -1889,41 +1955,48 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     if(scanRafRef.current){ cancelAnimationFrame(scanRafRef.current); scanRafRef.current=null; }
     if(scanStreamRef.current){ scanStreamRef.current.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; }
   }
-  async function startScan(){
-    setScanErr(""); setScanOpen(true);
-    try{
-      const jsQR=await loadJsQR();
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
-      scanStreamRef.current=stream;
-      const v=scanVideoRef.current; if(!v){ stopScan(); return; }
-      v.srcObject=stream; await v.play();
-      const canvas=document.createElement('canvas');
-      const ctx=canvas.getContext('2d',{willReadFrequently:true});
-      const tick=()=>{
-        if(!scanStreamRef.current){ return; }
-        if(v.readyState===v.HAVE_ENOUGH_DATA){
-          canvas.width=v.videoWidth; canvas.height=v.videoHeight;
-          ctx.drawImage(v,0,0,canvas.width,canvas.height);
-          try{
-            const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-            const res=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
-            if(res&&res.data){
-              const room=parseRoomFromQR(res.data);
-              if(room){ setCode(room); stopScan(); setScanOpen(false); return; }
-            }
-          }catch(e){}
-        }
+  function startScan(){ setScanErr(""); setScanOpen(true); }
+  React.useEffect(()=>{
+    if(!scanOpen) return;
+    let cancelled=false;
+    (async()=>{
+      try{
+        const jsQR=await loadJsQR();
+        const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+        if(cancelled){ stream.getTracks().forEach(tr=>tr.stop()); return; }
+        scanStreamRef.current=stream;
+        const v=scanVideoRef.current;
+        if(!v){ stream.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; return; }
+        v.srcObject=stream;
+        try{ await v.play(); }catch(e){}
+        const canvas=document.createElement('canvas');
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+        const tick=()=>{
+          if(cancelled||!scanStreamRef.current){ return; }
+          if(v.readyState===v.HAVE_ENOUGH_DATA && v.videoWidth){
+            canvas.width=v.videoWidth; canvas.height=v.videoHeight;
+            ctx.drawImage(v,0,0,canvas.width,canvas.height);
+            try{
+              const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+              const r=jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
+              if(r&&r.data){
+                const room=parseRoomFromQR(r.data);
+                if(room){ setCode(room); setScanOpen(false); return; }
+              }
+            }catch(e){}
+          }
+          scanRafRef.current=requestAnimationFrame(tick);
+        };
         scanRafRef.current=requestAnimationFrame(tick);
-      };
-      scanRafRef.current=requestAnimationFrame(tick);
-    }catch(e){
-      console.error('scan failed:',e);
-      setScanErr(lang==='en'?'Camera/scanner unavailable. Use your phone camera on the QR or type the code.'
-        :lang==='es'?'Cámara/escáner no disponible. Usa la cámara del móvil o escribe el código.'
-        :'Kamera/Scanner nicht verfügbar. Nutze die Handy-Kamera auf dem QR oder tippe den Code ein.');
-    }
-  }
-  React.useEffect(()=>()=>stopScan(),[]);
+      }catch(e){
+        console.error('scan failed:',e);
+        setScanErr(lang==='en'?'Camera/scanner unavailable. Use your phone camera on the QR or type the code.'
+          :lang==='es'?'Cámara/escáner no disponible. Usa la cámara del móvil o escribe el código.'
+          :'Kamera/Scanner nicht verfügbar. Nutze die Handy-Kamera auf dem QR oder tippe den Code ein.');
+      }
+    })();
+    return ()=>{ cancelled=true; stopScan(); };
+  },[scanOpen]);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
@@ -1980,7 +2053,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       es:["4.800+ Preguntas","Tiempo real","Comodines"],
     };
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:`radial-gradient(circle,${lt.accent}2e,transparent 65%)`,top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
         {scanOpen&&<div style={{position:'fixed',inset:0,zIndex:400,background:'#000',
           display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
@@ -2664,11 +2737,8 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const betWorst = room.betWorst !== undefined ? !!room.betWorst : true;
   const bettingActive = room.withBets!==false && (betBest||betWorst) && activePl.length>=3;
   const betOthers = activePl.filter(p=>p.id!==myId);
-  const betComplete = !bettingActive || (
-    (!betBest  || !!betClosest) &&
-    (!betWorst || !!betFarthest) &&
-    (!(betBest&&betWorst) || betClosest!==betFarthest)
-  );
+  // Wette ist OPTIONAL – Tipp kann immer abgegeben werden. Einzige Regel: nicht denselben Spieler für beste & schlechteste.
+  const betValid = !(betClosest && betFarthest && betClosest===betFarthest);
   const doneCount=activePl.filter(p=>guesses[p.id]!=null).length;
   const changeAllowed=room.changeAllowed===myId;
   const hintVisible=room.hintVisible;
@@ -2727,7 +2797,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   async function submit(){
     const n=parseFloat(val.replace(",","."));
     if(isNaN(n))return;
-    if(bettingActive && !(betClosest && betFarthest && betClosest!==betFarthest)) return;
+    if(betClosest && betFarthest && betClosest===betFarthest) return; // ungültig: gleicher Spieler für beide Wetten
     if(changeAllowed){
       await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
     }
@@ -2965,7 +3035,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <Inp type="number" value={val} onChange={setVal}
               placeholder="z.B. 42" t={t} autoFocus
               style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
-            <Btn t={t} onClick={submit} disabled={!val||!betComplete}
+            <Btn t={t} onClick={submit} disabled={!val||!betValid}
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
           {isHost&&activePl.length>1&&<p style={{fontSize:11,color:t.muted,
@@ -3006,7 +3076,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           {/* Wette – gemeinsam mit dem Tipp abgeben (ab 3 Spielern, wenn Wetten an) */}
           {bettingActive&&<div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${t.border}`}}>
             <p style={{fontSize:11,fontWeight:800,color:t.gold,letterSpacing:.6,margin:'0 0 2px'}}>
-              🎲 {lang==='en'?'Your bet':lang==='es'?'Tu apuesta':'Deine Wette'}
+              🎲 {lang==='en'?'Your bet (optional)':lang==='es'?'Tu apuesta (opcional)':'Deine Wette (optional)'}
             </p>
             <p style={{fontSize:11,color:t.muted,margin:'0 0 8px'}}>
               {lang==='en'?'Bonus point for each correct guess':lang==='es'?'Punto extra por cada acierto':'Bonuspunkt für jeden Treffer'}
