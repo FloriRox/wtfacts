@@ -1554,15 +1554,15 @@ function OnboardingScreen({t, lang, onDone}) {
 
 
 /* ─── STECKBRIEF SCREEN ─────────────────────────── */
-function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
+function SteckbriefScreen({t, lang, myId, code, playerName, onDone, initial=null, onSaveProfile=null}) {
   const i = UI[lang]||UI.de;
   const fields = [
     {key:'kampfname', label:i.steckbriefKampfname, emoji:'✏', placeholder:'z.B. Der Schätzkönig'},
     {key:'fact',      label:i.steckbriefFact,       emoji:'🔥', placeholder:'z.B. Ich schlafe stehend'},
   ];
-  const [vals, setVals] = React.useState({});
+  const [vals, setVals] = React.useState(()=> initial ? {kampfname:initial.kampfname||'', fact:initial.fact||''} : {});
   const [busy, setBusy] = React.useState(false);
-  const [selfie, setSelfie] = React.useState(null);
+  const [selfie, setSelfie] = React.useState(initial?.selfie||null);
   const [showCam, setShowCam] = React.useState(false);
   const videoRef = React.useRef(null);
   const streamRef = React.useRef(null);
@@ -1611,6 +1611,8 @@ function SteckbriefScreen({t, lang, myId, code, playerName, onDone}) {
     }
     const steckbrief = {...vals, name: playerName, selfie: selfieSmall};
     await update(ref(db, `rooms/${code}/steckbriefe/${myId}`), steckbrief);
+    // Account-Profil aktualisieren (nur eingeloggte Nutzer – Callback ist sonst null); volles Selfie fürs Vorbefüllen
+    if(onSaveProfile) onSaveProfile({kampfname:vals.kampfname||'', fact:vals.fact||'', selfie:selfie||null});
     onDone();
   }
 
@@ -1707,13 +1709,46 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null}){
+// QR-Decoder (jsQR) bei Bedarf vom CDN laden – keine Build-Abhängigkeit
+let _jsqrPromise=null;
+function loadJsQR(){
+  if(window.jsQR) return Promise.resolve(window.jsQR);
+  if(_jsqrPromise) return _jsqrPromise;
+  _jsqrPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    s.async=true;
+    s.onload=()=>res(window.jsQR);
+    s.onerror=()=>{ _jsqrPromise=null; rej(new Error('jsQR load failed')); };
+    document.head.appendChild(s);
+  });
+  return _jsqrPromise;
+}
+function parseRoomFromQR(data){
+  if(!data) return null;
+  try{ const u=new URL(data); const r=u.searchParams.get('room'); if(r) return r.toUpperCase(); }catch(e){}
+  const m=String(data).match(/room=([A-Za-z0-9]+)/);
+  if(m) return m[1].toUpperCase();
+  const raw=String(data).trim();
+  if(/^[A-Za-z0-9]{4,8}$/.test(raw)) return raw.toUpperCase();
+  return null;
+}
+
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
   const[spitzname,setSpitzname]=useState("");
   const[funfact,setFunfact]=useState("");
   const[selfieHome,setSelfieHome]=useState(null);
+  // Account-Profil in leere Felder einspielen (nur eingeloggte Nutzer – kommt vorbefüllt rein, bleibt änderbar)
+  React.useEffect(()=>{
+    if(!profile) return;
+    if(profile.name)      setName(v=>v||profile.name);
+    if(profile.kampfname) setSpitzname(v=>v||profile.kampfname);
+    if(profile.fact)      setFunfact(v=>v||profile.fact);
+    if(profile.selfie)    setSelfieHome(v=>v||profile.selfie);
+  },[profile]);
   const[streamHome,setStreamHome]=useState(null);
   const videoRefHome=React.useRef(null);
   const[code,setCode]=useState(()=>new URLSearchParams(location.search).get("room")||"");
@@ -1721,6 +1756,50 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
   const[a11yOpen,setA11yOpen]=useState(false);
+  const[scanOpen,setScanOpen]=useState(false);
+  const[scanErr,setScanErr]=useState("");
+  const scanVideoRef=React.useRef(null);
+  const scanStreamRef=React.useRef(null);
+  const scanRafRef=React.useRef(null);
+  function stopScan(){
+    if(scanRafRef.current){ cancelAnimationFrame(scanRafRef.current); scanRafRef.current=null; }
+    if(scanStreamRef.current){ scanStreamRef.current.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; }
+  }
+  async function startScan(){
+    setScanErr(""); setScanOpen(true);
+    try{
+      const jsQR=await loadJsQR();
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+      scanStreamRef.current=stream;
+      const v=scanVideoRef.current; if(!v){ stopScan(); return; }
+      v.srcObject=stream; await v.play();
+      const canvas=document.createElement('canvas');
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      const tick=()=>{
+        if(!scanStreamRef.current){ return; }
+        if(v.readyState===v.HAVE_ENOUGH_DATA){
+          canvas.width=v.videoWidth; canvas.height=v.videoHeight;
+          ctx.drawImage(v,0,0,canvas.width,canvas.height);
+          try{
+            const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+            const res=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+            if(res&&res.data){
+              const room=parseRoomFromQR(res.data);
+              if(room){ setCode(room); stopScan(); setScanOpen(false); return; }
+            }
+          }catch(e){}
+        }
+        scanRafRef.current=requestAnimationFrame(tick);
+      };
+      scanRafRef.current=requestAnimationFrame(tick);
+    }catch(e){
+      console.error('scan failed:',e);
+      setScanErr(lang==='en'?'Camera/scanner unavailable. Use your phone camera on the QR or type the code.'
+        :lang==='es'?'Cámara/escáner no disponible. Usa la cámara del móvil o escribe el código.'
+        :'Kamera/Scanner nicht verfügbar. Nutze die Handy-Kamera auf dem QR oder tippe den Code ein.');
+    }
+  }
+  React.useEffect(()=>()=>stopScan(),[]);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
@@ -1779,11 +1858,28 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(232,54,10,.18),transparent 65%)",top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
+        {scanOpen&&<div style={{position:'fixed',inset:0,zIndex:400,background:'#000',
+          display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
+          <p style={{color:'#fff',fontSize:16,fontWeight:700,margin:0}}>
+            {lang==='en'?'Scan the room QR':lang==='es'?'Escanea el QR':'QR-Code scannen'}
+          </p>
+          <div style={{position:'relative',width:'min(78vw,320px)',height:'min(78vw,320px)',
+            borderRadius:18,overflow:'hidden',border:`3px solid ${lt.accent}`}}>
+            <video ref={scanVideoRef} autoPlay playsInline muted
+              style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          </div>
+          {scanErr&&<p style={{color:'#ffb3b3',fontSize:13,maxWidth:280,textAlign:'center',margin:0}}>{scanErr}</p>}
+          <button onClick={()=>{stopScan();setScanOpen(false);}}
+            style={{padding:'10px 24px',borderRadius:100,background:'#fff',border:'none',
+              color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
+            {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
+          </button>
+        </div>}
         {/* Top row: Sprache · Account · Demo */}
         <div style={{display:"flex",justifyContent:"space-between",
           alignItems:"center",gap:8,marginBottom:32,width:"100%",maxWidth:400,marginLeft:'auto',marginRight:'auto'}}>
           <select value={lang} onChange={e=>onSetLang(e.target.value)}
-            style={{padding:"8px 12px",
+            style={{padding:"0 12px",height:38,boxSizing:"border-box",
               background:lt.surface,
               border:`1.5px solid ${lt.border}`,
               borderRadius:100,color:lt.text,
@@ -1802,14 +1898,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           <div style={{flex:1,display:'flex',justifyContent:'center',minWidth:0}}>
             {isAnonymous
               ? <button onClick={onShowLogin}
-                  style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',
-                    padding:'8px 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
+                  style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',height:38,boxSizing:'border-box',
+                    padding:'0 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
                     borderRadius:100,color:lt.text,fontSize:13,cursor:'pointer',
                     fontFamily:ADULT.fontBody,fontWeight:600,overflow:'hidden'}}>
                   🔐 <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lang==='en'?'Sign in':lang==='es'?'Entrar':'Anmelden'}</span>
                 </button>
-              : <div style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',
-                  padding:'8px 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
+              : <div style={{display:'flex',alignItems:'center',gap:6,maxWidth:'100%',height:38,boxSizing:'border-box',
+                  padding:'0 14px',background:lt.surface,border:`1.5px solid ${lt.border}`,
                   borderRadius:100,overflow:'hidden'}}>
                   <span style={{fontSize:13,color:lt.text,fontWeight:600,overflow:'hidden',
                     textOverflow:'ellipsis',whiteSpace:'nowrap'}}>✅ {userName||(lang==='en'?'Signed in':lang==='es'?'Conectado':'Angemeldet')}</span>
@@ -1820,7 +1916,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
           </div>
           {onShowOnboarding&&<button onClick={onShowOnboarding}
             title={i.demoLabel||"Demo"}
-            style={{padding:"8px 14px",background:"none",
+            style={{padding:"0 14px",height:38,boxSizing:"border-box",background:lt.surface,
               border:`1.5px solid ${lt.muted}55`,
               borderRadius:100,color:lt.text,fontSize:13,flexShrink:0,
               cursor:"pointer",fontFamily:ADULT.fontBody,fontWeight:600}}>
@@ -1830,7 +1926,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <Logo t={lt} size="xl"/>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:44}}>
           <Btn t={lt} onClick={()=>{setTab("host");setMode("adult");}} style={{minWidth:150}}>{li.createRoom}</Btn>
-          <Btn t={lt} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150}}>{li.join}</Btn>
+          <Btn t={lt} variant="secondary" onClick={()=>setTab("join")} style={{minWidth:150,background:lt.surface}}>{li.join}</Btn>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
           {(pills[lang]||pills.de).map(x=><Pill key={x} t={lt} color={lt.muted}>{x}</Pill>)}
@@ -1897,7 +1993,14 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         </div>
         {tab==="join"&&<div style={{width:'100%'}}>
           <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🔑 {lang==="en"?"Room code":lang==="es"?"Código de sala":"Raumcode"}</p>
-          <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono}}/>
+          <div style={{display:'flex',gap:8}}>
+            <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono,flex:1}}/>
+            <Btn t={t} variant="secondary" onClick={startScan} style={{flexShrink:0,background:t.surface}}
+              title={lang==='en'?'Scan QR':lang==='es'?'Escanear QR':'QR scannen'}>📷</Btn>
+          </div>
+          <p style={{fontSize:11,color:t.muted,margin:'4px 0 0',paddingLeft:2}}>
+            {lang==='en'?'…or scan the QR on the big screen':lang==='es'?'…o escanea el QR de la pantalla':'…oder den QR auf dem Beamer scannen'}
+          </p>
         </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
             <div>
@@ -2423,6 +2526,8 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const i=UI[lang]||UI.de;
   const[val,setVal]=useState("");
   const[allIn,setAllIn]=useState(false);
+  const[betClosest,setBetClosest]=useState("");
+  const[betFarthest,setBetFarthest]=useState("");
   // KERS All-In: stored in Firebase per player for reliability
   const[timeLeft,setTimeLeft]=useState(null);
   const q=room.q;
@@ -2431,6 +2536,15 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
   const myGuess=guesses[myId];
   const afkPlayers=room.afkPlayers||{};
   const activePl=pl.filter(p=>!afkPlayers[p.id]);
+  const betBest  = room.betBest  !== undefined ? !!room.betBest  : true;  // Standard: beide an (Legacy)
+  const betWorst = room.betWorst !== undefined ? !!room.betWorst : true;
+  const bettingActive = room.withBets!==false && (betBest||betWorst) && activePl.length>=3;
+  const betOthers = activePl.filter(p=>p.id!==myId);
+  const betComplete = !bettingActive || (
+    (!betBest  || !!betClosest) &&
+    (!betWorst || !!betFarthest) &&
+    (!(betBest&&betWorst) || betClosest!==betFarthest)
+  );
   const doneCount=activePl.filter(p=>guesses[p.id]!=null).length;
   const changeAllowed=room.changeAllowed===myId;
   const hintVisible=room.hintVisible;
@@ -2482,15 +2596,18 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     return ()=>clearInterval(iv);
   },[speedMode,q?.id,myGuess]);
 
+  useEffect(()=>{ setBetClosest(""); setBetFarthest(""); },[q?.id]);
+
   if(!q)return <div style={{...page,display:"flex",alignItems:"center",justifyContent:"center"}}><Spinner t={t}/></div>;
 
   async function submit(){
     const n=parseFloat(val.replace(",","."));
     if(isNaN(n))return;
+    if(bettingActive && !(betClosest && betFarthest && betClosest!==betFarthest)) return;
     if(changeAllowed){
       await update(ref(db,`rooms/${code}/`),{changeAllowed:null});
     }
-    onGuess(n, allIn);
+    onGuess(n, allIn, bettingActive ? {closest: betBest?betClosest:null, farthest: betWorst?betFarthest:null} : null);
     if(allIn){
       const newCharge = myBoostCharge - 50;
       update(ref(db,`rooms/${code}/boostCharge`),{[myId]: Math.max(0, newCharge)});
@@ -2498,6 +2615,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
     }
     setVal("");
     setAllIn(false);
+    setBetClosest(""); setBetFarthest("");
   }
 
   const showInput=myGuess==null||(changeAllowed&&myGuess!=null);
@@ -2723,7 +2841,7 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
             <Inp type="number" value={val} onChange={setVal}
               placeholder="z.B. 42" t={t} autoFocus
               style={{fontSize:20,fontWeight:700,fontFamily:t.fontMono}}/>
-            <Btn t={t} onClick={submit} disabled={!val}
+            <Btn t={t} onClick={submit} disabled={!val||!betComplete}
               style={{flexShrink:0}}>OK ✓</Btn>
           </div>
           {isHost&&activePl.length>1&&<p style={{fontSize:11,color:t.muted,
@@ -2761,6 +2879,36 @@ function QuestionScreen({room,myId,t,onGuess,code,debugMode,onSkip,lang,isHost=f
           </p>}
           <div style={{display:'none'}}>
           </div>
+          {/* Wette – gemeinsam mit dem Tipp abgeben (ab 3 Spielern, wenn Wetten an) */}
+          {bettingActive&&<div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${t.border}`}}>
+            <p style={{fontSize:11,fontWeight:800,color:t.gold,letterSpacing:.6,margin:'0 0 2px'}}>
+              🎲 {lang==='en'?'Your bet':lang==='es'?'Tu apuesta':'Deine Wette'}
+            </p>
+            <p style={{fontSize:11,color:t.muted,margin:'0 0 8px'}}>
+              {lang==='en'?'Bonus point for each correct guess':lang==='es'?'Punto extra por cada acierto':'Bonuspunkt für jeden Treffer'}
+            </p>
+            {[
+              ...(betBest ?[{lab:i.closestLabel, col:t.green, val:betClosest, set:setBetClosest}]:[]),
+              ...(betWorst?[{lab:i.farthestLabel,col:t.danger,val:betFarthest,set:setBetFarthest}]:[]),
+            ].map((g,gi)=>(
+              <div key={gi} style={{marginBottom:8}}>
+                <p style={{fontSize:11,color:g.col,fontWeight:700,margin:'0 0 4px'}}>{g.lab}</p>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                  {betOthers.map(p=>{const sel=g.val===p.id;return(
+                    <button key={p.id} onClick={()=>g.set(sel?"":p.id)}
+                      style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',borderRadius:100,
+                        background:sel?g.col+'22':t.surface,border:`1.5px solid ${sel?g.col:t.border}`,
+                        color:t.text,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:t.fontBody}}>
+                      <Avatar name={p.name} t={t} size={20}/>{p.name}
+                    </button>);})}
+                </div>
+              </div>
+            ))}
+            {betBest&&betWorst&&betClosest&&betFarthest&&betClosest===betFarthest&&
+              <p style={{fontSize:11,color:t.danger,margin:'2px 0 0'}}>
+                {lang==='en'?'Pick two different players':lang==='es'?'Elige dos jugadores distintos':'Bitte zwei verschiedene Spieler wählen'}
+              </p>}
+          </div>}
           <p style={{marginTop:8,color:t.muted,fontSize:12}}>
             {i.discuss}
           </p>
@@ -3571,7 +3719,11 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const medals = ['🥇','🥈','🥉'];
   const gold = t.gold; const accent = t.accent;
 
-  const beamerT={...t,border:'#2a1a0e',green:t.green,gold,surface:'#1a120a',text:'#f2ece6',muted:'#6e5e54'};
+  const lightBeamer = !!room?.lightMode;
+  const D = lightBeamer
+    ? {bg:'#f3ece2', surface:'#ffffff', card:'#fbf6ee', border:'#e4d8c7', text:'#2b211a', muted:'#9b8b7b'}
+    : {bg:'#0f0a06', surface:'#1a120a', card:'#181310', border:'#2a1a0e', text:'#f2ece6', muted:'#6e5e54'};
+  const beamerT={...t,border:D.border,green:t.green,gold,surface:D.surface,text:D.text,muted:D.muted};
 
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
@@ -3605,7 +3757,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
     if(!code) return;
     const link = inviteUrl(code);
     import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js').then(()=>{
-      window.QRCode.toDataURL(link,{width:140,margin:1,color:{dark:'#f2ece6',light:'#1a120a'}})
+      window.QRCode.toDataURL(link,{width:140,margin:1,color:{dark:D.text,light:D.surface}})
         .then(url=>setQr(url)).catch(()=>{});
     }).catch(()=>{});
   },[code]);
@@ -3652,14 +3804,14 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
     @keyframes bomb{0%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(80px,-30px) rotate(180deg) scale(1.5)}100%{transform:translate(160px,0) rotate(360deg) scale(0.5);opacity:0}}
   `;
 
-  return <div style={{minHeight:'100vh',background:'#0f0a06',color:'#f2ece6',
+  return <div style={{minHeight:'100vh',background:D.bg,color:D.text,
     fontFamily:t.fontBody,display:'flex',flexDirection:'column',overflow:'hidden'}}>
     <style>{css}</style>
 
     {/* Joker Overlay */}
     {jokerAnim&&<div style={{position:'fixed',inset:0,zIndex:200,pointerEvents:'none',
       display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.6)'}}>
-      <div style={{background:'#0f0a06',border:`3px solid ${jokerColor(jokerAnim.type)}`,
+      <div style={{background:D.bg,border:`3px solid ${jokerColor(jokerAnim.type)}`,
         borderRadius:24,padding:'32px 56px',textAlign:'center',
         animation:'popIn .4s ease both',
         boxShadow:`0 0 60px ${jokerColor(jokerAnim.type)}66`}}>
@@ -3670,7 +3822,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
         <p style={{fontSize:28,fontWeight:900,color:jokerColor(jokerAnim.type),margin:'0 0 6px'}}>
           {jokerAnim.from} spielt einen Joker!
         </p>
-        {jokerAnim.to&&<p style={{fontSize:22,color:'#f2ece6',margin:0,
+        {jokerAnim.to&&<p style={{fontSize:22,color:D.text,margin:0,
           animation:'shake .5s ease 1s both'}}>
           💣 → <strong>{jokerAnim.to}</strong>
         </p>}
@@ -3679,25 +3831,25 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
     {/* Header */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-      padding:'14px 28px',borderBottom:'1px solid #2a1a0e',flexShrink:0}}>
+      padding:'14px 28px',borderBottom:`1px solid ${D.border}`,flexShrink:0}}>
       <div style={{display:'flex',flexDirection:'column',gap:2}}>
         <div style={{display:'flex',alignItems:'baseline',gap:4}}>
           <span style={{fontSize:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
           <span style={{fontSize:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
         </div>
-        <span style={{fontSize:11,color:'#6e5e54',letterSpacing:.5,fontStyle:'italic'}}>
+        <span style={{fontSize:11,color:D.muted,letterSpacing:.5,fontStyle:'italic'}}>
           the pocket party game to prove your mates wrong!
         </span>
       </div>
       {phase==='question'&&<div style={{display:'flex',alignItems:'center',gap:10}}>
-        <div style={{width:140,height:5,background:'#2a1a0e',borderRadius:3,overflow:'hidden'}}>
+        <div style={{width:140,height:5,background:D.border,borderRadius:3,overflow:'hidden'}}>
           <div style={{height:'100%',background:gold,borderRadius:3,transition:'width .4s',
             width:`${(tippedCount/Math.max(pl.length,1))*100}%`}}/>
         </div>
-        <span style={{fontSize:12,color:'#6e5e54'}}>{tippedCount}/{pl.length} {i.dispTipped}</span>
+        <span style={{fontSize:12,color:D.muted}}>{tippedCount}/{pl.length} {i.dispTipped}</span>
         {room.timerSecs&&<span style={{
           fontSize:14,fontWeight:800,
-          color:room.timerPaused?'#6e5e54':timerDisplaySecs<=5?'#ff3355':timerDisplaySecs<=10?gold:'#6e5e54',
+          color:room.timerPaused?D.muted:timerDisplaySecs<=5?'#ff3355':timerDisplaySecs<=10?gold:D.muted,
           fontFamily:'monospace',minWidth:32}}>
           {room.timerPaused?'II':timerDisplaySecs+'s'}
         </span>}
@@ -3713,7 +3865,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
       {/* ── LEFT: Live content ── */}
       <div style={{flex:'0 0 58%',padding:'16px 24px',display:'flex',flexDirection:'column',
-        gap:16,borderRight:'1px solid #2a1a0e',overflow:'hidden'}}>
+        gap:16,borderRight:`1px solid ${D.border}`,overflow:'hidden'}}>
 
         {/* LOBBY */}
         {(phase==='lobby'||phase==='jokerSetup'||phase==='categories')&&
@@ -3721,21 +3873,19 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
             justifyContent:'center',gap:16}}>
             <div style={{fontSize:40,animation:'pulse2 2s ease infinite'}}>🎮</div>
             <p style={{fontSize:24,fontWeight:900,margin:0}}>{i.dispReady}</p>
-            <p style={{fontSize:14,color:'#6e5e54',margin:0}}>{i.dispHostPrep}</p>
+            <p style={{fontSize:14,color:D.muted,margin:0}}>{i.dispHostPrep}</p>
             {/* QR Code für Beamer */}
-            <div style={{background:'#1a120a',borderRadius:16,padding:16,
-              border:'1.5px solid #2a1a0e',textAlign:'center'}}>
-              <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 10px'}}>
+            <div style={{background:D.surface,borderRadius:16,padding:16,
+              border:`1.5px solid ${D.border}`,textAlign:'center'}}>
+              <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1,margin:'0 0 10px'}}>
                 📱 BEITRETEN
               </p>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
-                alt="QR" style={{width:220,height:220,borderRadius:8}}/>
-              <p style={{fontSize:20,fontFamily:'monospace',letterSpacing:4,
-                color:'#e8360a',fontWeight:800,margin:'10px 0 0'}}>{room.code}</p>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${lightBeamer?'ffffff':'1a120a'}&color=${lightBeamer?'2b211a':'e8360a'}`}
+                alt="QR" style={{width:300,height:300,borderRadius:8}}/>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>
-              {pl.map((p,idx)=><div key={p.id} style={{background:'#1a120a',
-                border:'1.5px solid #2a1a0e',borderRadius:12,padding:'6px 14px',
+              {pl.map((p,idx)=><div key={p.id} style={{background:D.surface,
+                border:`1.5px solid ${D.border}`,borderRadius:12,padding:'6px 14px',
                 fontSize:13,fontWeight:600,animation:`flyIn .4s ease ${idx*0.1}s both`}}>
                 👤 {p.name}
               </div>)}
@@ -3744,9 +3894,9 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
         {/* QUESTION */}
         {phase==='question'&&q&&<>
-          <div style={{background:'#1a120a',borderRadius:12,padding:'14px 18px',
+          <div style={{background:D.surface,borderRadius:12,padding:'14px 18px',
             border:`1.5px solid ${gold}33`}}>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 12px'}}>{i.dispQuestion}</p>
+            <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1,margin:'0 0 12px'}}>{i.dispQuestion}</p>
             <p style={{fontSize:'clamp(14px,1.8vw,20px)',fontWeight:800,lineHeight:1.4,margin:'0 0 10px'}}>{q.q}</p>
             {q.unit&&<span style={{background:gold+'22',border:`1px solid ${gold}55`,
               borderRadius:8,padding:'4px 12px',color:gold,fontWeight:700,fontSize:14}}>
@@ -3763,39 +3913,39 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
               const displayName=sb?.kampfname?`${p.name} aka ${sb.kampfname}`:p.name;
               return <div key={p.id} style={{
                 display:'flex',alignItems:'center',gap:8,
-                background:tipped?gold+'1a':'#1a120a',
-                border:`1.5px solid ${rank===0?gold:tipped?gold+'66':'#2a1a0e'}`,
+                background:tipped?gold+'1a':D.surface,
+                border:`1.5px solid ${rank===0?gold:tipped?gold+'66':D.border}`,
                 borderRadius:10,padding:'7px 10px',
                 transition:'all .6s',
                 animation:tipped?'glow .8s ease':'none'}}>
                 {/* Rank */}
                 <span style={{fontSize:13,width:22,flexShrink:0,textAlign:'center',
                   fontWeight:800,fontFamily:'monospace',
-                  color:rank===0?gold:rank===1?'#c0c0c0':rank===2?'#cd7f32':'#6e5e54'}}>
+                  color:rank===0?gold:rank===1?'#c0c0c0':rank===2?'#cd7f32':D.muted}}>
                   {rank+1}.
                 </span>
                 {/* Selfie */}
                 <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',
-                  flexShrink:0,border:`2px solid ${tipped?gold:'#2a1a0e'}`}}>
+                  flexShrink:0,border:`2px solid ${tipped?gold:D.border}`}}>
                   {sb?.selfie
                     ? <img src={sb.selfie} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                    : <div style={{width:'100%',height:'100%',background:'#2a1a0e',
+                    : <div style={{width:'100%',height:'100%',background:D.border,
                         display:'flex',alignItems:'center',justifyContent:'center',
-                        fontSize:14,color:tipped?gold:'#6e5e54'}}>
+                        fontSize:14,color:tipped?gold:D.muted}}>
                         {timedOut?'–':tipped?'✓':'?'}
                       </div>}
                 </div>
                 {/* Name */}
                 <div style={{flex:1,fontSize:13,fontWeight:700,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
-                  color:rank===0?gold:'#f2ece6'}}>{displayName}</div>
+                  color:rank===0?gold:D.text}}>{displayName}</div>
                 {/* Tip value */}
                 <div style={{fontSize:14,fontWeight:800,color:tipped?gold:'#3a2a1e',
                   flexShrink:0,minWidth:40,textAlign:'right'}}>
                   {tipped&&!timedOut?fmtNum(g):'—'}
                 </div>
                 {/* Points */}
-                <div style={{fontSize:12,color:rank===0?gold:'#6e5e54',fontWeight:700,
+                <div style={{fontSize:12,color:rank===0?gold:D.muted,fontWeight:700,
                   flexShrink:0,minWidth:32,textAlign:'right'}}>
                   {pts}P
                 </div>
@@ -3820,13 +3970,13 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           <div style={{background:gold+'22',borderRadius:12,padding:'14px 20px',
             border:`2px solid ${gold}`,animation:revealed?'popIn .5s ease both':'none',flexShrink:0}}>
             <p style={{fontSize:13,color:'#c8b8a8',margin:'0 0 8px',lineHeight:1.4}}>{q.q}</p>
-            <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1,margin:'0 0 4px'}}>{i.dispAnswer}</p>
+            <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1,margin:'0 0 4px'}}>{i.dispAnswer}</p>
             <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:q.hint?10:0}}>
               {/* Inline Count-up für Beamer */}
               <BeamerCountUp value={q.a} gold={gold} fontTitle={t.fontTitle}/>
-              <span style={{fontSize:16,color:'#6e5e54'}}>{q.unit}</span>
+              <span style={{fontSize:16,color:D.muted}}>{q.unit}</span>
             </div>
-            {q.hint&&<div style={{background:'#1a120a',borderRadius:8,padding:'8px 12px',
+            {q.hint&&<div style={{background:D.surface,borderRadius:8,padding:'8px 12px',
               borderLeft:`3px solid ${gold}`}}>
               <span style={{fontSize:12,color:gold,fontWeight:600}}>💡 </span>
               <span style={{fontSize:12,color:'#c8b8a8'}}>{q.hint}</span>
@@ -3837,13 +3987,13 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           <BeamerRevealStrip ranked={ranked} answer={q.a} gold={gold}/>
 
           {/* WTF-Kommentar */}
-          <p style={{fontSize:15,fontWeight:700,color:'#f2ece6',margin:'0 0 6px',
+          <p style={{fontSize:15,fontWeight:700,color:D.text,margin:'0 0 6px',
             lineHeight:1.4,animation:'fu .4s .5s ease both'}}>
             {wtfComment(ranked,q,lang)}
           </p>
 
           {/* Histogram */}
-          <TippHistogram room={room} t={{surface:'#1a120a',border:'#2a1a0e',radius:12,muted:'#6e5e54',text:'#f2ece6'}} lang={lang} gold={gold}/>
+          <TippHistogram room={room} t={{surface:D.surface,border:D.border,radius:12,muted:D.muted,text:D.text}} lang={lang} gold={gold}/>
 
           {/* Full results table */}
           <div style={{flex:1,display:'flex',flexDirection:'column',gap:6,overflowY:'auto'}}>
@@ -3852,16 +4002,16 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
               const roundPts=rs[p.id]||0;
               const rowAnim=isClosest&&p.diff!==0?'pulseGold 1.4s ease-in-out infinite':`slideUp .4s ease ${idx*0.08}s both`;
               return <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,
-                background:p.diff===0?'#39d98a22':isClosest?gold+'18':'#1a120a',
-                border:`1px solid ${p.diff===0?'#39d98a':isClosest?gold+'66':'#2a1a0e'}`,
+                background:p.diff===0?'#39d98a22':isClosest?gold+'18':D.surface,
+                border:`1px solid ${p.diff===0?'#39d98a':isClosest?gold+'66':D.border}`,
                 borderRadius:10,padding:'10px 14px',
                 animation:rowAnim}}>                <span style={{fontSize:14,width:26,flexShrink:0,fontWeight:800,
                   fontFamily:'monospace',
-                  color:idx===0?gold:idx===1?'#c0c0c0':idx===2?'#cd7f32':'#6e5e54'}}>
+                  color:idx===0?gold:idx===1?'#c0c0c0':idx===2?'#cd7f32':D.muted}}>
                   {idx+1}.
                 </span>
                 <span style={{flex:1,fontWeight:isClosest?700:400,fontSize:14}}>{p.name}</span>
-                <span style={{fontFamily:t.fontMono,fontSize:13,color:'#6e5e54',minWidth:50,textAlign:'right'}}>
+                <span style={{fontFamily:t.fontMono,fontSize:13,color:D.muted,minWidth:50,textAlign:'right'}}>
                   {fmtNum(p.guess)}
                 </span>
                 <span style={{fontFamily:t.fontMono,fontSize:13,minWidth:56,textAlign:'right',
@@ -3880,14 +4030,38 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
         {/* FINAL */}
         {phase==='final'&&<div style={{flex:1,display:'flex',flexDirection:'column',
-          alignItems:'center',justifyContent:'center',gap:16}}>
-          <div style={{fontSize:64}}>🏆</div>
-          <p style={{fontSize:32,fontWeight:900,color:gold,margin:0}}>
+          alignItems:'center',justifyContent:'center',gap:12,padding:'8px 8px',overflow:'hidden'}}>
+          <div style={{fontSize:52,lineHeight:1}}>🏆</div>
+          <p style={{fontSize:30,fontWeight:900,color:gold,margin:0,textAlign:'center',
+            overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'100%'}}>
             {sorted[0]?.name} {i.dispWins}
           </p>
-          <p style={{fontSize:20,color:'#6e5e54',margin:0}}>
-            {scores[sorted[0]?.id]||0} {i.pts}
-          </p>
+          {/* Endstand – alle Plätze mit Punkten + Treffer */}
+          <div style={{width:'100%',maxWidth:600,display:'flex',flexDirection:'column',gap:8,
+            overflow:'auto',marginTop:4}}>
+            {sorted.map((p,idx)=>{
+              const isWin=idx===0;
+              const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
+              return <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,
+                background:isWin?gold+'1a':D.surface,border:`1.5px solid ${isWin?gold:D.border}`,
+                borderRadius:14,padding:'11px 16px'}}>
+                <span style={{fontSize:22,width:38,textAlign:'center',flexShrink:0}}>{medals[idx]||`${idx+1}.`}</span>
+                <Avatar name={p.name} t={beamerT} size={38}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:19,fontWeight:700,color:D.text,
+                    overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                  <div style={{fontSize:12,color:D.muted,display:'flex',gap:12,marginTop:1}}>
+                    <span>🎯 {exactHits[p.id]||0}</span>
+                    <span>Ø {avg!=null?fmtNum(avg):'–'}</span>
+                    <span>🃏 {jokerTotals[p.id]||0}</span>
+                  </div>
+                </div>
+                <span style={{fontSize:26,fontWeight:900,color:isWin?gold:D.text,
+                  minWidth:54,textAlign:'right',flexShrink:0}}>{scores[p.id]||0}</span>
+              </div>;
+            })}
+          </div>
+          <p style={{fontSize:12,color:D.muted,margin:'2px 0 0'}}>{i.pts}</p>
         </div>}
       </div>
 
@@ -3897,14 +4071,13 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
         {/* ── QR Code – always visible ── */}
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,
-          background:'#1a120a',borderRadius:12,padding:'10px 14px',
-          border:'1px solid #2a1a0e',flexShrink:0}}>
-          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=1a120a&color=e8360a`}
-            alt="QR" style={{width:80,height:80,borderRadius:6,flexShrink:0}}/>
+          background:D.surface,borderRadius:12,padding:'10px 14px',
+          border:`1px solid ${D.border}`,flexShrink:0}}>
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${lightBeamer?'ffffff':'1a120a'}&color=${lightBeamer?'2b211a':'e8360a'}`}
+            alt="QR" style={{width:116,height:116,borderRadius:6,flexShrink:0}}/>
           <div>
-            <p style={{fontSize:10,color:'#6e5e54',fontWeight:700,letterSpacing:1,margin:'0 0 4px'}}>📱 BEITRETEN</p>
-            <p style={{fontSize:22,fontFamily:'monospace',letterSpacing:4,color:'#e8360a',fontWeight:800,margin:0}}>{room.code}</p>
-            <p style={{fontSize:10,color:'#6e5e54',margin:'4px 0 0'}}>{i.dispScanJoin}</p>
+            <p style={{fontSize:11,color:D.muted,fontWeight:700,letterSpacing:1,margin:'0 0 4px'}}>📱 BEITRETEN</p>
+            <p style={{fontSize:13,color:D.muted,margin:0}}>{i.dispScanJoin}</p>
           </div>
         </div>
 
@@ -3912,18 +4085,18 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
         {/* ── Live Statistiken ── */}
         {history.length>0&&<>
-          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
-            margin:'0 0 10px',textTransform:'uppercase',borderTop:'1px solid #2a1a0e',
+          <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1.2,
+            margin:'0 0 10px',textTransform:'uppercase',borderTop:`1px solid ${D.border}`,
             paddingTop:10}}>{i.dispStats}</p>
           <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>
             {sorted.map(p=>{
               const avg=diffCounts[p.id]>0?Math.round(diffTotals[p.id]/diffCounts[p.id]):null;
-              return <div key={p.id} style={{background:'#181310',borderRadius:10,
-                padding:'10px 14px',border:'1px solid #2a1a0e'}}>
+              return <div key={p.id} style={{background:D.card,borderRadius:10,
+                padding:'10px 14px',border:`1px solid ${D.border}`}}>
                 <div style={{fontWeight:700,fontSize:14,marginBottom:5,
                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
-                  color:'#f2ece6'}}>{p.name}</div>
-                <div style={{display:'flex',gap:14,color:'#8e7e6e',fontSize:13}}>
+                  color:D.text}}>{p.name}</div>
+                <div style={{display:'flex',gap:14,color:D.muted,fontSize:13}}>
                   <span title="Exakte Treffer">🎯 {exactHits[p.id]||0}</span>
                   <span title="Ø Abweichung">Ø {avg!=null?fmtNum(avg):'–'}</span>
                   <span title="Joker gespielt">🃏 {jokerTotals[p.id]||0}</span>
@@ -3934,8 +4107,8 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
         </>}
 
         {/* ── Joker Inventar ── */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,marginBottom:10,flexShrink:0}}>
-          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+        <div style={{borderTop:`1px solid ${D.border}`,paddingTop:10,marginBottom:10,flexShrink:0}}>
+          <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase'}}>{i.dispJoker}</p>
           {pl.map(p=>{
             const jk=(room?.jokers||{})[p.id]||[];
@@ -3958,18 +4131,18 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
         </div>
 
         {/* ── Event Feed ── */}
-        <div style={{borderTop:'1px solid #2a1a0e',paddingTop:10,flex:1,
+        <div style={{borderTop:`1px solid ${D.border}`,paddingTop:10,flex:1,
           display:'flex',flexDirection:'column',minHeight:0}}>
-          <p style={{fontSize:11,fontWeight:700,color:'#6e5e54',letterSpacing:1.2,
+          <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1.2,
             margin:'0 0 10px',textTransform:'uppercase',flexShrink:0}}>{i.dispEvents}</p>
           <ChatFeed room={room} pl={pl} gold={gold} jokerIcon={jokerIcon} i={i}/>
         </div>
 
         {/* ── QR ── */}
         {qr&&<div style={{textAlign:'center',opacity:.5,paddingTop:12,flexShrink:0,
-          borderTop:'1px solid #2a1a0e',marginTop:8}}>
+          borderTop:`1px solid ${D.border}`,marginTop:8}}>
           <img src={qr} style={{width:72,height:72,borderRadius:6}}/>
-          <p style={{fontSize:11,color:'#6e5e54',margin:'4px 0 0'}}>{i.dispScanJoin}</p>
+          <p style={{fontSize:11,color:D.muted,margin:'4px 0 0'}}>{i.dispScanJoin}</p>
         </div>}
       </div>
     </div>
@@ -4283,7 +4456,7 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       {/* Comment field – immer sichtbar, sobald bewertet wurde (auch positiv) */}
       {(rating||nps!==null)&&<div>
         <p style={{fontSize:12,color:t.muted,margin:'0 0 4px'}}>
-          {((rating&&rating>=4)||(nps!==null&&nps>=7))
+          {(!((rating&&rating<4)||(nps!==null&&nps<7)))
             ? (lang==='en'?'What did you love? (optional)':lang==='es'?'¿Qué te encantó? (opcional)':'Was hat dir besonders gefallen? (optional)')
             : (lang==='en'?'What can we improve? (optional)':lang==='es'?'¿Qué podemos mejorar? (opcional)':'Was können wir verbessern? (optional)')}
         </p>
@@ -4431,6 +4604,9 @@ export function DisplayApp() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState(false);
   const lang = localStorage.getItem('em_lang')||'de';
+  // Heller Modus vom Host per URL (?light=1) oder aus dem Raum übernehmen
+  const wantLight = params.get('light')==='1';
+  if(wantLight && !A11Y.light){ A11Y={...A11Y, light:true}; }
   const t = applyA11y(ADULT);
 
   useEffect(()=>{
@@ -4582,8 +4758,11 @@ function AdminDashboard({t, lang, onBack}){
   const[range,setRange]=useState('14d'); // 14d|30d|6m|1y|all – Zeitraum des Verlaufs-Charts
   const[commFilter,setCommFilter]=useState('pending'); // pending|approved|rejected|all
   const[fbSort,setFbSort]=useState('newest'); // newest|oldest|best|worst|region
+  const[fbStarFilter,setFbStarFilter]=useState(0); // 0=alle, 1..5
+  const[fbNpsFilter,setFbNpsFilter]=useState('all'); // all|promoter|passive|detractor
   const[editComm,setEditComm]=useState(null); // {id,q,a,unit}
   const[busyId,setBusyId]=useState(null);
+  const[cleanupBusy,setCleanupBusy]=useState(false);
 
   useEffect(()=>{
     async function loadStats(){
@@ -4848,17 +5027,47 @@ function AdminDashboard({t, lang, onBack}){
     return date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   };
 
+  async function cleanupRooms(){
+    const HOURS=6;
+    if(!window.confirm(`Alle Spielräume löschen, die älter als ${HOURS} Stunden sind?\n(Laufende/aktuelle Räume bleiben erhalten.)`)) return;
+    setCleanupBusy(true);
+    try{
+      const snap=await get(ref(db,'rooms'));
+      const rooms=snap.val()||{};
+      const cutoff=Date.now()-HOURS*3600*1000;
+      const updates={}; let n=0, total=0;
+      Object.entries(rooms).forEach(([id,r])=>{
+        total++;
+        const created=(r&&r.createdAt)?r.createdAt:0; // ohne createdAt = Altbestand → löschen
+        if(created<cutoff){ updates['rooms/'+id]=null; n++; }
+      });
+      if(n>0) await update(ref(db),updates);
+      window.alert(`${n} von ${total} Räumen gelöscht (älter als ${HOURS}h).`);
+    }catch(e){
+      console.error('room cleanup failed:',e);
+      window.alert('Aufräumen fehlgeschlagen. Sind die aktuellen Firebase-Rules deployed?');
+    }
+    setCleanupBusy(false);
+  }
+
   return <div style={{...page,paddingBottom:40,animation:'fu .3s ease both'}}>
     {/* Header */}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
       <button onClick={onBack} style={{background:'none',border:'none',color:muted,
         fontSize:20,cursor:'pointer',padding:0}}>←</button>
-      <div>
+      <div style={{flex:1}}>
         <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,color:t.text}}>
           Admin Dashboard
         </h2>
         <p style={{fontSize:11,color:muted,margin:0}}>EstiMates Analytics</p>
       </div>
+      <button onClick={cleanupRooms} disabled={cleanupBusy}
+        title="Alte Spielräume aus der Datenbank löschen"
+        style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',borderRadius:100,
+          background:'none',border:`1.5px solid ${accent}66`,color:accent,fontSize:12,fontWeight:700,
+          cursor:cleanupBusy?'default':'pointer',opacity:cleanupBusy?.5:1,fontFamily:t.fontBody,flexShrink:0}}>
+        🧹 {cleanupBusy?'Räume…':'Räume aufräumen'}
+      </button>
     </div>
 
     {/* Tab bar */}
@@ -5098,7 +5307,17 @@ function AdminDashboard({t, lang, onBack}){
 
       {/* ── FEEDBACK ── */}
       {tab==='feedback'&&(()=>{
-        const fbSorted=[...stats.feedbacks].sort((a,b)=>{
+        const fbFiltered=stats.feedbacks.filter(f=>{
+          if(fbStarFilter && f.stars!==fbStarFilter) return false;
+          if(fbNpsFilter!=='all'){
+            if(f.nps==null) return false;
+            if(fbNpsFilter==='promoter' && f.nps<9) return false;
+            if(fbNpsFilter==='passive' && !(f.nps>=7&&f.nps<=8)) return false;
+            if(fbNpsFilter==='detractor' && f.nps>6) return false;
+          }
+          return true;
+        });
+        const fbSorted=[...fbFiltered].sort((a,b)=>{
           switch(fbSort){
             case 'oldest': return (a.ts||0)-(b.ts||0);
             case 'best':   return (b.stars||0)-(a.stars||0) || (b.ts||0)-(a.ts||0);
@@ -5110,7 +5329,9 @@ function AdminDashboard({t, lang, onBack}){
         return <div style={{display:'flex',flexDirection:'column',gap:8}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap',margin:'0 0 4px'}}>
           <p style={{fontSize:11,color:muted,margin:0}}>
-            Kommentare bei Bewertungen unter 4★ oder NPS unter 7 · {stats.feedbacks.length} Einträge
+            {fbFiltered.length===stats.feedbacks.length
+              ? `${stats.feedbacks.length} ${stats.feedbacks.length===1?'Bewertung':'Bewertungen'} gesamt`
+              : `${fbFiltered.length} von ${stats.feedbacks.length} Bewertungen`}
           </p>
           <select value={fbSort} onChange={e=>setFbSort(e.target.value)}
             style={{padding:'6px 10px',background:surface,border:`1.5px solid ${border}`,
@@ -5125,9 +5346,32 @@ function AdminDashboard({t, lang, onBack}){
             <option value="region">Nach Region</option>
           </select>
         </div>
-        {stats.feedbacks.length===0&&<div style={{background:surface,borderRadius:10,
+        {/* Filter: Sterne */}
+        <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
+          <span style={{fontSize:10,color:muted,fontWeight:700,marginRight:2}}>★</span>
+          {[{v:0,l:'Alle'},{v:5,l:'5★'},{v:4,l:'4★'},{v:3,l:'3★'},{v:2,l:'2★'},{v:1,l:'1★'}].map(o=>(
+            <button key={o.v} onClick={()=>setFbStarFilter(o.v)}
+              style={{padding:'4px 9px',borderRadius:100,fontSize:10,fontWeight:700,cursor:'pointer',
+                border:`1.5px solid ${fbStarFilter===o.v?gold:border}`,
+                background:fbStarFilter===o.v?gold+'22':'none',
+                color:fbStarFilter===o.v?gold:muted,fontFamily:t.fontBody}}>{o.l}</button>
+          ))}
+        </div>
+        {/* Filter: NPS */}
+        <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
+          <span style={{fontSize:10,color:muted,fontWeight:700,marginRight:2}}>NPS</span>
+          {[{v:'all',l:'Alle'},{v:'promoter',l:'Promotoren 9–10'},{v:'passive',l:'Passive 7–8'},{v:'detractor',l:'Detraktoren 0–6'}].map(o=>{
+            const c=o.v==='promoter'?green:o.v==='detractor'?accent:muted;
+            return <button key={o.v} onClick={()=>setFbNpsFilter(o.v)}
+              style={{padding:'4px 9px',borderRadius:100,fontSize:10,fontWeight:700,cursor:'pointer',
+                border:`1.5px solid ${fbNpsFilter===o.v?c:border}`,
+                background:fbNpsFilter===o.v?c+'22':'none',
+                color:fbNpsFilter===o.v?c:muted,fontFamily:t.fontBody}}>{o.l}</button>;
+          })}
+        </div>
+        {fbSorted.length===0&&<div style={{background:surface,borderRadius:10,
           padding:'20px',textAlign:'center',border:`1px solid ${border}`}}>
-          <p style={{color:muted,fontSize:13}}>Noch keine Feedback-Kommentare.</p>
+          <p style={{color:muted,fontSize:13}}>{stats.feedbacks.length===0?'Noch keine Feedback-Kommentare.':'Keine Bewertungen für diesen Filter.'}</p>
         </div>}
         {fbSorted.map((f,idx)=>{
           const date=f.ts?new Date(f.ts).toLocaleDateString('de-DE',{
@@ -7045,6 +7289,7 @@ function App(){
   const[isAnonymous,setIsAnonymous]=useState(true);
   const[userName,setUserName]=useState(null);
   const[isPro,setIsPro]=useState(false);
+  const[profile,setProfile]=useState(null); // Account-Profil (nur eingeloggte Nutzer)
 
   const[mode,setMode]=useState("adult");
   const[loading,setLoading]=useState(false);
@@ -7179,23 +7424,41 @@ function App(){
   const isHostRef = useRef(false);
   useEffect(()=>{
     if(!myId || autoJoinedRef.current) return;
+    let sessionRoom=null; try{ sessionRoom=localStorage.getItem('em_session'); }catch(e){}
     const urlRoom = new URLSearchParams(location.search).get('room');
-    const storedName = localStorage.getItem('em_lastname');
-    if(urlRoom && storedName) {
-      // Only auto-join if this player was already in the room (reconnect)
-      dbGet(urlRoom).then(r => {
-        if(r && r.players && r.players[myId]) {
-          // Already in room – silent reconnect
-          autoJoinedRef.current = true;
-          setCode(urlRoom);
-          setMode(r.mode||'adult');
-          listenRoom(urlRoom);
-        }
-        // else: new player with stored name → HomeScreen with pre-filled code
-        // HomeScreen reads URL param automatically
-      });
-    }
+    const target = sessionRoom || urlRoom;
+    if(!target) return;
+    // Nur wieder reinkommen, wenn dieser Spieler noch Mitglied des Raums ist (echter Reconnect)
+    dbGet(target).then(r => {
+      if(r && r.players && r.players[myId] && !(r.kicked||{})[myId]) {
+        autoJoinedRef.current = true;
+        isHostRef.current = (r.hostId === myId);
+        setCode(target);
+        setMode(r.mode||'adult');
+        listenRoom(target);
+      } else if(sessionRoom) {
+        // Raum vorbei / kein Mitglied mehr → veraltete Session verwerfen
+        try{ localStorage.removeItem('em_session'); }catch(e){}
+      }
+    }).catch(()=>{});
   },[myId]);
+  // Aktive Session merken (für Reload-Schutz) – wird beim Verlassen/Beenden (code=null) geleert
+  const sessionInitRef = useRef(false);
+  useEffect(()=>{
+    if(!sessionInitRef.current){ sessionInitRef.current=true; return; } // ersten Lauf überspringen, sonst wird gespeicherte Session beim Start gelöscht
+    try{ if(code) localStorage.setItem('em_session', code); else localStorage.removeItem('em_session'); }catch(e){}
+  },[code]);
+  // Account-Profil laden (nur eingeloggte Nutzer)
+  useEffect(()=>{
+    if(!myId || isAnonymous){ setProfile(null); return; }
+    get(ref(db,`userProfiles/${myId}`)).then(s=>setProfile(s.val()||null)).catch(()=>{});
+  },[myId,isAnonymous]);
+  function saveProfile(data){
+    if(!myId || isAnonymous) return;
+    const clean={}; Object.entries(data||{}).forEach(([k,v])=>{ if(v!==undefined) clean[k]=v; });
+    setProfile(p=>({...(p||{}),...clean}));
+    update(ref(db,`userProfiles/${myId}`),clean).catch(()=>{});
+  }
   const usedIdsRef=useRef([]);
   const selectedCatsRef=useRef([]);
   const enabledJokersRef=useRef([]);
@@ -7204,9 +7467,14 @@ function App(){
   const advanceBetPhaseRef=useRef(false);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   useEffect(()=>{inject(globalCSS(t));},[t]);
-  const[,setA11yTick]=useState(0);
+  const[a11yTick,setA11yTick]=useState(0);
   useEffect(()=>{ applyLargeText(); },[]);
   function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
+  // Hellen Modus des Hosts in den Raum spiegeln → Beamer übernimmt ihn (geräteübergreifend)
+  useEffect(()=>{
+    if(!code || !isHostRef.current) return;
+    update(ref(db,`rooms/${code}`),{lightMode: !!(typeof A11Y!=='undefined'&&A11Y.light)}).catch(()=>{});
+  },[code,a11yTick,room?.hostId]);
 
   // Verbindungsstatus (nahtloser Reconnect-Feedback) – Firebase nimmt Listener selbst wieder auf
   useEffect(()=>{
@@ -7239,6 +7507,8 @@ function App(){
       setMode(r.mode||"adult");
       const map={lobby:"lobby",jokerSetup:"jokerSetup",categories:"categories",question:"question",betting:"betting",results:"results",final:"final"};
       const currentUid = auth?.currentUser?.uid || myId;
+      // Host-Status autoritativ aus den Raumdaten (überlebt Reload)
+      if(r.hostId) isHostRef.current = (r.hostId === currentUid);
       // Non-host players wait in lobby during setup phases
       if(map[r.phase]){
         if(!isHostRef.current && (r.phase==="jokerSetup"||r.phase==="categories")){
@@ -7284,6 +7554,7 @@ function App(){
     setMode(m);
     const c=genCode();
     setCode(c);
+    saveProfile({name, kampfname:steckbriefData?.kampfname||'', fact:steckbriefData?.fact||'', selfie:steckbriefData?.selfie||null});
     setLoadTxt("Raum wird erstellt...");
     setLoading(true);
     isHostRef.current = true;
@@ -7316,6 +7587,7 @@ function App(){
       setMyId(uid);
     }
     localStorage.setItem('em_lastname', name);
+    saveProfile({name, kampfname:steckbriefData?.kampfname||'', fact:steckbriefData?.fact||'', selfie:steckbriefData?.selfie||null});
     setMode(m||"adult");
     if(roomLang&&roomLang!==lang) setLang(roomLang);
     setCode(c);
@@ -7429,9 +7701,10 @@ function App(){
     await handleStartWithCats(validCats);
   }
 
-  async function handleGuess(val, isAllIn=false){
+  async function handleGuess(val, isAllIn=false, bet=null){
     const updates = {[`rooms/${code}/guesses/${myId}`]: val};
     if(isAllIn) updates[`rooms/${code}/allIn/${myId}`] = true;
+    if(bet && (bet.closest || bet.farthest)) updates[`rooms/${code}/bets/${myId}`] = {closest:bet.closest||null, farthest:bet.farthest||null};
     await update(ref(db), updates);
   }
 
@@ -7462,19 +7735,12 @@ function App(){
 
         // Skip check moved to separate useEffect below
 
-        if(active.length<3){
-          const merged={...r,guesses:g};
-          const result=calcRound(merged);
-          const newJokers=await distributeJokers(r,result,active);
-          const histEntry={guesses:g,answer:r.q?.a,bets:{},closestId:result.closestId,farthestId:result.farthestId};
-          await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers,advancing:false});
-        } else {
-          if(room.withBets===false){
-            await dbPatch(code,{phase:"results",advancing:false});
-          } else {
-            await dbPatch(code,{phase:"betting",advancing:false});
-          }
-        }
+        // Tipp + Wette wurden gemeinsam abgegeben → direkt werten, keine separate Wett-Phase
+        const merged={...r,guesses:g};
+        const result=calcRound(merged);
+        const newJokers=await distributeJokers(r,result,active);
+        const histEntry={guesses:g,answer:r.q?.a,bets:r.bets||{},closestId:result.closestId,farthestId:result.farthestId};
+        await dbPatch(code,{phase:"results",roundScores:result.roundScores,scores:result.newScores,history:[...(r.history||[]),histEntry],newJokersThisRound:newJokers,advancing:false});
       };
       advance();
     }
@@ -7653,6 +7919,7 @@ function App(){
   }
 
   function handleRestart(){
+    if(isHostRef.current && code){ try{ dbSet(code,null); }catch(e){} } // Raum sauber entfernen, wenn der Host das Spiel verlässt
     if(unsubRef.current)unsubRef.current();
     setRoom(null);setCode(null);setScreen("home");
     showSteckbriefShownRef.current=false;
@@ -7684,7 +7951,7 @@ function App(){
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
     {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
@@ -7704,7 +7971,7 @@ function App(){
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
     {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
-    {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)}/>}
+    {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)} initial={profile} onSaveProfile={isAnonymous?null:saveProfile}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?async()=>{
       // Set all non-host players to AFK
       const updates={};
