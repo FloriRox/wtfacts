@@ -257,6 +257,12 @@ var COLOR_PRESETS = [
     colors:{bg:'#14131C',surface:'#1E1C28',card:'#272433',border:'#383447',accent:'#8E7BF0',gold:'#FFC98C',green:'#6EE7B7',danger:'#FB7185',text:'#ECEAF6',muted:'#8E8AA3'}},
 ];
 function applyColorPreset(colors){ CUSTOM_COLORS={...colors}; try{ localStorage.setItem('em_colors',JSON.stringify(CUSTOM_COLORS)); }catch(e){} }
+/* ─── EIGENE CI-KONZEPTE (benannt, speicherbar) ── */
+function loadSavedThemes(){ try{ return JSON.parse(localStorage.getItem('em_savedThemes')||'[]')||[]; }catch(e){ return []; } }
+var SAVED_THEMES = loadSavedThemes();
+function persistSavedThemes(){ try{ localStorage.setItem('em_savedThemes', JSON.stringify(SAVED_THEMES)); }catch(e){} }
+function saveThemePreset(name, colors){ var id='ci_'+Date.now().toString(36); SAVED_THEMES=[...SAVED_THEMES,{id,name:name,colors:colors}]; persistSavedThemes(); return id; }
+function deleteSavedTheme(id){ SAVED_THEMES=SAVED_THEMES.filter(function(x){return x.id!==id;}); persistSavedThemes(); }
 
 function ColorEditor({t, lang, onChange, onClose}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
@@ -278,6 +284,11 @@ function ColorEditor({t, lang, onChange, onClose}){
   const resetOne=k=>{ clearCustomColor(k); onChange&&onChange(); rerender(); };
   const resetAll=()=>{ resetCustomColors(); resetCustomStyle(); onChange&&onChange(); rerender(); };
   const pickPreset=p=>{ applyColorPreset(p.colors); onChange&&onChange(); rerender(); };
+  const[ciName,setCiName]=useState('');
+  const currentColors=()=>({bg:t.bg,surface:t.surface,card:t.card,border:t.border,accent:t.accent,gold:t.gold,green:t.green,danger:t.danger,text:t.text,muted:t.muted});
+  const saveCI=()=>{ const n=(ciName||'').trim(); if(!n) return; saveThemePreset(n,currentColors()); setCiName(''); onChange&&onChange(); rerender(); };
+  const applyCI=c=>{ applyColorPreset(c.colors); onChange&&onChange(); rerender(); };
+  const delCI=id=>{ deleteSavedTheme(id); rerender(); };
   const setStyle=(k,v)=>{ setCustomStyle(k,v); onChange&&onChange(); rerender(); };
   const curRadius=CUSTOM_STYLE.radius!=null?CUSTOM_STYLE.radius:(t.radius!=null?t.radius:12);
   const curDepth=CUSTOM_STYLE.depth||'flat';
@@ -313,6 +324,46 @@ function ColorEditor({t, lang, onChange, onClose}){
           </button>;
         })}
       </div>
+      {/* ── Eigene CI-Konzepte speichern/abrufen ── */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 8px',textTransform:'uppercase'}}>
+        {L('Meine CIs','My CIs','Mis CIs')}
+      </p>
+      <div style={{display:'flex',gap:8,marginBottom:SAVED_THEMES.length?10:14}}>
+        <input value={ciName} onChange={e=>setCiName(e.target.value.slice(0,30))}
+          onKeyDown={e=>{ if(e.key==='Enter') saveCI(); }}
+          placeholder={L('Name, z. B. „Aldiana CI"','Name, e.g. "Aldiana CI"','Nombre, p. ej. "CI Aldiana"')}
+          style={{flex:1,minWidth:0,boxSizing:'border-box',padding:'9px 12px',borderRadius:t.radius,
+            background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,
+            fontFamily:t.fontBody,outline:'none'}}/>
+        <button onClick={saveCI} disabled={!ciName.trim()}
+          style={{flexShrink:0,padding:'9px 14px',borderRadius:t.radius,
+            background:ciName.trim()?t.accent:t.surface,border:`1.5px solid ${ciName.trim()?t.accent:t.border}`,
+            color:ciName.trim()?'#fff':t.muted,fontSize:13,fontWeight:700,
+            cursor:ciName.trim()?'pointer':'default',fontFamily:t.fontBody}}>💾 {L('Speichern','Save','Guardar')}</button>
+      </div>
+      {SAVED_THEMES.length>0&&<div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:6,marginBottom:14,WebkitOverflowScrolling:'touch'}}>
+        {SAVED_THEMES.map(c=>{
+          const active=Object.keys(c.colors).every(k=>(CUSTOM_COLORS[k]||'').toLowerCase()===(c.colors[k]||'').toLowerCase());
+          return <div key={c.id} style={{flex:'0 0 auto',position:'relative',display:'flex',flexDirection:'column',gap:7,
+            padding:'9px 11px',borderRadius:t.radius,background:t.surface,
+            border:`2px solid ${active?t.accent:t.border}`,minWidth:108}}>
+            <button onClick={()=>delCI(c.id)} title={L('Löschen','Delete','Eliminar')}
+              style={{position:'absolute',top:-7,right:-7,width:20,height:20,borderRadius:'50%',
+                background:t.danger,color:'#fff',border:'none',fontSize:12,lineHeight:1,cursor:'pointer',
+                display:'flex',alignItems:'center',justifyContent:'center',fontFamily:t.fontBody}}>×</button>
+            <div onClick={()=>applyCI(c)} style={{cursor:'pointer'}}>
+              <div style={{display:'flex',gap:3,marginBottom:7}}>
+                {[c.colors.bg,c.colors.accent,c.colors.gold,c.colors.green].map((col,ci)=>(
+                  <span key={ci} style={{width:17,height:17,borderRadius:5,background:col,
+                    border:`1px solid ${t.border}`,display:'inline-block'}}/>
+                ))}
+              </div>
+              <span style={{fontSize:11,fontWeight:700,color:active?t.accent:t.text,whiteSpace:'nowrap',
+                overflow:'hidden',textOverflow:'ellipsis',maxWidth:130,display:'block'}}>{c.name}</span>
+            </div>
+          </div>;
+        })}
+      </div>}
       <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:12,marginBottom:14,
         display:'flex',alignItems:'center',gap:10}}>
         <div style={{flex:1,minWidth:0}}>
@@ -6278,7 +6329,7 @@ var OCCASION_TEMPLATES = {
 };
 
 /* ─── TEAM / BUSINESS-ACCOUNT (Slice A: Mitglieder & Rollen) ── */
-function TeamScreen({myId, t, lang, onBack}){
+function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const[teamsMap,setTeamsMap]=useState({});
   const teams=Object.values(teamsMap).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
@@ -6292,6 +6343,7 @@ function TeamScreen({myId, t, lang, onBack}){
   const[newPackMenu,setNewPackMenu]=useState(null); // team-Objekt für Vorlagen-Auswahl
   const[qEdit,setQEdit]=useState(null); // {teamId,packId,qId|null,q,a,unit,hint,emoji}
   const[pendingMap,setPendingMap]=useState({}); // teamId -> {name} (eigene ausstehende Anfragen)
+  const[ciNames,setCiNames]=useState({}); // teamId -> Eingabe-Name fürs Speichern eines CI
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
 
   const roleLabel=r=>r==='owner'?L('Inhaber','Owner','Propietario'):r==='viewer'?L('Betrachter','Viewer','Lector'):L('Editor','Editor','Editor');
@@ -6507,6 +6559,29 @@ function TeamScreen({myId, t, lang, onBack}){
     catch(e){ console.error('delete team question failed:',e); }
   }
 
+  // ── Team-CIs (zentrale Farbkonzepte) ──
+  const currentCIColors=()=>({bg:t.bg,surface:t.surface,card:t.card,border:t.border,accent:t.accent,gold:t.gold,green:t.green,danger:t.danger,text:t.text,muted:t.muted});
+  async function saveTeamCI(team){
+    const nm=((ciNames[team.id]||'').trim());
+    if(!nm) return;
+    const id='ci'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    try{
+      await update(ref(db,`teams/${team.id}/cis/${id}`),{name:nm,colors:currentCIColors(),by:myId,byName:(team.members?.[myId]?.name||''),at:Date.now()});
+      setCiNames(m=>({...m,[team.id]:''}));
+      setMsg(L('CI gespeichert.','CI saved.','CI guardado.'));
+    }catch(e){ console.error('save team CI failed:',e); setErr(L('Speichern fehlgeschlagen (Rules deployen?).','Save failed (deploy rules?).','Error al guardar.')); }
+  }
+  function applyTeamCI(ci){
+    applyColorPreset(ci.colors||{});
+    onThemeApplied&&onThemeApplied();
+    setMsg(L('CI angewendet.','CI applied.','CI aplicado.'));
+  }
+  async function deleteTeamCI(team,ciId){
+    if(!window.confirm(L('Dieses CI für das ganze Team löschen?','Delete this CI for the whole team?','¿Eliminar este CI para todo el equipo?'))) return;
+    try{ await remove(ref(db,`teams/${team.id}/cis/${ciId}`)); }
+    catch(e){ console.error('delete team CI failed:',e); }
+  }
+
   const inputStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
     borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
     fontFamily:t.fontBody,boxSizing:'border-box'};
@@ -6634,6 +6709,55 @@ function TeamScreen({myId, t, lang, onBack}){
               ))}
             </div>
           </div>}
+
+        {/* Team-CIs (zentrale Farbkonzepte – alle Mitglieder nutzbar) */}
+        <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
+          <p style={{fontSize:12,fontWeight:800,color:t.text,margin:'0 0 8px'}}>
+            🎨 {L('Team-CIs','Team CIs','CIs del equipo')} ({Object.keys(team.cis||{}).length})
+          </p>
+          {Object.keys(team.cis||{}).length===0&&<p style={{fontSize:11,color:t.muted,margin:'0 0 8px'}}>
+            {L('Noch keine CIs. Lege im Farb-Editor ein Konzept an und speichere es hier fürs Team.',
+               'No CIs yet. Build a concept in the color editor and save it here for the team.',
+               'Aún sin CIs. Crea un concepto en el editor de color y guárdalo aquí.')}
+          </p>}
+          {Object.keys(team.cis||{}).length>0&&<div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:6,marginBottom:8,WebkitOverflowScrolling:'touch'}}>
+            {Object.entries(team.cis||{}).map(([cid,ci])=>{
+              const cols=ci.colors||{};
+              const active=Object.keys(cols).length>0 && Object.keys(cols).every(k=>(CUSTOM_COLORS[k]||'').toLowerCase()===(cols[k]||'').toLowerCase());
+              return <div key={cid} style={{flex:'0 0 auto',position:'relative',display:'flex',flexDirection:'column',gap:7,
+                padding:'9px 11px',borderRadius:t.radius,background:t.surface,
+                border:`2px solid ${active?t.accent:t.border}`,minWidth:110}}>
+                {myRole!=='viewer'&&<button onClick={()=>deleteTeamCI(team,cid)} title={L('Löschen','Delete','Eliminar')}
+                  style={{position:'absolute',top:-7,right:-7,width:20,height:20,borderRadius:'50%',
+                    background:t.danger,color:'#fff',border:'none',fontSize:12,lineHeight:1,cursor:'pointer',
+                    display:'flex',alignItems:'center',justifyContent:'center',fontFamily:t.fontBody}}>×</button>}
+                <div onClick={()=>applyTeamCI(ci)} style={{cursor:'pointer'}}>
+                  <div style={{display:'flex',gap:3,marginBottom:7}}>
+                    {[cols.bg,cols.accent,cols.gold,cols.green].map((col,ci2)=>(
+                      <span key={ci2} style={{width:17,height:17,borderRadius:5,background:col||t.border,
+                        border:`1px solid ${t.border}`,display:'inline-block'}}/>
+                    ))}
+                  </div>
+                  <span style={{fontSize:11,fontWeight:700,color:active?t.accent:t.text,whiteSpace:'nowrap',
+                    overflow:'hidden',textOverflow:'ellipsis',maxWidth:130,display:'block'}}>{ci.name||'CI'}</span>
+                </div>
+              </div>;
+            })}
+          </div>}
+          {myRole!=='viewer'&&<div style={{display:'flex',gap:8}}>
+            <input value={ciNames[team.id]||''} onChange={e=>setCiNames(m=>({...m,[team.id]:e.target.value.slice(0,30)}))}
+              onKeyDown={e=>{ if(e.key==='Enter') saveTeamCI(team); }}
+              placeholder={L('Aktuelle Farben als CI speichern …','Save current colors as CI …','Guardar colores como CI …')}
+              style={{flex:1,minWidth:0,boxSizing:'border-box',padding:'8px 11px',borderRadius:t.radius,
+                background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:12,fontFamily:t.fontBody,outline:'none'}}/>
+            <button onClick={()=>saveTeamCI(team)} disabled={!(ciNames[team.id]||'').trim()}
+              style={{flexShrink:0,padding:'8px 13px',borderRadius:t.radius,
+                background:(ciNames[team.id]||'').trim()?t.accent:t.surface,
+                border:`1.5px solid ${(ciNames[team.id]||'').trim()?t.accent:t.border}`,
+                color:(ciNames[team.id]||'').trim()?'#fff':t.muted,fontSize:12,fontWeight:700,
+                cursor:(ciNames[team.id]||'').trim()?'pointer':'default',fontFamily:t.fontBody}}>💾</button>
+          </div>}
+        </div>
 
         {/* Geteilte Packs (live, gemeinsame Daten) */}
         <div style={{marginTop:12,borderTop:`1px solid ${t.border}`,paddingTop:10}}>
@@ -7804,7 +7928,12 @@ function App(){
   const unsubRef=useRef(null);
   const advanceGuessPhaseRef=useRef(false);
   const advanceBetPhaseRef=useRef(false);
-  const t=applyA11y(mode==="kids"?KIDS:ADULT);
+  const baseTheme=applyA11y(mode==="kids"?KIDS:ADULT);
+  const isHostHere = !!(room && room.hostId && myId && room.hostId===myId);
+  // CI-Farben des Gastgebers auf alle Teilnehmer-Geräte spielen (Host hat sie lokal schon)
+  const t = (room && room.theme && typeof room.theme==='object' && !isHostHere)
+    ? {...baseTheme, ...room.theme}
+    : baseTheme;
   useEffect(()=>{inject(globalCSS(t));},[t]);
   const[a11yTick,setA11yTick]=useState(0);
   useEffect(()=>{ applyLargeText(); },[]);
@@ -8300,7 +8429,7 @@ function App(){
       onDone={()=>setShowOnboarding(false)}/>}
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
-    {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
+    {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onThemeApplied={()=>setA11yTick(x=>x+1)}/>}
     {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
