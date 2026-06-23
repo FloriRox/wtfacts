@@ -146,6 +146,11 @@ function loadCustomStyle(){ try{ return JSON.parse(localStorage.getItem('em_btns
 var CUSTOM_STYLE = loadCustomStyle();
 function setCustomStyle(key,val){ CUSTOM_STYLE={...CUSTOM_STYLE,[key]:val}; try{ localStorage.setItem('em_btnstyle',JSON.stringify(CUSTOM_STYLE)); }catch(e){} }
 function resetCustomStyle(){ CUSTOM_STYLE={}; try{ localStorage.removeItem('em_btnstyle'); }catch(e){} }
+/* ─── BUSINESS-CI (Name + Logo, lokal + Raum-Sync) ── */
+function loadBiz(){ try{ return JSON.parse(localStorage.getItem('em_business')||'{}')||{}; }catch(e){ return {}; } }
+var BIZ = loadBiz();
+function setBizField(key,val){ BIZ={...BIZ,[key]:val}; try{ localStorage.setItem('em_business',JSON.stringify(BIZ)); }catch(e){} }
+function resetBiz(){ BIZ={}; try{ localStorage.removeItem('em_business'); }catch(e){} }
 function btnShadowFor(depth){ return depth==='shadow' ? '0 4px 14px rgba(0,0,0,.28)' : depth==='3d' ? '0 5px 0 rgba(0,0,0,.32)' : 'none'; }
 // Wrapper: erst Barrierefreiheit/Heller Modus, dann eigene Farben + Button-Stil drüberlegen
 function applyA11y(base){
@@ -187,7 +192,7 @@ function applyBaseA11y(base){
 }
 
 /* ─── BARRIEREFREIHEIT-MENÜ ──────────────────────── */
-function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
+function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null, onOpenBusiness=null}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const items=[
     {k:'light', icon:'☀️', label:L('Heller Modus','Light mode','Modo claro')},
@@ -222,6 +227,14 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null}){
         color:t.text,fontSize:fs,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
       <span style={{fontSize:compact?15:16,width:20,textAlign:'center'}}>🎨</span>
       <span style={{flex:1,textAlign:'left'}}>{L('Farben & Stil','Colors & style','Colores y estilo')}</span>
+      <span style={{color:t.muted}}>›</span>
+    </button>}
+    {onOpenBusiness&&<button onClick={onOpenBusiness}
+      style={{width:'100%',display:'flex',alignItems:'center',gap:10,justifyContent:'flex-start',
+        background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:rad,padding:pad,
+        color:t.text,fontSize:fs,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600}}>
+      <span style={{fontSize:compact?15:16,width:20,textAlign:'center'}}>🏢</span>
+      <span style={{flex:1,textAlign:'left'}}>{L('Business-CI','Business CI','CI de empresa')}</span>
       <span style={{color:t.muted}}>›</span>
     </button>}
   </div>;
@@ -377,7 +390,117 @@ function ColorEditor({t, lang, onChange, onClose}){
   </div>;
 }
 
-/* ─── UI TRANSLATIONS ────────────────────────────── */
+/* ─── BUSINESS-CI: „powered by"-Badge (wiederverwendbar) ── */
+function PoweredBy({name, logo, t, size='md'}){
+  if(!name && !logo) return null;
+  const big = size==='lg';
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:big?14:8,opacity:.95,flexWrap:'wrap'}}>
+    {logo && <img src={logo} alt="" style={{height:big?48:26,width:'auto',maxWidth:big?180:90,objectFit:'contain'}}/>}
+    {name && <span style={{fontSize:big?15:11,color:t.muted,fontWeight:600,letterSpacing:.3}}>
+      powered by <span style={{color:t.text,fontWeight:800}}>{name}</span>
+    </span>}
+  </div>;
+}
+
+/* ─── BUSINESS-CI: Einrichtungs-Maske (Teil des Business-Pakets, dormant) ── */
+function BusinessScreen({t, lang, onOpenColors, onChange, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const[,setTick]=useState(0); const rerender=()=>setTick(x=>x+1);
+  const fileRef=React.useRef(null);
+  const change=()=>{ onChange&&onChange(); rerender(); };
+  function onName(v){ setBizField('name', (v||'').slice(0,40)); change(); }
+  function onLogoFile(e){
+    const f=e.target.files&&e.target.files[0]; if(!f){ return; }
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=220; let w=img.width||1, h=img.height||1;
+        if(w>=h){ if(w>max){ h=Math.round(h*max/w); w=max; } }
+        else { if(h>max){ w=Math.round(w*max/h); h=max; } }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        try{ setBizField('logo', c.toDataURL('image/png')); change(); }catch(err){}
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(f);
+    e.target.value='';
+  }
+  const removeLogo=()=>{ setBizField('logo', null); change(); };
+  const reset=()=>{ resetBiz(); change(); };
+  const name=BIZ.name||'', logo=BIZ.logo||null;
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
+    display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
+      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',maxHeight:'90vh',overflowY:'auto'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+        <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🏢 {L('Business-CI','Business CI','CI de empresa')}</p>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
+      </div>
+      <p style={{fontSize:12,color:t.muted,margin:'0 0 14px'}}>
+        {L('Logo, Name & Farben deiner Marke – erscheinen auf dem Beamer und in der Lobby.',
+           'Your brand logo, name & colors – shown on the beamer and in the lobby.',
+           'Logo, nombre y colores de tu marca: se muestran en el proyector y la sala.')}
+      </p>
+      {/* Live-Vorschau */}
+      <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,
+        padding:'20px 14px',marginBottom:16,textAlign:'center'}}>
+        <div style={{fontFamily:t.fontTitle,fontSize:34,letterSpacing:1,lineHeight:1,marginBottom:12}}>
+          <span style={{color:t.accent}}>Esti</span><span style={{color:t.gold}}>Mates</span>
+        </div>
+        {(name||logo)
+          ? <PoweredBy name={name} logo={logo} t={t} size="lg"/>
+          : <span style={{fontSize:12,color:t.muted}}>{L('Noch keine Marke gesetzt','No brand set yet','Sin marca aún')}</span>}
+      </div>
+      {/* Name */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 6px',textTransform:'uppercase'}}>
+        {L('Firmenname','Company name','Nombre de empresa')}
+      </p>
+      <input value={name} onChange={e=>onName(e.target.value)}
+        placeholder={L('z. B. Aldiana','e.g. Aldiana','p. ej. Aldiana')}
+        style={{width:'100%',boxSizing:'border-box',padding:'11px 13px',borderRadius:t.radius,
+          background:t.surface,border:`1.5px solid ${t.border}`,color:t.text,fontSize:14,
+          fontFamily:t.fontBody,marginBottom:16,outline:'none'}}/>
+      {/* Logo */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 6px',textTransform:'uppercase'}}>
+        {L('Logo','Logo','Logo')}
+      </p>
+      <input ref={fileRef} type="file" accept="image/*" onChange={onLogoFile} style={{display:'none'}}/>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        {logo && <div style={{background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:t.radius,
+          padding:8,display:'flex',alignItems:'center'}}>
+          <img src={logo} alt="" style={{height:40,width:'auto',maxWidth:110,objectFit:'contain'}}/>
+        </div>}
+        <button onClick={()=>fileRef.current&&fileRef.current.click()}
+          style={{flex:logo?'0 0 auto':1,padding:'10px 14px',borderRadius:t.radius,background:t.surface,
+            border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody}}>
+          {logo? L('Logo ändern','Change logo','Cambiar logo') : L('Logo hochladen','Upload logo','Subir logo')}
+        </button>
+        {logo && <button onClick={removeLogo}
+          style={{padding:'10px 12px',borderRadius:t.radius,background:'none',
+            border:`1.5px solid ${t.border}`,color:t.muted,fontSize:13,cursor:'pointer',fontFamily:t.fontBody}}>↺</button>}
+      </div>
+      {/* CI-Farben */}
+      {onOpenColors && <button onClick={onOpenColors}
+        style={{width:'100%',display:'flex',alignItems:'center',gap:10,justifyContent:'flex-start',
+          background:t.surface,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:'11px 14px',
+          color:t.text,fontSize:14,cursor:'pointer',fontFamily:t.fontBody,fontWeight:600,marginBottom:14}}>
+        <span style={{fontSize:16,width:20,textAlign:'center'}}>🎨</span>
+        <span style={{flex:1,textAlign:'left'}}>{L('CI-Farben & Stil','CI colors & style','Colores y estilo CI')}</span>
+        <span style={{color:t.muted}}>›</span>
+      </button>}
+      <p style={{fontSize:11,color:t.muted,margin:'0 0 14px',lineHeight:1.5}}>
+        {L('Logo & Name werden mit den Mitspielern und dem Beamer geteilt, sobald du einen Raum eröffnest.',
+           'Logo & name are shared with players and the beamer when you open a room.',
+           'El logo y el nombre se comparten al abrir una sala.')}
+      </p>
+      <button onClick={reset} style={{width:'100%',padding:'11px',borderRadius:t.radius,
+        background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:t.fontBody}}>{L('Business-CI zurücksetzen','Reset business CI','Restablecer CI')}</button>
+    </div>
+  </div>;
+}
 const UI = {
   de: {
     createRoom:"Raum erstellen",join:"Beitreten",back:"← Zurück",
@@ -1925,7 +2048,7 @@ function parseRoomFromQR(data){
   return null;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null}){
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null,onOpenBusiness=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -2159,7 +2282,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
                 margin:'2px 0 0',textTransform:'uppercase'}}>
                 {lang==='en'?'Display & accessibility':lang==='es'?'Pantalla y accesibilidad':'Anzeige & Barrierefreiheit'}
               </p>
-              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact onOpenColors={onOpenColors}/>
+              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact onOpenColors={onOpenColors} onOpenBusiness={onOpenBusiness}/>
             </div>}
           </div>}
         </div>
@@ -2637,6 +2760,7 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
   function addPlayer(){ if(navigator.share){navigator.share({title:'EstiMates',text:'Komm mitspielen!',url:link});}else{copy();} }
   return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh'}}>
     <Logo t={t} size="sm"/>
+    {(room.bizName||room.bizLogo)&&<div style={{marginTop:8}}><PoweredBy name={room.bizName} logo={room.bizLogo} t={t}/></div>}
     <div style={{marginTop:12,marginBottom:4}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
     <h2 style={{fontFamily:t.fontTitle,fontSize:t.id==="kids"?30:36,marginBottom:8}}>{i.lobbyWaiting}</h2>
 
@@ -3915,13 +4039,24 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   },[room.q?.id]);
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
-  const gold = t.gold; const accent = t.accent;
 
+  // Vom Host synchronisierte Custom-Farben (CI) – liegen über der Hell/Dunkel-Basis
+  const ct = (room?.theme && typeof room.theme==='object') ? room.theme : {};
   const lightBeamer = !!room?.lightMode;
-  const D = lightBeamer
+  const baseD = lightBeamer
     ? {bg:'#f3ece2', surface:'#ffffff', card:'#fbf6ee', border:'#e4d8c7', text:'#2b211a', muted:'#9b8b7b'}
     : {bg:'#0f0a06', surface:'#1a120a', card:'#181310', border:'#2a1a0e', text:'#f2ece6', muted:'#6e5e54'};
-  const beamerT={...t,border:D.border,green:t.green,gold,surface:D.surface,text:D.text,muted:D.muted};
+  const D = {
+    bg:     ct.bg     || baseD.bg,
+    surface:ct.surface|| baseD.surface,
+    card:   ct.card   || baseD.card,
+    border: ct.border || baseD.border,
+    text:   ct.text   || baseD.text,
+    muted:  ct.muted  || baseD.muted,
+  };
+  const gold   = ct.gold   || t.gold;
+  const accent = ct.accent || t.accent;
+  const beamerT={...t, border:D.border, green: ct.green||t.green, gold, accent, danger: ct.danger||t.danger, surface:D.surface, text:D.text, muted:D.muted};
 
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
@@ -4030,14 +4165,17 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
     {/* Header */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
       padding:'14px 28px',borderBottom:`1px solid ${D.border}`,flexShrink:0}}>
-      <div style={{display:'flex',flexDirection:'column',gap:2}}>
-        <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-          <span style={{fontSize:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
-          <span style={{fontSize:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        {room.bizLogo && <img src={room.bizLogo} alt="" style={{height:44,width:'auto',maxWidth:160,objectFit:'contain'}}/>}
+        <div style={{display:'flex',flexDirection:'column',gap:2}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:4}}>
+            <span style={{fontSize:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
+            <span style={{fontSize:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
+          </div>
+          {room.bizName
+            ? <span style={{fontSize:12,color:D.muted,letterSpacing:.4}}>powered by <span style={{color:D.text,fontWeight:800}}>{room.bizName}</span></span>
+            : <span style={{fontSize:11,color:D.muted,letterSpacing:.5,fontStyle:'italic'}}>the pocket party game to prove your mates wrong!</span>}
         </div>
-        <span style={{fontSize:11,color:D.muted,letterSpacing:.5,fontStyle:'italic'}}>
-          the pocket party game to prove your mates wrong!
-        </span>
       </div>
       {phase==='question'&&<div style={{display:'flex',alignItems:'center',gap:10}}>
         <div style={{width:140,height:5,background:D.border,borderRadius:3,overflow:'hidden'}}>
@@ -4078,7 +4216,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
               <p style={{fontSize:11,fontWeight:700,color:D.muted,letterSpacing:1,margin:'0 0 10px'}}>
                 📱 BEITRETEN
               </p>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${lightBeamer?'ffffff':'1a120a'}&color=${lightBeamer?'2b211a':'e8360a'}`}
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${D.surface.replace('#','')}&color=${accent.replace('#','')}`}
                 alt="QR" style={{width:300,height:300,borderRadius:8}}/>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>
@@ -4271,7 +4409,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,
           background:D.surface,borderRadius:12,padding:'10px 14px',
           border:`1px solid ${D.border}`,flexShrink:0}}>
-          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${lightBeamer?'ffffff':'1a120a'}&color=${lightBeamer?'2b211a':'e8360a'}`}
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${typeof window!=='undefined'?window.location.origin:'https://playestimates.app'}?room=${room.code}`)}&bgcolor=${D.surface.replace('#','')}&color=${accent.replace('#','')}`}
             alt="QR" style={{width:116,height:116,borderRadius:6,flexShrink:0}}/>
           <div>
             <p style={{fontSize:11,color:D.muted,fontWeight:700,letterSpacing:1,margin:'0 0 4px'}}>📱 BEITRETEN</p>
@@ -7482,6 +7620,8 @@ function App(){
   const[showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('em_onboarded'));
   const[showSteckbrief,setShowSteckbrief]=useState(false);
   const[showColorEditor,setShowColorEditor]=useState(false);
+  const[showBusiness,setShowBusiness]=useState(false);
+  const[bizTick,setBizTick]=useState(0);
   const[gamePaused,setGamePaused]=useState(false);
   const[soundOn,setSoundOn]=useState(isSoundOn());
   const[showCountdown,setShowCountdown]=useState(false);
@@ -7669,11 +7809,22 @@ function App(){
   const[a11yTick,setA11yTick]=useState(0);
   useEffect(()=>{ applyLargeText(); },[]);
   function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
-  // Hellen Modus des Hosts in den Raum spiegeln → Beamer übernimmt ihn (geräteübergreifend)
+  // Hellen Modus + Custom-Farben (CI) des Hosts in den Raum spiegeln → Beamer übernimmt sie
   useEffect(()=>{
     if(!code || !isHostRef.current) return;
-    update(ref(db,`rooms/${code}`),{lightMode: !!(typeof A11Y!=='undefined'&&A11Y.light)}).catch(()=>{});
+    const hasColors = typeof CUSTOM_COLORS!=='undefined' && CUSTOM_COLORS && Object.keys(CUSTOM_COLORS).length>0;
+    update(ref(db,`rooms/${code}`),{
+      lightMode: !!(typeof A11Y!=='undefined'&&A11Y.light),
+      theme: hasColors ? CUSTOM_COLORS : null,
+    }).catch(()=>{});
   },[code,a11yTick,room?.hostId]);
+  // Business-CI (Name + Logo) des Hosts in den Raum spiegeln → Beamer & Lobby zeigen "powered by"
+  useEffect(()=>{
+    if(!code || !isHostRef.current) return;
+    const name=(typeof BIZ!=='undefined'&&BIZ.name)?BIZ.name:null;
+    const logo=(typeof BIZ!=='undefined'&&BIZ.logo)?BIZ.logo:null;
+    update(ref(db,`rooms/${code}`),{bizName:name, bizLogo:logo}).catch(()=>{});
+  },[code,bizTick,room?.hostId]);
 
   // Verbindungsstatus (nahtloser Reconnect-Feedback) – Firebase nimmt Listener selbst wieder auf
   useEffect(()=>{
@@ -8150,7 +8301,7 @@ function App(){
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
     {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)}/>}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
@@ -8172,6 +8323,7 @@ function App(){
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)} initial={profile} onSaveProfile={isAnonymous?null:saveProfile}/>}
     {showColorEditor&&<ColorEditor t={t} lang={lang} onChange={()=>setA11yTick(x=>x+1)} onClose={()=>setShowColorEditor(false)}/>}
+    {showBusiness&&<BusinessScreen t={t} lang={lang} onChange={()=>setBizTick(x=>x+1)} onOpenColors={()=>{setShowBusiness(false);setShowColorEditor(true);}} onClose={()=>setShowBusiness(false)}/>}
     {screen==="question"&&room&&<QuestionScreen room={room} myId={myId} t={t} onGuess={handleGuess} code={code} debugMode={debugMode} onSkip={handleSkip} lang={lang} isHost={isHostRef.current} onKick={isHostRef.current?handleKick:null} onPause={isHostRef.current?async()=>{
       // Set all non-host players to AFK
       const updates={};
@@ -8224,7 +8376,7 @@ function App(){
           <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,margin:'0 0 8px'}}>
             {lang==='en'?'DISPLAY & ACCESSIBILITY':lang==='es'?'PANTALLA Y ACCESIBILIDAD':'ANZEIGE & BARRIEREFREIHEIT'}
           </p>
-          <A11yMenu t={t} lang={lang} onA11y={handleA11y} onOpenColors={()=>setShowColorEditor(true)}/>
+          <A11yMenu t={t} lang={lang} onA11y={handleA11y} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)}/>
         </div>
       </div>}
     </>}
