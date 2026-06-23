@@ -4215,16 +4215,16 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
 
     {/* Header */}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-      padding:'14px 28px',borderBottom:`1px solid ${D.border}`,flexShrink:0}}>
-      <div style={{display:'flex',alignItems:'center',gap:14}}>
-        {room.bizLogo && <img src={room.bizLogo} alt="" style={{height:44,width:'auto',maxWidth:160,objectFit:'contain'}}/>}
-        <div style={{display:'flex',flexDirection:'column',gap:2}}>
+      padding: room.bizLogo ? '22px 32px' : '14px 28px',borderBottom:`1px solid ${D.border}`,flexShrink:0}}>
+      <div style={{display:'flex',alignItems:'center',gap:room.bizLogo?22:14}}>
+        {room.bizLogo && <img src={room.bizLogo} alt="" style={{height:82,width:'auto',maxWidth:300,objectFit:'contain'}}/>}
+        <div style={{display:'flex',flexDirection:'column',gap:3}}>
           <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-            <span style={{fontSize:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
-            <span style={{fontSize:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
+            <span style={{fontSize:room.bizLogo?40:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
+            <span style={{fontSize:room.bizLogo?40:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
           </div>
           {room.bizName
-            ? <span style={{fontSize:12,color:D.muted,letterSpacing:.4}}>powered by <span style={{color:D.text,fontWeight:800}}>{room.bizName}</span></span>
+            ? <span style={{fontSize:room.bizLogo?15:12,color:D.muted,letterSpacing:.4}}>powered by <span style={{color:D.text,fontWeight:800}}>{room.bizName}</span></span>
             : <span style={{fontSize:11,color:D.muted,letterSpacing:.5,fontStyle:'italic'}}>the pocket party game to prove your mates wrong!</span>}
         </div>
       </div>
