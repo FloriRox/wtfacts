@@ -1,3 +1,4 @@
+// EstiMates – Build-Marker: beamer-theme-fix v3
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -3857,7 +3858,8 @@ function BeamerCountUp({value, gold, fontTitle}){
   },[value]);
   return <span style={{fontSize:'clamp(28px,4vw,48px)',fontWeight:900,color:gold,fontFamily:fontTitle}}>{fmtNum(Math.round(disp))}</span>;
 }
-function BeamerRevealStrip({ranked, answer, gold}){
+function BeamerRevealStrip({ranked, answer, gold, t}){
+  t = t || {bg:'#0f0a06',surface:'#1a120a',card:'#181310',border:'#2a1a0e',text:'#f2ece6',muted:'#6e5e54'};
   if(!ranked||!ranked.length) return null;
   const gs=ranked.map(r=>r.guess);
   const lo=Math.min(answer,...gs),hi=Math.max(answer,...gs);
@@ -4180,7 +4182,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
           </div>
 
           {/* Avatar-Zahlenstrahl */}
-          <BeamerRevealStrip ranked={ranked} answer={q.a} gold={gold}/>
+          <BeamerRevealStrip ranked={ranked} answer={q.a} gold={gold} t={{bg:D.bg,surface:D.surface,card:D.card,border:D.border,text:D.text,muted:D.muted}}/>
 
           {/* WTF-Kommentar */}
           <p style={{fontSize:15,fontWeight:700,color:D.text,margin:'0 0 6px',
