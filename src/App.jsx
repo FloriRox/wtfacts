@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: beamer-theme-fix v3
+// EstiMates – Build-Marker: ios-qr-photo-fallback v4
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
@@ -2124,14 +2124,47 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[a11yOpen,setA11yOpen]=useState(false);
   const[scanOpen,setScanOpen]=useState(false);
   const[scanErr,setScanErr]=useState("");
+  const[scanMsg,setScanMsg]=useState("");
   const scanVideoRef=React.useRef(null);
   const scanStreamRef=React.useRef(null);
   const scanRafRef=React.useRef(null);
+  const scanFileRef=React.useRef(null);
+  const isIOS=(()=>{ try{ return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }catch(_){ return false; } })();
   function stopScan(){
     if(scanRafRef.current){ cancelAnimationFrame(scanRafRef.current); scanRafRef.current=null; }
     if(scanStreamRef.current){ scanStreamRef.current.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; }
   }
-  function startScan(){ setScanErr(""); setScanOpen(true); }
+  // iOS (v.a. Home-Screen-App): Live-Kamera ist gesperrt → natives Kamera-Foto, QR daraus dekodieren
+  function onScanFile(e){
+    const f=e.target.files&&e.target.files[0]; e.target.value='';
+    if(!f) return;
+    setScanMsg(lang==='en'?'Reading QR…':lang==='es'?'Leyendo QR…':'QR wird gelesen…'); setScanErr("");
+    const reader=new FileReader();
+    reader.onload=()=>{
+      loadJsQR().then(jsQR=>{
+        const img=new Image();
+        img.onload=()=>{
+          const max=1400; let w=img.width||1, h=img.height||1;
+          if(Math.max(w,h)>max){ if(w>=h){ h=Math.round(h*max/w); w=max; } else { w=Math.round(w*max/h); h=max; } }
+          const c=document.createElement('canvas'); c.width=w; c.height=h;
+          const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0,w,h);
+          let found=null;
+          try{ const id=ctx.getImageData(0,0,w,h); const r=jsQR(id.data,id.width,id.height,{inversionAttempts:'attemptBoth'}); if(r&&r.data) found=parseRoomFromQR(r.data); }catch(_){}
+          if(found){ setCode(found); setScanMsg(""); setScanErr(""); }
+          else { setScanMsg(""); setScanErr(lang==='en'?'No QR detected. Try again or type the code.':lang==='es'?'No se detectó QR. Inténtalo de nuevo o escribe el código.':'Kein QR erkannt. Bitte erneut versuchen oder Code eintippen.'); }
+        };
+        img.onerror=()=>{ setScanMsg(""); setScanErr(lang==='en'?'Could not read image.':lang==='es'?'No se pudo leer la imagen.':'Bild konnte nicht gelesen werden.'); };
+        img.src=reader.result;
+      }).catch(()=>{ setScanMsg(""); setScanErr(lang==='en'?'Scanner unavailable.':lang==='es'?'Escáner no disponible.':'Scanner nicht verfügbar.'); });
+    };
+    reader.onerror=()=>{ setScanMsg(""); setScanErr(lang==='en'?'Could not read photo.':lang==='es'?'No se pudo leer la foto.':'Foto konnte nicht gelesen werden.'); };
+    reader.readAsDataURL(f);
+  }
+  function startScan(){
+    setScanErr(""); setScanMsg("");
+    if(isIOS){ if(scanFileRef.current) scanFileRef.current.click(); return; }
+    setScanOpen(true);
+  }
   React.useEffect(()=>{
     if(!scanOpen) return;
     let cancelled=false;
@@ -2245,11 +2278,21 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
               style={{width:'100%',height:'100%',objectFit:'cover'}}/>
           </div>
           {scanErr&&<p style={{color:'#ffb3b3',fontSize:13,maxWidth:280,textAlign:'center',margin:0}}>{scanErr}</p>}
-          <button onClick={()=>{stopScan();setScanOpen(false);}}
-            style={{padding:'10px 24px',borderRadius:100,background:'#fff',border:'none',
-              color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
-            {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
-          </button>
+          <p style={{color:'#888',fontSize:12,maxWidth:300,textAlign:'center',margin:0}}>
+            {lang==='en'?'Black image? Use “Take photo”.':lang==='es'?'¿Imagen negra? Usa “Hacer foto”.':'Bild schwarz? Dann „Foto aufnehmen".'}
+          </p>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'center'}}>
+            <button onClick={()=>{stopScan();setScanOpen(false);setTimeout(()=>{if(scanFileRef.current)scanFileRef.current.click();},120);}}
+              style={{padding:'10px 22px',borderRadius:100,background:lt.accent,border:'none',
+                color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
+              {lang==='en'?'📷 Take photo':lang==='es'?'📷 Hacer foto':'📷 Foto aufnehmen'}
+            </button>
+            <button onClick={()=>{stopScan();setScanOpen(false);}}
+              style={{padding:'10px 24px',borderRadius:100,background:'#fff',border:'none',
+                color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
+              {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
+            </button>
+          </div>
         </div>, document.body)}
         {/* Top row: Sprache · Account · Demo */}
         <div style={{display:"flex",justifyContent:"space-between",
@@ -2374,8 +2417,15 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
             <Btn t={t} variant="secondary" onClick={startScan} style={{flexShrink:0,background:t.surface}}
               title={lang==='en'?'Scan QR':lang==='es'?'Escanear QR':'QR scannen'}>📷</Btn>
           </div>
+          <input ref={scanFileRef} type="file" accept="image/*" capture="environment" onChange={onScanFile} style={{display:'none'}}/>
+          {scanMsg&&<p style={{fontSize:11,color:t.accent,margin:'6px 0 0',paddingLeft:2,fontWeight:700}}>{scanMsg}</p>}
+          {scanErr&&!scanOpen&&<p style={{fontSize:11,color:t.danger,margin:'6px 0 0',paddingLeft:2}}>{scanErr}</p>}
           <p style={{fontSize:11,color:t.muted,margin:'4px 0 0',paddingLeft:2}}>
-            {lang==='en'?'…or scan the QR on the big screen':lang==='es'?'…o escanea el QR de la pantalla':'…oder den QR auf dem Beamer scannen'}
+            {isIOS
+              ? (lang==='en'?'iPhone: tap 📷 to photograph the QR — or just point your Camera app at it.'
+                 :lang==='es'?'iPhone: toca 📷 para fotografiar el QR — o apunta con la app Cámara.'
+                 :'iPhone: 📷 tippen und den QR abfotografieren – oder einfach die Kamera-App draufhalten.')
+              : (lang==='en'?'…or scan the QR on the big screen':lang==='es'?'…o escanea el QR de la pantalla':'…oder den QR auf dem Beamer scannen')}
           </p>
         </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
