@@ -1,6 +1,5 @@
-// EstiMates – Build-Marker: ios-qr-photo-fallback v4
+// EstiMates – Build-Marker: remove-inapp-scanner v5
 import React, { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get, remove } from "firebase/database";
@@ -2075,31 +2074,6 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-// QR-Decoder (jsQR) bei Bedarf vom CDN laden – keine Build-Abhängigkeit
-let _jsqrPromise=null;
-function loadJsQR(){
-  if(window.jsQR) return Promise.resolve(window.jsQR);
-  if(_jsqrPromise) return _jsqrPromise;
-  _jsqrPromise=new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-    s.async=true;
-    s.onload=()=>res(window.jsQR);
-    s.onerror=()=>{ _jsqrPromise=null; rej(new Error('jsQR load failed')); };
-    document.head.appendChild(s);
-  });
-  return _jsqrPromise;
-}
-function parseRoomFromQR(data){
-  if(!data) return null;
-  try{ const u=new URL(data); const r=u.searchParams.get('room'); if(r) return r.toUpperCase(); }catch(e){}
-  const m=String(data).match(/room=([A-Za-z0-9]+)/);
-  if(m) return m[1].toUpperCase();
-  const raw=String(data).trim();
-  if(/^[A-Za-z0-9]{4,8}$/.test(raw)) return raw.toUpperCase();
-  return null;
-}
-
 function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null,onOpenBusiness=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
@@ -2122,93 +2096,6 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
   const[a11yOpen,setA11yOpen]=useState(false);
-  const[scanOpen,setScanOpen]=useState(false);
-  const[scanErr,setScanErr]=useState("");
-  const[scanMsg,setScanMsg]=useState("");
-  const scanVideoRef=React.useRef(null);
-  const scanStreamRef=React.useRef(null);
-  const scanRafRef=React.useRef(null);
-  const scanFileRef=React.useRef(null);
-  const isIOS=(()=>{ try{ return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }catch(_){ return false; } })();
-  function stopScan(){
-    if(scanRafRef.current){ cancelAnimationFrame(scanRafRef.current); scanRafRef.current=null; }
-    if(scanStreamRef.current){ scanStreamRef.current.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; }
-  }
-  // iOS (v.a. Home-Screen-App): Live-Kamera ist gesperrt → natives Kamera-Foto, QR daraus dekodieren
-  function onScanFile(e){
-    const f=e.target.files&&e.target.files[0]; e.target.value='';
-    if(!f) return;
-    setScanMsg(lang==='en'?'Reading QR…':lang==='es'?'Leyendo QR…':'QR wird gelesen…'); setScanErr("");
-    const reader=new FileReader();
-    reader.onload=()=>{
-      loadJsQR().then(jsQR=>{
-        const img=new Image();
-        img.onload=()=>{
-          const max=1400; let w=img.width||1, h=img.height||1;
-          if(Math.max(w,h)>max){ if(w>=h){ h=Math.round(h*max/w); w=max; } else { w=Math.round(w*max/h); h=max; } }
-          const c=document.createElement('canvas'); c.width=w; c.height=h;
-          const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0,w,h);
-          let found=null;
-          try{ const id=ctx.getImageData(0,0,w,h); const r=jsQR(id.data,id.width,id.height,{inversionAttempts:'attemptBoth'}); if(r&&r.data) found=parseRoomFromQR(r.data); }catch(_){}
-          if(found){ setCode(found); setScanMsg(""); setScanErr(""); }
-          else { setScanMsg(""); setScanErr(lang==='en'?'No QR detected. Try again or type the code.':lang==='es'?'No se detectó QR. Inténtalo de nuevo o escribe el código.':'Kein QR erkannt. Bitte erneut versuchen oder Code eintippen.'); }
-        };
-        img.onerror=()=>{ setScanMsg(""); setScanErr(lang==='en'?'Could not read image.':lang==='es'?'No se pudo leer la imagen.':'Bild konnte nicht gelesen werden.'); };
-        img.src=reader.result;
-      }).catch(()=>{ setScanMsg(""); setScanErr(lang==='en'?'Scanner unavailable.':lang==='es'?'Escáner no disponible.':'Scanner nicht verfügbar.'); });
-    };
-    reader.onerror=()=>{ setScanMsg(""); setScanErr(lang==='en'?'Could not read photo.':lang==='es'?'No se pudo leer la foto.':'Foto konnte nicht gelesen werden.'); };
-    reader.readAsDataURL(f);
-  }
-  function startScan(){
-    setScanErr(""); setScanMsg("");
-    if(isIOS){ if(scanFileRef.current) scanFileRef.current.click(); return; }
-    setScanOpen(true);
-  }
-  React.useEffect(()=>{
-    if(!scanOpen) return;
-    let cancelled=false;
-    (async()=>{
-      try{
-        const jsQR=await loadJsQR();
-        const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
-        if(cancelled){ stream.getTracks().forEach(tr=>tr.stop()); return; }
-        scanStreamRef.current=stream;
-        const v=scanVideoRef.current;
-        if(!v){ stream.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; return; }
-        v.srcObject=stream;
-        try{ v.muted=true; v.playsInline=true; v.setAttribute('playsinline',''); }catch(_){}
-        const tryPlay=()=>{ try{ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }catch(_){} };
-        tryPlay();
-        v.onloadedmetadata=tryPlay;
-        const canvas=document.createElement('canvas');
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});
-        const tick=()=>{
-          if(cancelled||!scanStreamRef.current){ return; }
-          if(v.readyState===v.HAVE_ENOUGH_DATA && v.videoWidth){
-            canvas.width=v.videoWidth; canvas.height=v.videoHeight;
-            ctx.drawImage(v,0,0,canvas.width,canvas.height);
-            try{
-              const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-              const r=jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
-              if(r&&r.data){
-                const room=parseRoomFromQR(r.data);
-                if(room){ setCode(room); setScanOpen(false); return; }
-              }
-            }catch(e){}
-          }
-          scanRafRef.current=requestAnimationFrame(tick);
-        };
-        scanRafRef.current=requestAnimationFrame(tick);
-      }catch(e){
-        console.error('scan failed:',e);
-        setScanErr(lang==='en'?'Camera/scanner unavailable. Use your phone camera on the QR or type the code.'
-          :lang==='es'?'Cámara/escáner no disponible. Usa la cámara del móvil o escribe el código.'
-          :'Kamera/Scanner nicht verfügbar. Nutze die Handy-Kamera auf dem QR oder tippe den Code ein.');
-      }
-    })();
-    return ()=>{ cancelled=true; stopScan(); };
-  },[scanOpen]);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
@@ -2267,33 +2154,6 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:`radial-gradient(circle,${lt.accent}2e,transparent 65%)`,top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        {scanOpen&&createPortal(<div style={{position:'fixed',inset:0,zIndex:99999,background:'#000',
-          display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
-          <p style={{color:'#fff',fontSize:16,fontWeight:700,margin:0}}>
-            {lang==='en'?'Scan the room QR':lang==='es'?'Escanea el QR':'QR-Code scannen'}
-          </p>
-          <div style={{position:'relative',width:'min(78vw,320px)',height:'min(78vw,320px)',
-            borderRadius:18,overflow:'hidden',border:`3px solid ${lt.accent}`}}>
-            <video ref={scanVideoRef} autoPlay playsInline muted
-              style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-          </div>
-          {scanErr&&<p style={{color:'#ffb3b3',fontSize:13,maxWidth:280,textAlign:'center',margin:0}}>{scanErr}</p>}
-          <p style={{color:'#888',fontSize:12,maxWidth:300,textAlign:'center',margin:0}}>
-            {lang==='en'?'Black image? Use “Take photo”.':lang==='es'?'¿Imagen negra? Usa “Hacer foto”.':'Bild schwarz? Dann „Foto aufnehmen".'}
-          </p>
-          <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'center'}}>
-            <button onClick={()=>{stopScan();setScanOpen(false);setTimeout(()=>{if(scanFileRef.current)scanFileRef.current.click();},120);}}
-              style={{padding:'10px 22px',borderRadius:100,background:lt.accent,border:'none',
-                color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
-              {lang==='en'?'📷 Take photo':lang==='es'?'📷 Hacer foto':'📷 Foto aufnehmen'}
-            </button>
-            <button onClick={()=>{stopScan();setScanOpen(false);}}
-              style={{padding:'10px 24px',borderRadius:100,background:'#fff',border:'none',
-                color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
-              {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
-            </button>
-          </div>
-        </div>, document.body)}
         {/* Top row: Sprache · Account · Demo */}
         <div style={{display:"flex",justifyContent:"space-between",
           alignItems:"center",gap:8,marginBottom:32,width:"100%",maxWidth:400,marginLeft:'auto',marginRight:'auto'}}>
@@ -2412,20 +2272,11 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         </div>
         {tab==="join"&&<div style={{width:'100%'}}>
           <p style={{fontSize:13,color:t.text,margin:'0 0 4px',paddingLeft:2,fontWeight:600}}>🔑 {lang==="en"?"Room code":lang==="es"?"Código de sala":"Raumcode"}</p>
-          <div style={{display:'flex',gap:8}}>
-            <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono,flex:1}}/>
-            <Btn t={t} variant="secondary" onClick={startScan} style={{flexShrink:0,background:t.surface}}
-              title={lang==='en'?'Scan QR':lang==='es'?'Escanear QR':'QR scannen'}>📷</Btn>
-          </div>
-          <input ref={scanFileRef} type="file" accept="image/*" capture="environment" onChange={onScanFile} style={{display:'none'}}/>
-          {scanMsg&&<p style={{fontSize:11,color:t.accent,margin:'6px 0 0',paddingLeft:2,fontWeight:700}}>{scanMsg}</p>}
-          {scanErr&&!scanOpen&&<p style={{fontSize:11,color:t.danger,margin:'6px 0 0',paddingLeft:2}}>{scanErr}</p>}
-          <p style={{fontSize:11,color:t.muted,margin:'4px 0 0',paddingLeft:2}}>
-            {isIOS
-              ? (lang==='en'?'iPhone: tap 📷 to photograph the QR — or just point your Camera app at it.'
-                 :lang==='es'?'iPhone: toca 📷 para fotografiar el QR — o apunta con la app Cámara.'
-                 :'iPhone: 📷 tippen und den QR abfotografieren – oder einfach die Kamera-App draufhalten.')
-              : (lang==='en'?'…or scan the QR on the big screen':lang==='es'?'…o escanea el QR de la pantalla':'…oder den QR auf dem Beamer scannen')}
+          <Inp value={code} onChange={v=>setCode(v.toUpperCase())} placeholder={i.roomCode} t={t} style={{letterSpacing:3,fontWeight:700,fontFamily:t.fontMono,width:'100%'}}/>
+          <p style={{fontSize:11,color:t.muted,margin:'6px 0 0',paddingLeft:2,lineHeight:1.5}}>
+            {lang==='en'?'Tip: scan the QR on the screen with your phone camera — or just type the code.'
+             :lang==='es'?'Consejo: escanea el QR de la pantalla con la cámara del móvil — o escribe el código.'
+             :'Tipp: Den QR auf dem Bildschirm einfach mit der Handy-Kamera scannen – oder den Code hier eintippen.'}
           </p>
         </div>}
         {(tab==="join"||tab==="host")&&<div style={{display:'flex',flexDirection:'column',gap:8,width:'100%'}}>
