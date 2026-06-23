@@ -1,5 +1,6 @@
 // EstiMates – Build-Marker: beamer-theme-fix v3
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, update, onValue, get, remove } from "firebase/database";
@@ -2143,7 +2144,10 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         const v=scanVideoRef.current;
         if(!v){ stream.getTracks().forEach(tr=>tr.stop()); scanStreamRef.current=null; return; }
         v.srcObject=stream;
-        try{ await v.play(); }catch(e){}
+        try{ v.muted=true; v.playsInline=true; v.setAttribute('playsinline',''); }catch(_){}
+        const tryPlay=()=>{ try{ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); }catch(_){} };
+        tryPlay();
+        v.onloadedmetadata=tryPlay;
         const canvas=document.createElement('canvas');
         const ctx=canvas.getContext('2d',{willReadFrequently:true});
         const tick=()=>{
@@ -2230,7 +2234,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:`radial-gradient(circle,${lt.accent}2e,transparent 65%)`,top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",maxWidth:460,width:"100%",position:"relative",animation:"fu .4s ease both"}}>
-        {scanOpen&&<div style={{position:'fixed',inset:0,zIndex:400,background:'#000',
+        {scanOpen&&createPortal(<div style={{position:'fixed',inset:0,zIndex:99999,background:'#000',
           display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
           <p style={{color:'#fff',fontSize:16,fontWeight:700,margin:0}}>
             {lang==='en'?'Scan the room QR':lang==='es'?'Escanea el QR':'QR-Code scannen'}
@@ -2246,7 +2250,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
               color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:ADULT.fontBody}}>
             {lang==='en'?'Cancel':lang==='es'?'Cancelar':'Abbrechen'}
           </button>
-        </div>}
+        </div>, document.body)}
         {/* Top row: Sprache · Account · Demo */}
         <div style={{display:"flex",justifyContent:"space-between",
           alignItems:"center",gap:8,marginBottom:32,width:"100%",maxWidth:400,marginLeft:'auto',marginRight:'auto'}}>
