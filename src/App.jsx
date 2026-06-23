@@ -2718,10 +2718,10 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
   const link=inviteUrl(code);
   function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); }
   function addPlayer(){ if(navigator.share){navigator.share({title:'EstiMates',text:'Komm mitspielen!',url:link});}else{copy();} }
-  return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh',position:'relative'}}>
+  return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh'}}>
     {onLeave&&<button onClick={onLeave} title={isHost?(lang==='en'?'Close room':lang==='es'?'Cerrar sala':'Raum schließen'):(i.leaveGame||'Verlassen')}
-      style={{position:'absolute',top:10,left:8,background:'none',border:'none',color:t.muted,
-        fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,padding:'4px 8px',zIndex:3}}>{i.back}</button>}
+      style={{alignSelf:'flex-start',background:'none',border:'none',color:t.muted,
+        fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,padding:'2px 4px',marginBottom:2}}>{i.back}</button>}
     <Logo t={t} size="sm"/>
     {(room.bizName||room.bizLogo)&&<div style={{marginTop:8}}><PoweredBy name={room.bizName} logo={room.bizLogo} t={t}/></div>}
     <div style={{marginTop:12,marginBottom:4}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
