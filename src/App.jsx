@@ -615,7 +615,7 @@ const UI = {
     scanCode:"📷 QR-Code scannen",scanOrType:"oder Code eingeben",
     bettingSection:"🎲 WETTEN",bettingOn:"Wetten aktiv",bettingOff:"Keine Wetten",betBoth:"🎯 Nächster & Weitester",betBest:"🏆 Nur Bester",betWorst:"🙈 Nur Schlechtester",
     scanJoin2:"Scan & mitspielen!",
-    dailyChallenge:"📅 Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",leaveGame:"Spiel verlassen",leaveConfirm:"Spiel wirklich verlassen?",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
+    dailyChallenge:"📅 Tages-Challenge",dailySub:"Eine Frage täglich · Global",dailyPlay:"Heute schätzen!",dailyDone:"Heute bereits gespielt!",dailyRank:(p)=>"Besser als "+p+"% weltweit",dailyStreak:(n)=>"🔥 "+n+" Tage am Stück",kickPlayer:"Kick",kickConfirm:(n)=>n+" wirklich kicken?",kicked:"Du wurdest vom Host entfernt.",leaveGame:"Spiel verlassen",leaveConfirm:"Spiel wirklich verlassen?",closeRoomConfirm:"Raum schließen und zurück zum Start? Der Raum wird für alle beendet.",displayMode:"Gastgeber-Modus",waitingTips:"Wartet auf Tipps...",dispReady:"Bereit?",dispHostPrep:"Host bereitet das Spiel vor...",dispQuestion:"FRAGE",dispAnswer:"ANTWORT",dispRanking:"RANGLISTE",dispStats:"STATISTIKEN",dispJoker:"JOKER-INVENTAR",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"Noch keine Events...",dispPhaseQuestion:"─── Neue Runde ───",dispPhaseResults:"─── Auflösung ───",dispPhaseBetting:"─── Wetten ───",dispPhaseFinal:"─── Spiel beendet ───",dispExact:"trifft EXAKT!",dispGuessed:"hat getippt",dispEarned:"erhält Joker",dispSabotaged:"wurde sabotiert",dispSaboteur:"von",dispJokerLabels:{sabotage:"sabotiert!",skip:"überspringt",hint:"Hint aufgedeckt",double:"Punkte verdoppelt",change:"Tipp geändert",extra:"50/50-Joker"},dispWins:"gewinnt!",jokerNames:{skip:"Skip",hint:"Hinweis",double:"Doppelt",sabotage:"Sabotage",change:"Tipp ändern",extra:"50/50-Joker"},jokerVerbs:{skip:"überspringt die Frage",hint:"deckt einen Hinweis auf",double:"verdoppelt seine Punkte",sabotage:"sabotiert",change:"ändert seinen Tipp",extra:"nutzt den 50/50-Joker"},
     camUnavailable:"Kamera nicht verfügbar",
     takePhoto:"📸 Gewinnerfoto aufnehmen",retakePhoto:"🔄 Nochmal",usePhoto:"✓ Verwenden",skipPhoto:"Ohne Foto teilen",photoHint:"Für die Share-Karte!",
   },
@@ -681,7 +681,7 @@ const UI = {
     scanCode:"📷 Scan QR Code",scanOrType:"or enter code",
     bettingSection:"🎲 BETTING",bettingOn:"Betting on",bettingOff:"No betting",betBoth:"🎯 Closest & Farthest",betBest:"🏆 Best only",betWorst:"🙈 Worst only",
     scanJoin2:"Scan to play!",
-    dailyChallenge:"📅 Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",leaveGame:"Leave game",leaveConfirm:"Really leave the game?",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
+    dailyChallenge:"📅 Daily Challenge",dailySub:"One question daily · Global",dailyPlay:"Play today!",dailyDone:"Already played today!",dailyRank:(p)=>"Better than "+p+"% worldwide",dailyStreak:(n)=>"🔥 "+n+" day streak",kickPlayer:"Kick",kickConfirm:(n)=>"Really kick "+n+"?",kicked:"You were removed by the host.",leaveGame:"Leave game",leaveConfirm:"Really leave the game?",closeRoomConfirm:"Close the room and go back? The room will end for everyone.",displayMode:"Host Display Mode",waitingTips:"Waiting for guesses...",dispReady:"Ready?",dispHostPrep:"Host is preparing the game...",dispQuestion:"QUESTION",dispAnswer:"ANSWER",dispRanking:"LEADERBOARD",dispStats:"STATISTICS",dispJoker:"JOKER INVENTORY",dispEvents:"EVENTS",dispScanJoin:"Scan to join",dispNoEvents:"No events yet...",dispPhaseQuestion:"─── New Round ───",dispPhaseResults:"─── Reveal ───",dispPhaseBetting:"─── Betting ───",dispPhaseFinal:"─── Game Over ───",dispExact:"hits EXACT!",dispGuessed:"has guessed",dispEarned:"receives Joker",dispSabotaged:"was sabotaged",dispSaboteur:"by",dispJokerLabels:{sabotage:"sabotages!",skip:"skips",hint:"reveals hint",double:"doubles points",change:"changes guess",extra:"50/50 joker"},dispWins:"wins!",jokerNames:{skip:"Skip",hint:"Hint",double:"Double",sabotage:"Sabotage",change:"Change guess",extra:"50/50 Joker"},jokerVerbs:{skip:"skips the question",hint:"reveals a hint",double:"doubles their points",sabotage:"sabotages",change:"changes their guess",extra:"uses the 50/50 joker"},
     camUnavailable:"Camera not available",
     takePhoto:"📸 Take winner photo",retakePhoto:"🔄 Retake",usePhoto:"✓ Use photo",skipPhoto:"Share without photo",photoHint:"For the share card!",
   },
@@ -747,7 +747,7 @@ const UI = {
     scanCode:"📷 Escanear QR",scanOrType:"o introducir código",
     bettingSection:"🎲 APUESTAS",bettingOn:"Apuestas activas",bettingOff:"Sin apuestas",betBoth:"🎯 Cercano y lejano",betBest:"🏆 Solo mejor",betWorst:"🙈 Solo peor",
     scanJoin2:"¡Escanear y jugar!",
-    dailyChallenge:"📅 Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",leaveGame:"Salir del juego",leaveConfirm:"¿Salir del juego?",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
+    dailyChallenge:"📅 Reto Diario",dailySub:"Una pregunta al día · Global",dailyPlay:"¡Jugar hoy!",dailyDone:"¡Ya jugaste hoy!",dailyRank:(p)=>"Mejor que el "+p+"% mundial",dailyStreak:(n)=>"🔥 "+n+" días seguidos",kickPlayer:"Expulsar",kickConfirm:(n)=>"¿Expulsar a "+n+"?",kicked:"El anfitrión te ha eliminado.",leaveGame:"Salir del juego",leaveConfirm:"¿Salir del juego?",closeRoomConfirm:"¿Cerrar la sala y volver? La sala terminará para todos.",displayMode:"Modo Anfitrión",waitingTips:"Esperando respuestas...",dispReady:"¿Listos?",dispHostPrep:"El anfitrión está preparando...",dispQuestion:"PREGUNTA",dispAnswer:"RESPUESTA",dispRanking:"CLASIFICACIÓN",dispStats:"ESTADÍSTICAS",dispJoker:"COMODINES",dispEvents:"EVENTOS",dispScanJoin:"Escanear para unirse",dispNoEvents:"Sin eventos aún...",dispPhaseQuestion:"─── Nueva Ronda ───",dispPhaseResults:"─── Revelación ───",dispPhaseBetting:"─── Apuestas ───",dispPhaseFinal:"─── Fin del Juego ───",dispExact:"¡acierta EXACTO!",dispGuessed:"ha respondido",dispEarned:"recibe Joker",dispSabotaged:"fue saboteado",dispSaboteur:"por",dispJokerLabels:{sabotage:"¡sabotea!",skip:"salta",hint:"revela pista",double:"dobla puntos",change:"cambia respuesta",extra:"comodín 50/50"},dispWins:"¡gana!",jokerNames:{skip:"Saltar",hint:"Pista",double:"Doble",sabotage:"Sabotaje",change:"Cambiar",extra:"50/50"},jokerVerbs:{skip:"salta la pregunta",hint:"revela una pista",double:"dobla sus puntos",sabotage:"sabotea a",change:"cambia su respuesta",extra:"usa el comodín 50/50"},
     camUnavailable:"Cámara no disponible",
     takePhoto:"📸 Foto del ganador",retakePhoto:"🔄 Repetir",usePhoto:"✓ Usar foto",skipPhoto:"Compartir sin foto",photoHint:"¡Para la tarjeta!",
   },
@@ -2355,7 +2355,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
 }
 
 /* ─── GAME SETUP (Joker + Speed-Modus) ───────────── */
-function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang}){
+function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang, onBack=null}){
   const i=UI[lang]||UI.de;
   const saved=(()=>{try{return JSON.parse(localStorage.getItem('em_lastSetup')||'null')}catch(e){return null}})();
   const[withJokers,setWithJokers]=useState(saved?!!saved.withJokers:false);
@@ -2399,6 +2399,8 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
     maxWidth:520,margin:'0 auto',padding:'14px 16px 28px',
     background:t.bg,gap:3,
   }}>
+    {onBack&&<button onClick={onBack} style={{alignSelf:'flex-start',background:'none',border:'none',
+      color:t.muted,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,padding:'2px 4px',marginBottom:2}}>{i.back}</button>}
     <Logo t={t} size="sm"/>
 
     {/* ── Speed ── */}
@@ -2457,7 +2459,7 @@ function JokerSetupScreen({mode, onDone, t, onToggleDebug, debugModeInit, lang})
   </div>;
 }
 /* ─── CATEGORY SELECTION ─────────────────────────── */
-function CategoryScreen({mode,onStart,t,lang,myId=null}){
+function CategoryScreen({mode,onStart,t,lang,myId=null,onBack=null}){
   const i=UI[lang]||UI.de;
   const catMeta=Object.entries(QUESTIONS_RAW[mode]).map(([name,{questions,locked}])=>({name,count:questions.length,locked})).sort((a,b)=>a.name.localeCompare(b.name));
   const allCats=catMeta.filter(c=>!c.locked).map(c=>c.name);
@@ -2555,6 +2557,8 @@ function CategoryScreen({mode,onStart,t,lang,myId=null}){
     maxWidth:520,margin:"0 auto",padding:"8px 16px 80px",
     background:t.bg,
   }}>
+    {onBack&&<button onClick={onBack} style={{alignSelf:'flex-start',background:'none',border:'none',
+      color:t.muted,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,padding:'2px 4px'}}>{i.back}</button>}
     <Logo t={t} size="xs"/>
 
     {/* Header row */}
@@ -2714,7 +2718,10 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
   const link=inviteUrl(code);
   function copy(){navigator.clipboard.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); }
   function addPlayer(){ if(navigator.share){navigator.share({title:'EstiMates',text:'Komm mitspielen!',url:link});}else{copy();} }
-  return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+  return <div style={{...page,animation:"fu .3s ease both",display:'flex',flexDirection:'column',minHeight:'100vh',position:'relative'}}>
+    {onLeave&&<button onClick={onLeave} title={isHost?(lang==='en'?'Close room':lang==='es'?'Cerrar sala':'Raum schließen'):(i.leaveGame||'Verlassen')}
+      style={{position:'absolute',top:10,left:8,background:'none',border:'none',color:t.muted,
+        fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:t.fontBody,padding:'4px 8px',zIndex:3}}>{i.back}</button>}
     <Logo t={t} size="sm"/>
     {(room.bizName||room.bizLogo)&&<div style={{marginTop:8}}><PoweredBy name={room.bizName} logo={room.bizLogo} t={t}/></div>}
     <div style={{marginTop:12,marginBottom:4}}><Pill t={t} color={t.green}>{t.id==="kids"?"🎈 LOBBY":"LOBBY"}</Pill></div>
@@ -2757,12 +2764,6 @@ function LobbyScreen({room,code,myId,t,onGoJokerSetup,lang,onKick=null,onLeave=n
       :<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
         <p style={{textAlign:"center",color:t.muted,fontSize:13,margin:0,
           animation:"pulse 1.5s ease infinite"}}>{i.waitingHost}</p>
-        {onLeave&&<button onClick={onLeave}
-          style={{padding:'7px',borderRadius:t.radius,background:'transparent',
-            border:`1px solid ${t.danger}44`,color:t.danger,fontSize:12,
-            cursor:'pointer',fontFamily:t.fontBody}}>
-          🚪 {i.leaveGame||'Verlassen'}
-        </button>}
       </div>}
 
     {/* ── Spielerliste scrollbar unten ── */}
@@ -8274,6 +8275,14 @@ function App(){
     setRoom(null);setCode(null);setScreen('home');
   }
 
+  async function handleHostLeave(){
+    const i=UI[lang]||UI.de;
+    if(!window.confirm(i.closeRoomConfirm||'Raum schließen und zurück zum Start? Der Raum wird für alle beendet.')) return;
+    if(code){ try{ await remove(ref(db,`rooms/${code}`)); }catch(e){} }
+    if(unsubRef.current){unsubRef.current();unsubRef.current=null;}
+    setRoom(null);setCode(null);setScreen('home');
+  }
+
   async function handleSkip(){
     // Fully atomic – re-fetch then write in one patch
     const r=await dbGet(code);
@@ -8350,10 +8359,10 @@ function App(){
         <Btn t={t} onClick={()=>{setScreen('home');setRoom(null);setCode(null);}}>{(UI[lang]||UI.de).back}</Btn>
       </div>}
     {screen==='lobby'&&room&&(room.kicked||{})[myId]&&null}
-    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={!isHostRef.current?handleLeave:null} onQuickStart={isHostRef.current?handleQuickStart:null}/>}
-    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang}/>}
+    {screen==='lobby'&&room&&!(room.kicked||{})[myId]&&<LobbyScreen room={room} code={code} myId={myId} t={t} onGoJokerSetup={handleGoJokerSetup} lang={lang} onKick={isHostRef.current?handleKick:null} onLeave={isHostRef.current?handleHostLeave:handleLeave} onQuickStart={isHostRef.current?handleQuickStart:null}/>}
+    {screen==="jokerSetup"&&room&&room.hostId===myId&&<JokerSetupScreen mode={mode} onDone={handleJokerSetupDone} t={t} onToggleDebug={setDebugMode} debugModeInit={debugMode} lang={lang} onBack={()=>setScreen('lobby')}/>}
     {screen==="jokerSetup"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Joker-Einstellungen...</p></div>}
-    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId}/>}
+    {screen==="categories"&&room&&room.hostId===myId&&<CategoryScreen mode={mode} onStart={handleStartWithCats} t={t} lang={lang} myId={myId} onBack={()=>setScreen('jokerSetup')}/>}
     {screen==="categories"&&room&&room.hostId!==myId&&<div style={{...page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}><Spinner t={t}/><p style={{color:t.muted,animation:"pulse 1.5s ease infinite"}}>Host wählt Kategorien...</p></div>}
     {showSteckbrief&&myId&&code&&<SteckbriefScreen t={t} lang={lang} myId={myId} code={code} playerName={room?.players?.[myId]?.name||''} onDone={()=>setShowSteckbrief(false)} initial={profile} onSaveProfile={isAnonymous?null:saveProfile}/>}
     {showColorEditor&&<ColorEditor t={t} lang={lang} onChange={()=>setA11yTick(x=>x+1)} onClose={()=>setShowColorEditor(false)}/>}
