@@ -1348,7 +1348,8 @@ function checkJokerReward(playerId, roundResult, room, enabledJokers){
   // Correct bet → 25% chance
   const bets=room.bets||{};
   const bet=bets[playerId]||{};
-  const betCorrect=bet.closest===closestId||bet.farthest===farthestId;
+  const farthestIdsArr=roundResult.farthestIds||[farthestId];
+  const betCorrect=closestIds.includes(bet.closest)||farthestIdsArr.includes(bet.farthest);
   if(betCorrect && Math.random()<0.25){
     return giveAvailable();
   }
@@ -3455,6 +3456,12 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
   const noAnswer=pl.filter(p=>guesses[p.id]===-999999&&!afkPlayers[p.id]);
   const minDiffR=ranked[0]?.diff??Infinity;
   const closestIdsR=ranked.filter(r=>r.diff===minDiffR).map(r=>r.id);
+  const maxDiffR=ranked[ranked.length-1]?.diff??Infinity;
+  const farthestIdsR=ranked.filter(r=>r.diff===maxDiffR).map(r=>r.id);
+  const anyExactR=ranked.some(r=>r.diff===0);
+  const allInR=room.allIn||{}, dblJR=room.doubleJokers||{};
+  // Reine TIPP-Punkte (ohne Wetten) – passend zur Scoring-Logik in calcRound
+  const guessPtsFor=(p)=>{ let g=0; if(p.diff===0)g=2; else if(!anyExactR&&closestIdsR.includes(p.id))g=1; if(allInR[p.id]){ g=p.diff===0?g+4:-5; } if(dblJR[p.id]) g*=2; return g; };
   const closestId=ranked[0]?.id,farthestId=ranked[ranked.length-1]?.id;
   const doubleActive=room.usedJokerThisRound==="double";
   const jokerUsedBy=room.jokerUsedBy;
@@ -3483,7 +3490,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
     </div>
     <Card t={t} style={{marginBottom:12}}>
       <p style={{fontSize:13,fontWeight:700,color:t.text,letterSpacing:.8,marginBottom:8}}>{i.roundScores}</p>
-      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=rs[p.id]||0,wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"8px 12px",borderRadius:t.radius,marginBottom:6,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
+      {ranked.map((p,i)=>{const exact=p.diff===0,win=!exact&&closestIdsR.includes(p.id),pts=guessPtsFor(p),wasSabotaged=(room.sabotaged||{})[p.id]||null;return <div key={p.id} style={{...row,padding:"8px 12px",borderRadius:t.radius,marginBottom:6,background:exact?t.green+"18":win?t.accent+"14":wasSabotaged?t.danger+"10":t.surface,border:`1.5px solid ${exact?t.green:win?t.accent+"44":wasSabotaged?t.danger+"44":t.border}`,animation:`fu .3s ${i*.07}s ease both`}}><span style={{fontSize:13,minWidth:20,fontWeight:800,
               color:i===0?t.gold:i===1?"#c0c0c0":i===2?"#cd7f32":"#6e5e54",
               flexShrink:0}}>{i+1}.</span><Avatar name={p.name} t={t} size={28}/><span style={{fontWeight:700,flex:1,fontSize:14}}>{p.name}{wasSabotaged&&<span style={{color:t.danger,fontSize:11,marginLeft:6}}>
   {i.sabotaged} {room.players?.[wasSabotaged]?.name||"?"}
@@ -3498,7 +3505,7 @@ function ResultsScreen({room,myId,t,onNext,onEnd,lang,code=null,onKick=null,onLe
       {pl.map(p=>{
         const b=bets[p.id];if(!b)return null;
         const cp=pl.find(x=>x.id===b.closest),fp=pl.find(x=>x.id===b.farthest);
-        const okC=b.closest===closestId,okF=b.farthest===farthestId;
+        const okC=closestIdsR.includes(b.closest),okF=farthestIdsR.includes(b.farthest);
         return <div key={p.id} style={{marginBottom:12,padding:"10px 12px",background:t.surface,borderRadius:t.radius,border:`1px solid ${t.border}`}}>
           <div style={{...row,marginBottom:8}}><Avatar name={p.name} t={t} size={26}/><span style={{fontWeight:700,fontSize:14}}>{p.name}</span></div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
