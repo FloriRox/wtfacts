@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: remove-inapp-scanner v5
+// EstiMates – Build-Marker: new-logo+configurator v6
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -117,8 +117,8 @@ async function getGlobalRank(avgDiff){
 
 /* ─── THEMES ──────────────────────────────────────── */
 const ADULT = {
-  id:"adult", bg:"#0d0b0a", surface:"#181310", card:"#211c18", border:"#32261e",
-  accent:"#e8360a", gold:"#ff8c2a", green:"#39d98a", text:"#f2ece6", muted:"#6e5e54", danger:"#cc2244",
+  id:"adult", bg:"#0b0f10", surface:"#141a1b", card:"#1b2224", border:"#2a3437",
+  accent:"#1f9d75", gold:"#f5af42", green:"#25c08a", text:"#eef3f2", muted:"#7e8c8a", danger:"#e0526a",
   fontTitle:"'Bebas Neue', sans-serif", fontBody:"'DM Sans', sans-serif", fontMono:"'DM Mono', monospace",
   radius:"10px", emoji:"🔥",
 };
@@ -155,11 +155,19 @@ function btnShadowFor(depth){ return depth==='shadow' ? '0 4px 14px rgba(0,0,0,.
 // Wrapper: erst Barrierefreiheit/Heller Modus, dann eigene Farben + Button-Stil drüberlegen
 function applyA11y(base){
   var th=applyBaseA11y(base);
-  var ks=CUSTOM_COLORS?Object.keys(CUSTOM_COLORS):[];
-  var hasStyle=CUSTOM_STYLE && (CUSTOM_STYLE.radius!=null || CUSTOM_STYLE.depth || CUSTOM_STYLE.gloss);
-  if(!ks.length && !hasStyle) return th;
   var o={...th};
+  // Logo-Marke: Standardwerte (per CUSTOM_STYLE überschreibbar)
+  o.logoFont   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoFont)  || "'Permanent Marker',cursive";
+  o.logoEsti   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoEsti)  || '#1f9d75';
+  o.logoMates  = (CUSTOM_STYLE&&CUSTOM_STYLE.logoMates) || '#2f8ce0';
+  o.logoCrown  = (CUSTOM_STYLE&&CUSTOM_STYLE.logoCrown) || '#f5af42';
+  o.logoGlow   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlow)  || '#2c81ff';
+  o.logoGlowOn = (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlowOn!=null) ? !!CUSTOM_STYLE.logoGlowOn : true;
+  o.logoGlowInt= (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlowInt!=null) ? CUSTOM_STYLE.logoGlowInt : 1;
+  o.logoTilt   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoTilt!=null) ? CUSTOM_STYLE.logoTilt : 6;
+  var ks=CUSTOM_COLORS?Object.keys(CUSTOM_COLORS):[];
   ks.forEach(function(k){ if(CUSTOM_COLORS[k]) o[k]=CUSTOM_COLORS[k]; });
+  var hasStyle=CUSTOM_STYLE && (CUSTOM_STYLE.radius!=null || CUSTOM_STYLE.depth || CUSTOM_STYLE.gloss);
   if(hasStyle){
     if(CUSTOM_STYLE.radius!=null) o.radius=CUSTOM_STYLE.radius;
     o.btnShadow=btnShadowFor(CUSTOM_STYLE.depth);
@@ -433,6 +441,64 @@ function ColorEditor({t, lang, onChange, onClose}){
                 fontWeight:700,cursor:'pointer',fontFamily:t.fontBody}}>{o.l}</button>;
           })}
         </div>
+      </div>
+      {/* ── Logo ── */}
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'18px 0 8px',textTransform:'uppercase'}}>
+        👑 {L('Logo','Logo','Logo')}
+      </p>
+      <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:'10px 8px 14px',marginBottom:12}}>
+        <Logo t={t} size="sm"/>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+        <span style={{flex:'0 0 auto',fontSize:13,color:t.text,fontWeight:600}}>{L('Schrift','Font','Fuente')}</span>
+        <select value={t.logoFont||"'Permanent Marker',cursive"} onChange={e=>{ ensureLogoFont(e.target.value); setStyle('logoFont',e.target.value); }}
+          style={{flex:1,minWidth:0,padding:'9px 10px',borderRadius:t.radius,background:t.surface,
+            border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,fontFamily:t.fontBody,cursor:'pointer'}}>
+          {FONT_OPTIONS.map(grp=>(
+            <optgroup key={grp.g} label={grp.g}>
+              {grp.items.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+      {[
+        {key:'logoEsti', label:L('Farbe „esti"','"esti" color','Color "esti"'), val:t.logoEsti},
+        {key:'logoMates',label:L('Farbe „mates"','"mates" color','Color "mates"'), val:t.logoMates},
+        {key:'logoCrown',label:L('Krone','Crown','Corona'), val:t.logoCrown},
+        {key:'logoGlow', label:L('Glow-Farbe','Glow color','Color del brillo'), val:t.logoGlow},
+      ].map(c=>(
+        <div key={c.key} style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+          <input type="color" value={c.val||'#1f9d75'} onChange={e=>setStyle(c.key,e.target.value)}
+            style={{width:42,height:32,border:`1.5px solid ${t.border}`,borderRadius:8,background:t.surface,cursor:'pointer',padding:2,flexShrink:0}}/>
+          <span style={{flex:1,fontSize:13,color:t.text}}>{c.label}</span>
+          <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted}}>{(c.val||'').toUpperCase()}</span>
+        </div>
+      ))}
+      <div style={{marginTop:4,marginBottom:10}}>
+        <p style={{fontSize:11,color:t.muted,margin:'0 0 5px'}}>{L('Leucht-Effekt (Glow)','Glow effect','Efecto de brillo')}</p>
+        <div style={{display:'flex',gap:6}}>
+          {[{l:L('Aus','Off','No'),v:false},{l:L('An','On','Sí'),v:true}].map(o=>{
+            const on=(t.logoGlowOn!==false)===o.v;
+            return <button key={String(o.v)} onClick={()=>setStyle('logoGlowOn',o.v)}
+              style={{padding:'6px 16px',borderRadius:t.radius,background:on?t.accent:t.surface,
+                border:`1.5px solid ${on?t.accent:t.border}`,color:on?'#fff':t.text,fontSize:12,
+                fontWeight:700,cursor:'pointer',fontFamily:t.fontBody}}>{o.l}</button>;
+          })}
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+        <span style={{flex:'0 0 auto',fontSize:13,color:t.text,minWidth:120}}>{L('Glow-Intensität','Glow intensity','Intensidad')}</span>
+        <input type="range" min="0" max="40" value={t.logoGlowInt!=null?t.logoGlowInt:1}
+          onChange={e=>setStyle('logoGlowInt',parseInt(e.target.value,10))}
+          style={{flex:1,accentColor:t.accent}}/>
+        <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoGlowInt!=null?t.logoGlowInt:1)}px</span>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+        <span style={{flex:'0 0 auto',fontSize:13,color:t.text,minWidth:120}}>{L('Kippwinkel Krone','Crown tilt','Inclinación')}</span>
+        <input type="range" min="0" max="18" step="0.5" value={t.logoTilt!=null?t.logoTilt:6}
+          onChange={e=>setStyle('logoTilt',parseFloat(e.target.value))}
+          style={{flex:1,accentColor:t.accent}}/>
+        <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoTilt!=null?t.logoTilt:6)}°</span>
       </div>
       <button onClick={resetAll} style={{width:'100%',marginTop:16,padding:'11px',borderRadius:t.radius,
         background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
@@ -1214,10 +1280,11 @@ var inject=(css)=>{
   el.textContent=css;
 };
 function globalCSS(t){
+  const brand=`@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');`;
   const fonts=t.id==="kids"
     ?`@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');`
     :`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap');`;
-  return `${fonts}
+  return `${brand}${fonts}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
 body{background:${t.bg};color:${t.text};font-family:${t.fontBody};-webkit-tap-highlight-color:transparent}
@@ -1237,6 +1304,8 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes confettifall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}
 @keyframes revealSlide{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @keyframes pulseGold{0%,100%{box-shadow:0 0 0 2px #f5c542,0 0 8px 0 rgba(245,197,66,.45)}50%{box-shadow:0 0 0 2px #f5c542,0 0 16px 4px rgba(245,197,66,.85)}}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 var(--pmin,1px) var(--lg,#2c81ff))}50%{filter:drop-shadow(0 0 var(--pmax,3px) var(--lg,#2c81ff))}}
+@keyframes crownFloat{0%,100%{transform:translate(-50%,0) rotate(calc(var(--tilt,6) * -1deg))}50%{transform:translate(-50%,-7%) rotate(calc(var(--tilt,6) * 1deg))}}
 
 `;}
 
@@ -1401,19 +1470,76 @@ function Pill({children,color,t}){
 function Avatar({name,t,size=36}){
   return <div style={{width:size,height:size,borderRadius:"50%",background:avatarColor(name,t),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.42,fontWeight:800,flexShrink:0}}>{(name||"?")[0].toUpperCase()}</div>;
 }
+/* ─── LOGO-SCHRIFTEN (bei Bedarf nachladen) ── */
+var _logoFontsLoaded={};
+function fontFamilyName(val){ try{ var m=String(val).match(/'([^']+)'/); return m?m[1]:String(val).split(',')[0].trim(); }catch(e){ return ''; } }
+var FONT_QUERY={'Baloo 2':'Baloo+2:wght@700;800','Quicksand':'Quicksand:wght@700','Sniglet':'Sniglet:wght@800','Grandstander':'Grandstander:wght@700','Passion One':'Passion+One:wght@700','Fredoka':'Fredoka:wght@600','Caveat':'Caveat:wght@700'};
+function ensureLogoFont(val){
+  var name=fontFamilyName(val); if(!name||_logoFontsLoaded[name]) return;
+  _logoFontsLoaded[name]=true;
+  var q=FONT_QUERY[name]||name.replace(/ /g,'+');
+  try{ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family='+q+'&display=swap'; document.head.appendChild(l); }catch(e){}
+}
+var FONT_OPTIONS=[
+  {g:'Rund & freundlich',items:[
+    {v:"'Fredoka One',cursive",l:'Fredoka One'},{v:"'Baloo 2',cursive",l:'Baloo 2'},{v:"'Quicksand',sans-serif",l:'Quicksand'},
+    {v:"'Fredoka',sans-serif",l:'Fredoka'},{v:"'Concert One',sans-serif",l:'Concert One'},{v:"'Sniglet',cursive",l:'Sniglet'},
+    {v:"'Grandstander',cursive",l:'Grandstander'},{v:"'Boogaloo',cursive",l:'Boogaloo'},{v:"'Chewy',cursive",l:'Chewy'},
+  ]},
+  {g:'Verspielt & knallig',items:[
+    {v:"'Luckiest Guy',cursive",l:'Luckiest Guy'},{v:"'Bangers',cursive",l:'Bangers'},{v:"'Modak',cursive",l:'Modak'},
+    {v:"'Chango',cursive",l:'Chango'},{v:"'Bowlby One',cursive",l:'Bowlby One'},{v:"'Bowlby One SC',cursive",l:'Bowlby One SC'},
+    {v:"'Titan One',cursive",l:'Titan One'},{v:"'Lilita One',cursive",l:'Lilita One'},{v:"'Paytone One',sans-serif",l:'Paytone One'},
+    {v:"'Shrikhand',cursive",l:'Shrikhand'},{v:"'Rampart One',cursive",l:'Rampart One'},{v:"'Bungee',cursive",l:'Bungee'},
+  ]},
+  {g:'Handgeschrieben',items:[
+    {v:"'Permanent Marker',cursive",l:'Permanent Marker'},{v:"'Pacifico',cursive",l:'Pacifico'},{v:"'Lobster',cursive",l:'Lobster'},
+    {v:"'Caveat',cursive",l:'Caveat'},{v:"'Patrick Hand',cursive",l:'Patrick Hand'},{v:"'Gochi Hand',cursive",l:'Gochi Hand'},
+  ]},
+  {g:'Kräftig & sportlich',items:[
+    {v:"'Righteous',cursive",l:'Righteous'},{v:"'Sigmar One',cursive",l:'Sigmar One'},{v:"'Passion One',cursive",l:'Passion One'},
+    {v:"'Fugaz One',cursive",l:'Fugaz One'},{v:"'Changa One',cursive",l:'Changa One'},{v:"'Black Ops One',cursive",l:'Black Ops One'},
+  ]},
+];
+
 function Logo({t,size="lg"}){
   const big=size==="lg"||size==="xl";
-  const fs=size==="xl"?"clamp(64px,17vw,116px)":size==="lg"?"clamp(52px,12vw,80px)":"36px";
-  if(t.id==="adult")return <div style={{fontFamily:t.fontTitle,fontSize:fs,letterSpacing:2,lineHeight:1,color:t.accent,animation:"flame 2.5s ease infinite"}}>
-    Esti<span style={{color:t.gold}}>Mates</span>
-    {big&&<div style={{fontFamily:t.fontBody,fontSize:size==="xl"?14:12,letterSpacing:1.8,color:t.muted,marginTop:size==="xl"?10:6,textTransform:"uppercase"}}>The pocket party game to prove your mates wrong.</div>}
-  </div>;
-  return <div style={{textAlign:"center"}}>
-    <div style={{fontFamily:t.fontTitle,fontSize:fs,lineHeight:1.1}}>
-      <span style={{animation:"rainbow 3s linear infinite"}}>Esti</span><span style={{animation:"rainbow 3s .5s linear infinite"}}>Mates</span>
+  const fs = size==="xl"?"clamp(56px,15vw,104px)" : size==="lg"?"clamp(46px,11vw,78px)" : size==="sm"?"40px" : "30px";
+  const padTop = size==="xl"?48 : size==="lg"?38 : size==="sm"?24 : 18;
+  const tagSize = size==="xl"?15 : size==="lg"?13 : 11;
+  const esti=t.logoEsti||'#1f9d75', mates=t.logoMates||'#2f8ce0', crownC=t.logoCrown||'#f5af42', glow=t.logoGlow||'#2c81ff';
+  const glowOn=t.logoGlowOn!==false;
+  const inten=t.logoGlowInt!=null?Math.max(0,t.logoGlowInt):1;
+  const tilt=t.logoTilt!=null?t.logoTilt:6;
+  const font=t.logoFont||"'Permanent Marker',cursive";
+  const brandFont=font+",'Fredoka One',cursive";
+  useEffect(()=>{ ensureLogoFont(font); },[font]);
+  const pmin=Math.round(inten*0.18);
+  // Krone sitzt über dem „?" (ersetzt das erste s)
+  const crown=<span aria-hidden="true" style={{position:'absolute',left:'50%',top:'-0.6em',
+    width:'0.86em',height:'0.62em',transform:'translate(-50%,0)',transformOrigin:'50% 100%',
+    ['--tilt']:tilt, animation:'crownFloat 2.6s ease-in-out infinite'}}>
+    <svg viewBox="0 0 100 74" style={{width:'100%',height:'100%',display:'block',overflow:'visible'}}>
+      <path d="M9 60 L20 27 L35 49 L50 16 L65 49 L80 27 L91 60 Z" fill={crownC} stroke={crownC} strokeWidth="4" strokeLinejoin="round"/>
+      <rect x="9" y="58" width="82" height="11" rx="4" fill={crownC}/>
+      <circle cx="20" cy="22" r="7" fill={crownC}/>
+      <circle cx="50" cy="10" r="8" fill={crownC}/>
+      <circle cx="80" cy="22" r="7" fill={crownC}/>
+    </svg>
+  </span>;
+  return <div style={{textAlign:'center',lineHeight:1,paddingTop:padTop}}>
+    <div style={{display:'inline-block',['--lg']:glow,['--pmin']:pmin+'px',['--pmax']:inten+'px',
+      animation:glowOn?'logoPulse 2.6s ease-in-out infinite':'none'}}>
+      <span style={{fontFamily:brandFont,fontSize:fs,fontWeight:400,letterSpacing:'-0.005em',
+        lineHeight:1,display:'inline-flex',alignItems:'flex-end',whiteSpace:'nowrap'}}>
+        <span style={{color:esti}}>e</span>
+        <span style={{color:esti,position:'relative',display:'inline-block'}}>{crown}?</span>
+        <span style={{color:esti}}>ti</span>
+        <span style={{color:mates}}>mates</span>
+      </span>
     </div>
-    {big&&<div style={{fontSize:size==="xl"?15:13,color:t.muted,marginTop:4}}>The pocket party game to prove your mates wrong. 🎉</div>}
-    {!big&&<div style={{fontSize:16,animation:"bop 1.2s ease infinite"}}>🎉✨</div>}
+    {big&&<div style={{fontFamily:t.fontBody,fontSize:tagSize,letterSpacing:'.04em',color:t.muted,
+      marginTop:size==="xl"?12:7,fontWeight:600}}>The pocket party game to prove your mates wrong.</div>}
   </div>;
 }
 function LoadingOverlay({t,text}){
