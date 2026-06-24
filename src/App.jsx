@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: new-logo+configurator v6
+// EstiMates – Build-Marker: logo-ci-sync v8
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -117,8 +117,8 @@ async function getGlobalRank(avgDiff){
 
 /* ─── THEMES ──────────────────────────────────────── */
 const ADULT = {
-  id:"adult", bg:"#0b0f10", surface:"#141a1b", card:"#1b2224", border:"#2a3437",
-  accent:"#1f9d75", gold:"#f5af42", green:"#25c08a", text:"#eef3f2", muted:"#7e8c8a", danger:"#e0526a",
+  id:"adult", bg:"#161f21", surface:"#1d282b", card:"#121a1c", border:"#2a3739",
+  accent:"#1f9d75", gold:"#f5af42", green:"#25c08a", text:"#eef3f2", muted:"#849391", danger:"#e0526a",
   fontTitle:"'Bebas Neue', sans-serif", fontBody:"'DM Sans', sans-serif", fontMono:"'DM Mono', monospace",
   radius:"10px", emoji:"🔥",
 };
@@ -157,13 +157,13 @@ function applyA11y(base){
   var th=applyBaseA11y(base);
   var o={...th};
   // Logo-Marke: Standardwerte (per CUSTOM_STYLE überschreibbar)
-  o.logoFont   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoFont)  || "'Permanent Marker',cursive";
+  o.logoFont   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoFont)  || "'Grandstander',cursive";
   o.logoEsti   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoEsti)  || '#1f9d75';
   o.logoMates  = (CUSTOM_STYLE&&CUSTOM_STYLE.logoMates) || '#2f8ce0';
   o.logoCrown  = (CUSTOM_STYLE&&CUSTOM_STYLE.logoCrown) || '#f5af42';
   o.logoGlow   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlow)  || '#2c81ff';
   o.logoGlowOn = (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlowOn!=null) ? !!CUSTOM_STYLE.logoGlowOn : true;
-  o.logoGlowInt= (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlowInt!=null) ? CUSTOM_STYLE.logoGlowInt : 1;
+  o.logoGlowInt= (CUSTOM_STYLE&&CUSTOM_STYLE.logoGlowInt!=null) ? CUSTOM_STYLE.logoGlowInt : 6;
   o.logoTilt   = (CUSTOM_STYLE&&CUSTOM_STYLE.logoTilt!=null) ? CUSTOM_STYLE.logoTilt : 6;
   var ks=CUSTOM_COLORS?Object.keys(CUSTOM_COLORS):[];
   ks.forEach(function(k){ if(CUSTOM_COLORS[k]) o[k]=CUSTOM_COLORS[k]; });
@@ -451,7 +451,7 @@ function ColorEditor({t, lang, onChange, onClose}){
       </div>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
         <span style={{flex:'0 0 auto',fontSize:13,color:t.text,fontWeight:600}}>{L('Schrift','Font','Fuente')}</span>
-        <select value={t.logoFont||"'Permanent Marker',cursive"} onChange={e=>{ ensureLogoFont(e.target.value); setStyle('logoFont',e.target.value); }}
+        <select value={t.logoFont||"'Grandstander',cursive"} onChange={e=>{ ensureLogoFont(e.target.value); setStyle('logoFont',e.target.value); }}
           style={{flex:1,minWidth:0,padding:'9px 10px',borderRadius:t.radius,background:t.surface,
             border:`1.5px solid ${t.border}`,color:t.text,fontSize:13,fontFamily:t.fontBody,cursor:'pointer'}}>
           {FONT_OPTIONS.map(grp=>(
@@ -488,10 +488,10 @@ function ColorEditor({t, lang, onChange, onClose}){
       </div>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
         <span style={{flex:'0 0 auto',fontSize:13,color:t.text,minWidth:120}}>{L('Glow-Intensität','Glow intensity','Intensidad')}</span>
-        <input type="range" min="0" max="40" value={t.logoGlowInt!=null?t.logoGlowInt:1}
+        <input type="range" min="0" max="40" value={t.logoGlowInt!=null?t.logoGlowInt:6}
           onChange={e=>setStyle('logoGlowInt',parseInt(e.target.value,10))}
           style={{flex:1,accentColor:t.accent}}/>
-        <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoGlowInt!=null?t.logoGlowInt:1)}px</span>
+        <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoGlowInt!=null?t.logoGlowInt:6)}px</span>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
         <span style={{flex:'0 0 auto',fontSize:13,color:t.text,minWidth:120}}>{L('Kippwinkel Krone','Crown tilt','Inclinación')}</span>
@@ -1502,6 +1502,42 @@ var FONT_OPTIONS=[
   ]},
 ];
 
+/* ─── APP-ICON / FAVICON (gekröntes „?" in Markenfarben) ── */
+function buildAppIconSVG(){
+  var esti=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoEsti)||'#1f9d75';
+  var crown=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoCrown)||'#f5af42';
+  var bg='#161f21';
+  return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>"
+    +"<rect width='512' height='512' rx='112' fill='"+bg+"'/>"
+    +"<text x='256' y='430' font-family='Arial Black, Arial, sans-serif' font-size='320' font-weight='900' fill='"+esti+"' text-anchor='middle'>?</text>"
+    +"<g transform='translate(176,56) scale(1.6)'>"
+    +"<path d='M9 60 L20 27 L35 49 L50 16 L65 49 L80 27 L91 60 Z' fill='"+crown+"' stroke='"+crown+"' stroke-width='4' stroke-linejoin='round'/>"
+    +"<rect x='9' y='58' width='82' height='11' rx='4' fill='"+crown+"'/>"
+    +"<circle cx='20' cy='22' r='7' fill='"+crown+"'/><circle cx='50' cy='10' r='8' fill='"+crown+"'/><circle cx='80' cy='22' r='7' fill='"+crown+"'/>"
+    +"</g></svg>";
+}
+function injectAppIcons(){
+  try{
+    var svg=buildAppIconSVG();
+    var uri='data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+    var fav=document.querySelector("link[rel='icon']")||document.createElement('link');
+    fav.setAttribute('rel','icon'); fav.setAttribute('type','image/svg+xml'); fav.setAttribute('href',uri);
+    if(!fav.parentNode) document.head.appendChild(fav);
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var c=document.createElement('canvas'); c.width=512; c.height=512;
+        c.getContext('2d').drawImage(img,0,0,512,512);
+        var png=c.toDataURL('image/png');
+        var at=document.querySelector("link[rel='apple-touch-icon']")||document.createElement('link');
+        at.setAttribute('rel','apple-touch-icon'); at.setAttribute('href',png);
+        if(!at.parentNode) document.head.appendChild(at);
+      }catch(e){}
+    };
+    img.src=uri;
+  }catch(e){}
+}
+
 function Logo({t,size="lg"}){
   const big=size==="lg"||size==="xl";
   const fs = size==="xl"?"clamp(56px,15vw,104px)" : size==="lg"?"clamp(46px,11vw,78px)" : size==="sm"?"40px" : "30px";
@@ -1509,9 +1545,9 @@ function Logo({t,size="lg"}){
   const tagSize = size==="xl"?15 : size==="lg"?13 : 11;
   const esti=t.logoEsti||'#1f9d75', mates=t.logoMates||'#2f8ce0', crownC=t.logoCrown||'#f5af42', glow=t.logoGlow||'#2c81ff';
   const glowOn=t.logoGlowOn!==false;
-  const inten=t.logoGlowInt!=null?Math.max(0,t.logoGlowInt):1;
+  const inten=t.logoGlowInt!=null?Math.max(0,t.logoGlowInt):6;
   const tilt=t.logoTilt!=null?t.logoTilt:6;
-  const font=t.logoFont||"'Permanent Marker',cursive";
+  const font=t.logoFont||"'Grandstander',cursive";
   const brandFont=font+",'Fredoka One',cursive";
   useEffect(()=>{ ensureLogoFont(font); },[font]);
   const pmin=Math.round(inten*0.18);
@@ -4127,6 +4163,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
     },1000);
     return()=>clearInterval(iv);
   },[room.q?.id]);
+  useEffect(()=>{ ensureLogoFont((room&&room.logoCfg&&room.logoCfg.font)||t.logoFont); },[room?.logoCfg?.font,t.logoFont]);
   const sorted = [...pl].sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0));
   const medals = ['🥇','🥈','🥉'];
 
@@ -4135,7 +4172,7 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const lightBeamer = !!room?.lightMode;
   const baseD = lightBeamer
     ? {bg:'#f3ece2', surface:'#ffffff', card:'#fbf6ee', border:'#e4d8c7', text:'#2b211a', muted:'#9b8b7b'}
-    : {bg:'#0f0a06', surface:'#1a120a', card:'#181310', border:'#2a1a0e', text:'#f2ece6', muted:'#6e5e54'};
+    : {bg:'#161f21', surface:'#1d282b', card:'#121a1c', border:'#2a3739', text:'#eef3f2', muted:'#849391'};
   const D = {
     bg:     ct.bg     || baseD.bg,
     surface:ct.surface|| baseD.surface,
@@ -4147,6 +4184,11 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
   const gold   = ct.gold   || t.gold;
   const accent = ct.accent || t.accent;
   const beamerT={...t, border:D.border, green: ct.green||t.green, gold, accent, danger: ct.danger||t.danger, surface:D.surface, text:D.text, muted:D.muted};
+  // Logo-Marke im Beamer (Raum-CI bevorzugt, sonst lokale Werte)
+  const _lc=(room&&room.logoCfg&&typeof room.logoCfg==='object')?room.logoCfg:{};
+  const lEsti=_lc.esti||t.logoEsti||'#1f9d75', lMates=_lc.mates||t.logoMates||'#2f8ce0', lCrown=_lc.crown||t.logoCrown||'#f5af42', lGlow=_lc.glow||t.logoGlow||'#2c81ff';
+  const lFont=(_lc.font||t.logoFont||"'Grandstander',cursive")+",'Fredoka One',cursive";
+  const lGlowOn=_lc.glowOn!=null?!!_lc.glowOn:(t.logoGlowOn!==false), lInt=_lc.glowInt!=null?Math.max(0,_lc.glowInt):(t.logoGlowInt!=null?Math.max(0,t.logoGlowInt):6), lTilt=_lc.tilt!=null?_lc.tilt:(t.logoTilt!=null?t.logoTilt:6);
 
   const ranked = q ? pl.filter(p=>guesses[p.id]!=null&&guesses[p.id]!==-999999&&!afkPlayers[p.id])
     .map(p=>({...p,guess:guesses[p.id],diff:Math.abs(guesses[p.id]-q.a)}))
@@ -4258,9 +4300,24 @@ function DisplayScreen({room, code, t, lang, onKick=null}) {
       <div style={{display:'flex',alignItems:'center',gap:room.bizLogo?22:14}}>
         {room.bizLogo && <img src={room.bizLogo} alt="" style={{height:82,width:'auto',maxWidth:300,objectFit:'contain'}}/>}
         <div style={{display:'flex',flexDirection:'column',gap:3}}>
-          <div style={{display:'flex',alignItems:'baseline',gap:4}}>
-            <span style={{fontSize:room.bizLogo?40:32,fontWeight:900,color:accent,fontFamily:t.fontTitle}}>Esti</span>
-            <span style={{fontSize:room.bizLogo?40:32,fontWeight:900,color:gold,fontFamily:t.fontTitle}}>Mates</span>
+          <div style={{display:'inline-block',['--lg']:lGlow,['--pmin']:Math.round(lInt*0.18)+'px',['--pmax']:lInt+'px',
+            animation:lGlowOn?'logoPulse 2.6s ease-in-out infinite':'none'}}>
+            <span style={{fontFamily:lFont,fontSize:room.bizLogo?42:34,fontWeight:400,lineHeight:1,
+              letterSpacing:'-0.01em',display:'inline-flex',alignItems:'flex-end',whiteSpace:'nowrap'}}>
+              <span style={{color:lEsti}}>e</span>
+              <span style={{color:lEsti,position:'relative',display:'inline-block'}}>
+                <span aria-hidden="true" style={{position:'absolute',left:'50%',top:'-0.6em',width:'0.86em',height:'0.62em',
+                  transform:'translate(-50%,0)',transformOrigin:'50% 100%',['--tilt']:lTilt,animation:'crownFloat 2.6s ease-in-out infinite'}}>
+                  <svg viewBox="0 0 100 74" style={{width:'100%',height:'100%',display:'block',overflow:'visible'}}>
+                    <path d="M9 60 L20 27 L35 49 L50 16 L65 49 L80 27 L91 60 Z" fill={lCrown} stroke={lCrown} strokeWidth="4" strokeLinejoin="round"/>
+                    <rect x="9" y="58" width="82" height="11" rx="4" fill={lCrown}/>
+                    <circle cx="20" cy="22" r="7" fill={lCrown}/><circle cx="50" cy="10" r="8" fill={lCrown}/><circle cx="80" cy="22" r="7" fill={lCrown}/>
+                  </svg>
+                </span>?
+              </span>
+              <span style={{color:lEsti}}>ti</span>
+              <span style={{color:lMates}}>mates</span>
+            </span>
           </div>
           {room.bizName
             ? <span style={{fontSize:room.bizLogo?15:12,color:D.muted,letterSpacing:.4}}>powered by <span style={{color:D.text,fontWeight:800}}>{room.bizName}</span></span>
@@ -7969,21 +8026,40 @@ function App(){
   const advanceBetPhaseRef=useRef(false);
   const baseTheme=applyA11y(mode==="kids"?KIDS:ADULT);
   const isHostHere = !!(room && room.hostId && myId && room.hostId===myId);
-  // CI-Farben des Gastgebers auf alle Teilnehmer-Geräte spielen (Host hat sie lokal schon)
-  const t = (room && room.theme && typeof room.theme==='object' && !isHostHere)
+  // CI-Farben + Logo des Gastgebers auf alle Teilnehmer-Geräte spielen (Host hat sie lokal schon)
+  let t = (room && room.theme && typeof room.theme==='object' && !isHostHere)
     ? {...baseTheme, ...room.theme}
     : baseTheme;
+  if(room && room.logoCfg && typeof room.logoCfg==='object' && !isHostHere){
+    const lc=room.logoCfg;
+    t = {...t,
+      logoFont:lc.font||t.logoFont, logoEsti:lc.esti||t.logoEsti, logoMates:lc.mates||t.logoMates,
+      logoCrown:lc.crown||t.logoCrown, logoGlow:lc.glow||t.logoGlow,
+      logoGlowOn: lc.glowOn!=null?!!lc.glowOn:t.logoGlowOn,
+      logoGlowInt: lc.glowInt!=null?lc.glowInt:t.logoGlowInt,
+      logoTilt: lc.tilt!=null?lc.tilt:t.logoTilt};
+  }
   useEffect(()=>{inject(globalCSS(t));},[t]);
   const[a11yTick,setA11yTick]=useState(0);
-  useEffect(()=>{ applyLargeText(); },[]);
+  useEffect(()=>{ applyLargeText(); injectAppIcons(); },[]);
   function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
   // Hellen Modus + Custom-Farben (CI) des Hosts in den Raum spiegeln → Beamer übernimmt sie
   useEffect(()=>{
     if(!code || !isHostRef.current) return;
     const hasColors = typeof CUSTOM_COLORS!=='undefined' && CUSTOM_COLORS && Object.keys(CUSTOM_COLORS).length>0;
+    const cs = (typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE)?CUSTOM_STYLE:{};
+    const logoCfg = {
+      font: cs.logoFont||"'Grandstander',cursive",
+      esti: cs.logoEsti||'#1f9d75', mates: cs.logoMates||'#2f8ce0',
+      crown: cs.logoCrown||'#f5af42', glow: cs.logoGlow||'#2c81ff',
+      glowOn: cs.logoGlowOn!=null?!!cs.logoGlowOn:true,
+      glowInt: cs.logoGlowInt!=null?cs.logoGlowInt:6,
+      tilt: cs.logoTilt!=null?cs.logoTilt:6,
+    };
     update(ref(db,`rooms/${code}`),{
       lightMode: !!(typeof A11Y!=='undefined'&&A11Y.light),
       theme: hasColors ? CUSTOM_COLORS : null,
+      logoCfg,
     }).catch(()=>{});
   },[code,a11yTick,room?.hostId]);
   // Business-CI (Name + Logo) des Hosts in den Raum spiegeln → Beamer & Lobby zeigen "powered by"
