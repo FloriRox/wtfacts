@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: question-editor-compact v1
+// EstiMates – Build-Marker: team-help-overlay v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -6448,6 +6448,64 @@ var OCCASION_TEMPLATES = {
 };
 
 /* ─── TEAM / BUSINESS-ACCOUNT (Slice A: Mitglieder & Rollen) ── */
+/* ─── TEAM-HILFE ──────────────────────────────────── */
+function TeamHelpOverlay({t, lang, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const steps=[
+    {icon:'➕', title:L('Team erstellen','Create a team','Crear un equipo'),
+      body:L('Gib unter „Neues Team" einen Namen ein und tippe auf „Erstellen". Du wirst automatisch Inhaber und bekommst einen Team-Code zum Teilen.',
+             'Enter a name under "New team" and tap "Create". You automatically become the owner and get a team code to share.',
+             'Escribe un nombre en "Nuevo equipo" y pulsa "Crear". Te conviertes en propietario y obtienes un código para compartir.')},
+    {icon:'🔑', title:L('Team beitreten','Join a team','Unirse a un equipo'),
+      body:L('Den Team-Code vom Inhaber erhalten und unter „Team beitreten" eingeben. Der Inhaber muss deine Anfrage noch bestätigen, bevor du Mitglied wirst.',
+             'Get the team code from the owner and enter it under "Join team". The owner still has to approve your request before you become a member.',
+             'Pide el código al propietario e introdúcelo en "Unirse a equipo". El propietario debe aprobar tu solicitud antes de que seas miembro.')},
+    {icon:'✓', title:L('Anfragen bestätigen','Approving requests','Aprobar solicitudes'),
+      body:L('Als Inhaber siehst du offene Anfragen direkt in deiner Team-Karte und kannst sie mit einem Tap annehmen oder ablehnen.',
+             'As owner, you see open requests directly in your team card and can accept or decline them with one tap.',
+             'Como propietario, ves las solicitudes pendientes en la tarjeta del equipo y puedes aceptarlas o rechazarlas con un toque.')},
+    {icon:'🎚️', title:L('Rollen','Roles','Roles'),
+      body:L('Inhaber verwaltet alles. Editor darf Team-Packs & Team-CIs bearbeiten. Betrachter darf sie nur nutzen. Der Inhaber stellt die Rolle pro Mitglied ein.',
+             'Owner manages everything. Editor can edit team packs & team CIs. Viewer can only use them. The owner sets each member\'s role.',
+             'El propietario gestiona todo. El editor puede editar paquetes y CIs del equipo. El lector solo puede usarlos. El propietario asigna el rol.')},
+    {icon:'📦', title:L('Team-Packs','Team packs','Paquetes de equipo'),
+      body:L('Gemeinsame Fragen-Packs, die alle Mitglieder live bearbeiten und in ihren eigenen Spielrunden als Kategorie nutzen können.',
+             'Shared question packs that all members can edit live and use as a category in their own game rounds.',
+             'Paquetes de preguntas compartidos que todos los miembros pueden editar en vivo y usar como categoría en sus partidas.')},
+    {icon:'🎨', title:L('Team-CIs','Team CIs','CIs del equipo'),
+      body:L('Gemeinsame Farbkonzepte (z. B. eure Firmenfarben), die jedes Mitglied mit einem Tap in seinen eigenen Spielrunden anwenden kann.',
+             'Shared color themes (e.g. your company colors) that any member can apply with one tap in their own game rounds.',
+             'Temas de color compartidos (p. ej. los de tu empresa) que cualquier miembro puede aplicar con un toque en sus partidas.')},
+  ];
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:600,
+    background:'rgba(0,0,0,0.72)',display:'flex',alignItems:'center',justifyContent:'center',
+    padding:18}}>
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal-85" style={{background:t.card,borderRadius:t.radius,
+      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',
+      overflowY:'auto',padding:'22px 20px',animation:'fu .25s ease both'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+        <h2 style={{fontFamily:t.fontTitle,fontSize:24,margin:0,color:t.text}}>
+          {L('So funktionieren Teams','How teams work','Cómo funcionan los equipos')}
+        </h2>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,
+          fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+        {steps.map((s,idx)=><div key={idx} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+          <span style={{fontSize:24,flexShrink:0,lineHeight:1.1}}>{s.icon}</span>
+          <div>
+            <p style={{fontSize:14,fontWeight:800,color:t.text,margin:'0 0 3px'}}>{s.title}</p>
+            <p style={{fontSize:13,color:t.muted,margin:0,lineHeight:1.5}}>{s.body}</p>
+          </div>
+        </div>)}
+      </div>
+      <Btn t={t} onClick={onClose} full style={{marginTop:20}}>
+        {L('Verstanden','Got it','Entendido')}
+      </Btn>
+    </div>
+  </div>;
+}
+
 function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const[teamsMap,setTeamsMap]=useState({});
@@ -6463,6 +6521,7 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
   const[qEdit,setQEdit]=useState(null); // {teamId,packId,qId|null,q,a,unit,hint,emoji}
   const[pendingMap,setPendingMap]=useState({}); // teamId -> {name} (eigene ausstehende Anfragen)
   const[ciNames,setCiNames]=useState({}); // teamId -> Eingabe-Name fürs Speichern eines CI
+  const[showHelp,setShowHelp]=useState(false);
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
 
   const roleLabel=r=>r==='owner'?L('Inhaber','Owner','Propietario'):r==='viewer'?L('Betrachter','Viewer','Lector'):L('Editor','Editor','Editor');
@@ -6706,10 +6765,15 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
     fontFamily:t.fontBody,boxSizing:'border-box'};
 
   return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
+    {showHelp&&<TeamHelpOverlay t={t} lang={lang} onClose={()=>setShowHelp(false)}/>}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
-      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,flex:1}}>
         👥 {L('Team','Team','Equipo')}
       </h2>
+      <button onClick={()=>setShowHelp(true)} title={L('So geht\'s','How it works','Cómo funciona')}
+        style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:'50%',
+          width:34,height:34,color:t.muted,fontSize:16,fontWeight:800,cursor:'pointer',
+          flexShrink:0,fontFamily:t.fontBody}}>?</button>
     </div>
 
     <p style={{fontSize:12,color:t.muted,margin:'0 0 16px',lineHeight:1.5}}>
