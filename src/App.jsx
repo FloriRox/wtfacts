@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: myquestions-vertical-buttons v1
+// EstiMates – Build-Marker: question-editor-compact v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -7394,7 +7394,25 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
             :'Fertige Anlass-Pakete (~22 Fragen) – oder eine leere CSV-Vorlage zum selbst Ausfüllen. Bei Anlässen: Antworten an euer Event anpassen!'}
         </p>
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
-          {Object.entries(OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de).map(([occId,occ])=>(
+          <button onClick={()=>{ setShowOccasions(false); downloadTemplate(); }}
+            style={{display:'flex',alignItems:'center',gap:12,width:'100%',
+              padding:'14px 16px',borderRadius:t.radius,background:t.surface,
+              border:`1.5px dashed ${t.border}`,cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
+            <span style={{fontSize:26,flexShrink:0}}>📄</span>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 1px'}}>
+                {lang==='en'?'Blank template (CSV)':lang==='es'?'Plantilla en blanco (CSV)':'Leere Vorlage (CSV)'}
+              </p>
+              <p style={{fontSize:11,color:t.muted,margin:0}}>
+                {lang==='en'?'Fill in Excel/Sheets, then import':lang==='es'?'Rellena en Excel/Sheets e importa':'In Excel/Sheets ausfüllen, dann importieren'}
+              </p>
+            </div>
+            <span style={{color:t.muted,fontSize:18,flexShrink:0}}>⬇</span>
+          </button>
+          <div style={{height:1,background:t.border,margin:'2px 0'}}/>
+          {Object.entries(OCCASION_TEMPLATES[lang]||OCCASION_TEMPLATES.de)
+            .sort((a,b)=>a[1].name.replace(/^[^\s]+\s/,'').localeCompare(b[1].name.replace(/^[^\s]+\s/,''),lang||'de'))
+            .map(([occId,occ])=>(
             <button key={occId} onClick={()=>loadOccasion(occId)}
               style={{display:'flex',alignItems:'center',gap:12,width:'100%',
                 padding:'14px 16px',borderRadius:t.radius,background:t.surface,
@@ -7411,22 +7429,6 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
               <span style={{color:t.gold,fontSize:18,fontWeight:800,flexShrink:0}}>+</span>
             </button>
           ))}
-          <div style={{height:1,background:t.border,margin:'2px 0'}}/>
-          <button onClick={()=>{ setShowOccasions(false); downloadTemplate(); }}
-            style={{display:'flex',alignItems:'center',gap:12,width:'100%',
-              padding:'14px 16px',borderRadius:t.radius,background:t.surface,
-              border:`1.5px dashed ${t.border}`,cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'}}>
-            <span style={{fontSize:26,flexShrink:0}}>📄</span>
-            <div style={{flex:1,minWidth:0}}>
-              <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 1px'}}>
-                {lang==='en'?'Blank template (CSV)':lang==='es'?'Plantilla en blanco (CSV)':'Leere Vorlage (CSV)'}
-              </p>
-              <p style={{fontSize:11,color:t.muted,margin:0}}>
-                {lang==='en'?'Fill in Excel/Sheets, then import':lang==='es'?'Rellena en Excel/Sheets e importa':'In Excel/Sheets ausfüllen, dann importieren'}
-              </p>
-            </div>
-            <span style={{color:t.muted,fontSize:18,flexShrink:0}}>⬇</span>
-          </button>
         </div>
       </div>
     </div>}
@@ -7674,7 +7676,6 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
   }
 
   const labelStyle={fontSize:13,color:t.text,fontWeight:600,margin:'0 0 4px',display:'block'};
-  const sectionStyle={borderTop:`1px solid ${t.border}`,paddingTop:14,marginTop:2};
   const selectStyle={width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
     borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
     fontFamily:t.fontBody,boxSizing:'border-box',cursor:'pointer',appearance:'none',
@@ -7697,7 +7698,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
           flexShrink:0,fontFamily:t.fontBody}}>?</button>
     </div>
 
-    <Card t={t} style={{display:'flex',flexDirection:'column',gap:14}}>
+    <Card t={t} style={{display:'flex',flexDirection:'column',gap:10}}>
       {/* 1) Die Frage – das Wichtigste zuerst */}
       <div>
         <span style={labelStyle}>
@@ -7708,7 +7709,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
         <textarea value={q} onChange={e=>setQ(e.target.value)}
           placeholder={lang==='en'?'How many days did...':
             lang==='es'?'Cuántos días duró...':'Wie viele Tage dauerte...'}
-          rows={3}
+          rows={2}
           style={{width:'100%',background:t.surface,border:`1.5px solid ${t.border}`,
             borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
             fontFamily:t.fontBody,resize:'none',boxSizing:'border-box'}}/>
@@ -7733,7 +7734,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
       </div>
 
       {/* 3) Darstellung: Emoji + Hinweis */}
-      <div style={sectionStyle}>
+      <div>
         <span style={labelStyle}>
           {lang==='en'?'Icon':lang==='es'?'Icono':'Symbol'}
         </span>
@@ -7755,7 +7756,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
       </div>
 
       {/* 4) Pack / Kategorie – Dropdown statt Knopf-Wolke */}
-      <div style={sectionStyle}>
+      <div>
         <span style={labelStyle}>
           📦 {lang==='en'?'Pack / category':lang==='es'?'Paquete / categoría':'Pack / Kategorie'}
         </span>
@@ -7781,7 +7782,7 @@ function QuestionEditorScreen({myId, t, lang, initial, onSave, onCancel, existin
       </div>
 
       {/* 5) Sichtbarkeit */}
-      <div style={sectionStyle}>
+      <div>
         <span style={labelStyle}>
           {lang==='en'?'Visibility':lang==='es'?'Visibilidad':'Sichtbarkeit'}
         </span>
