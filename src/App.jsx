@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: logo-ci-sync v8
+// EstiMates – Build-Marker: icon-laser-final v14
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -1473,7 +1473,9 @@ function Avatar({name,t,size=36}){
 /* ─── LOGO-SCHRIFTEN (bei Bedarf nachladen) ── */
 var _logoFontsLoaded={};
 function fontFamilyName(val){ try{ var m=String(val).match(/'([^']+)'/); return m?m[1]:String(val).split(',')[0].trim(); }catch(e){ return ''; } }
-var FONT_QUERY={'Baloo 2':'Baloo+2:wght@700;800','Quicksand':'Quicksand:wght@700','Sniglet':'Sniglet:wght@800','Grandstander':'Grandstander:wght@700','Passion One':'Passion+One:wght@700','Fredoka':'Fredoka:wght@600','Caveat':'Caveat:wght@700'};
+var FONT_QUERY={'Baloo 2':'Baloo+2:wght@700;800','Quicksand':'Quicksand:wght@700','Sniglet':'Sniglet:wght@800','Grandstander':'Grandstander:wght@600;700;800','Passion One':'Passion+One:wght@700','Fredoka':'Fredoka:wght@600','Caveat':'Caveat:wght@700'};
+var FONT_WEIGHT={'Grandstander':800,'Baloo 2':800,'Quicksand':700,'Sniglet':800,'Passion One':700,'Caveat':700,'Fredoka':600};
+function logoFontWeight(val){ var n=fontFamilyName(val); return FONT_WEIGHT[n]||400; }
 function ensureLogoFont(val){
   var name=fontFamilyName(val); if(!name||_logoFontsLoaded[name]) return;
   _logoFontsLoaded[name]=true;
@@ -1502,39 +1504,40 @@ var FONT_OPTIONS=[
   ]},
 ];
 
-/* ─── APP-ICON / FAVICON (gekröntes „?" in Markenfarben) ── */
+/* ─── APP-ICON / FAVICON (gekröntes „E?" auf Marken-Verlauf) ── */
 function buildAppIconSVG(){
   var esti=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoEsti)||'#1f9d75';
-  var crown=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoCrown)||'#f5af42';
-  var bg='#161f21';
+  var mates=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoMates)||'#2f8ce0';
+  var ff="'Grandstander','Poppins','Fredoka One',system-ui,'Segoe UI',Arial,sans-serif";
+  var half=148, h=2.6, cy=257; // tapered spear/lens laser dimensions
+  var lensPath="M "+(256-half)+","+cy+" C "+(256-half*0.5)+","+(cy-h)+" "+(256+half*0.5)+","+(cy-h)+" "+(256+half)+","+cy+
+    " C "+(256+half*0.5)+","+(cy+h)+" "+(256-half*0.5)+","+(cy+h)+" "+(256-half)+","+cy+" Z";
+  var glowH=h*3.2;
+  var lensGlow="M "+(256-half)+","+cy+" C "+(256-half*0.5)+","+(cy-glowH)+" "+(256+half*0.5)+","+(cy-glowH)+" "+(256+half)+","+cy+
+    " C "+(256+half*0.5)+","+(cy+glowH)+" "+(256-half*0.5)+","+(cy+glowH)+" "+(256-half)+","+cy+" Z";
   return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>"
-    +"<rect width='512' height='512' rx='112' fill='"+bg+"'/>"
-    +"<text x='256' y='430' font-family='Arial Black, Arial, sans-serif' font-size='320' font-weight='900' fill='"+esti+"' text-anchor='middle'>?</text>"
-    +"<g transform='translate(176,56) scale(1.6)'>"
-    +"<path d='M9 60 L20 27 L35 49 L50 16 L65 49 L80 27 L91 60 Z' fill='"+crown+"' stroke='"+crown+"' stroke-width='4' stroke-linejoin='round'/>"
-    +"<rect x='9' y='58' width='82' height='11' rx='4' fill='"+crown+"'/>"
-    +"<circle cx='20' cy='22' r='7' fill='"+crown+"'/><circle cx='50' cy='10' r='8' fill='"+crown+"'/><circle cx='80' cy='22' r='7' fill='"+crown+"'/>"
-    +"</g></svg>";
+    +"<defs>"
+    +"<linearGradient id='bg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0c1417'/><stop offset='1' stop-color='#070b0d'/></linearGradient>"
+    +"<radialGradient id='glow' cx='50%' cy='50%' r='46%'><stop offset='0' stop-color='#2c81ff' stop-opacity='0.55'/><stop offset='1' stop-color='#2c81ff' stop-opacity='0'/></radialGradient>"
+    +"<radialGradient id='glow2' cx='50%' cy='46%' r='30%'><stop offset='0' stop-color='#2c81ff' stop-opacity='0.35'/><stop offset='1' stop-color='#2c81ff' stop-opacity='0'/></radialGradient>"
+    +"<filter id='lb' x='-50%' y='-300%' width='200%' height='700%'><feGaussianBlur stdDeviation='7'/></filter>"
+    +"</defs>"
+    +"<rect width='512' height='512' rx='113' fill='url(#bg)'/>"
+    +"<rect width='512' height='512' rx='113' fill='url(#glow)'/>"
+    +"<rect width='512' height='512' rx='113' fill='url(#glow2)'/>"
+    +"<path d='"+lensGlow+"' fill='#2c81ff' opacity='0.85' filter='url(#lb)'/>"
+    +"<path d='"+lensPath+"' fill='#4696ff'/>"
+    +"<text x='256' y='245' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+esti+"'>e?ti</text>"
+    +"<text x='256' y='357' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+mates+"'>mates</text>"
+    +"<rect x='2' y='2' width='508' height='508' rx='111' fill='none' stroke='#ffffff' stroke-opacity='0.15' stroke-width='3'/>"
+    +"</svg>";
 }
 function injectAppIcons(){
   try{
-    var svg=buildAppIconSVG();
-    var uri='data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+    var uri='data:image/svg+xml;utf8,'+encodeURIComponent(buildAppIconSVG());
     var fav=document.querySelector("link[rel='icon']")||document.createElement('link');
     fav.setAttribute('rel','icon'); fav.setAttribute('type','image/svg+xml'); fav.setAttribute('href',uri);
     if(!fav.parentNode) document.head.appendChild(fav);
-    var img=new Image();
-    img.onload=function(){
-      try{
-        var c=document.createElement('canvas'); c.width=512; c.height=512;
-        c.getContext('2d').drawImage(img,0,0,512,512);
-        var png=c.toDataURL('image/png');
-        var at=document.querySelector("link[rel='apple-touch-icon']")||document.createElement('link');
-        at.setAttribute('rel','apple-touch-icon'); at.setAttribute('href',png);
-        if(!at.parentNode) document.head.appendChild(at);
-      }catch(e){}
-    };
-    img.src=uri;
   }catch(e){}
 }
 
