@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: floating-nav v1
+// EstiMates – Build-Marker: midnight-mint-theme v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -117,8 +117,8 @@ async function getGlobalRank(avgDiff){
 
 /* ─── THEMES ──────────────────────────────────────── */
 const ADULT = {
-  id:"adult", bg:"#161f21", surface:"#1d282b", card:"#121a1c", border:"#2a3739",
-  accent:"#1f9d75", gold:"#f5af42", green:"#25c08a", text:"#eef3f2", muted:"#849391", danger:"#e0526a",
+  id:"adult", bg:"#0F1525", surface:"#182034", card:"#202B45", border:"#2E3B57",
+  accent:"#3B82F6", gold:"#FFB84D", green:"#34D399", text:"#EDF1FB", muted:"#8B97AE", danger:"#F1566B",
   fontTitle:"'Bebas Neue', sans-serif", fontBody:"'DM Sans', sans-serif", fontMono:"'DM Mono', monospace",
   radius:"10px", emoji:"🔥",
 };
@@ -130,7 +130,7 @@ const KIDS = {
 };
 
 /* ─── BARRIEREFREIHEIT (global, persistent) ──────── */
-function loadA11y(){ try{ var o=JSON.parse(localStorage.getItem('em_a11y')||'{}')||{}; if(o.contrast===undefined) o.contrast=true; return o; }catch(e){ return {contrast:true}; } }
+function loadA11y(){ try{ var o=JSON.parse(localStorage.getItem('em_a11y')||'{}')||{}; return o; }catch(e){ return {}; } }
 var A11Y = loadA11y();
 function applyLargeText(){ try{ document.documentElement.style.zoom = A11Y.large ? '1.12' : ''; }catch(e){} }
 function setA11yPref(key,val){ A11Y={...A11Y,[key]:val}; try{ localStorage.setItem('em_a11y',JSON.stringify(A11Y)); }catch(e){} applyLargeText(); }
@@ -180,10 +180,10 @@ function applyBaseA11y(base){
   var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0)+'|'+(A11Y.light?1:0);
   if(_a11yCache[key]) return _a11yCache[key];
   var t={...base};
-  // Heller/freundlicher Modus (nur Adult): warme, einladende Palette – ersetzt den Dark-Look
+  // Heller/freundlicher Modus (nur Adult): Mint Frisch – ersetzt den Mitternachtsblau-Look
   if(A11Y.light && base.id==='adult'){
-    t={...t, bg:'#faf5ee', surface:'#ffffff', card:'#ffffff', border:'#e7dccd',
-      accent:'#e8470a', gold:'#dd7d12', green:'#1f9d63', text:'#2b211a', muted:'#9b8b7b'};
+    t={...t, bg:'#F0FAF5', surface:'#FFFFFF', card:'#F6FDF9', border:'#CFE9DD',
+      accent:'#0FA98E', gold:'#F2A93B', green:'#17B26A', danger:'#E5484D', text:'#1E2B27', muted:'#6E8A80'};
     if(A11Y.cb) t.green='#2f7fe0';
     _a11yCache[key]=t; return t; // im hellen Modus kein zusätzlicher Dark-Kontrast
   }
@@ -249,10 +249,6 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null, onOpenBusi
 }
 
 var COLOR_PRESETS = [
-  {id:'dark',      emoji:'🌙', name:{de:'Standard Dunkel',en:'Default Dark',es:'Oscuro estándar'},
-    colors:{bg:'#0d0b0a',surface:'#181310',card:'#211c18',border:'#32261e',accent:'#e8360a',gold:'#ff8c2a',green:'#39d98a',danger:'#cc2244',text:'#f2ece6',muted:'#6e5e54'}},
-  {id:'light',     emoji:'☀️', name:{de:'Standard Hell',en:'Default Light',es:'Claro estándar'},
-    colors:{bg:'#faf5ee',surface:'#ffffff',card:'#ffffff',border:'#e7dccd',accent:'#e8470a',gold:'#dd7d12',green:'#1f9d63',danger:'#d6334e',text:'#2b211a',muted:'#9b8b7b'}},
   {id:'midnight',  emoji:'🌌', name:{de:'Mitternachtsblau',en:'Midnight Blue',es:'Azul medianoche'},
     colors:{bg:'#0F1525',surface:'#182034',card:'#202B45',border:'#2E3B57',accent:'#3B82F6',gold:'#FFB84D',green:'#34D399',danger:'#F1566B',text:'#EDF1FB',muted:'#8B97AE'}},
   {id:'coral',     emoji:'🪸', name:{de:'Koralle',en:'Coral',es:'Coral'},
@@ -8048,7 +8044,13 @@ function App(){
   useEffect(()=>{inject(globalCSS(t));},[t]);
   const[a11yTick,setA11yTick]=useState(0);
   useEffect(()=>{ applyLargeText(); injectAppIcons(); },[]);
-  function handleA11y(key,val){ setA11yPref(key,val); setA11yTick(x=>x+1); }
+  function handleA11y(key,val){
+    setA11yPref(key,val);
+    // Hell/Dunkel ist ein Basis-Modus – eine zuvor gespeicherte eigene Farbgebung
+    // würde ihn sonst unsichtbar überdecken, also beim Umschalten zurücksetzen.
+    if(key==='light') resetCustomColors();
+    setA11yTick(x=>x+1);
+  }
   // Hellen Modus + Custom-Farben (CI) des Hosts in den Raum spiegeln → Beamer übernimmt sie
   useEffect(()=>{
     if(!code || !isHostRef.current) return;
