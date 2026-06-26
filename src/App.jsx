@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: icon-vcenter-fix v15
+// EstiMates – Build-Marker: floating-nav v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -2241,7 +2241,51 @@ function CountdownOverlay({t, lang, onDone}) {
   </div>;
 }
 
-function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null,onOpenBusiness=null}){
+function FloatingNav({t, lang, active, onNavigate, isAdmin}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const items=[
+    {key:'home', icon:'🏠', label:L('Home','Home','Inicio')},
+    {key:'myQuestions', icon:'📝', label:L('Fragen','Questions','Preguntas')},
+    {key:'team', icon:'👥', label:L('Team','Team','Equipo')},
+    {key:'settings', icon:'⚙️', label:L('Settings','Settings','Ajustes')},
+  ];
+  if(isAdmin) items.push({key:'admin', icon:'📊', label:'Admin'});
+  return <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',
+    display:'flex',gap:2,background:t.surface,border:`1.5px solid ${t.border}`,
+    borderRadius:100,padding:5,boxShadow:'0 6px 24px rgba(0,0,0,.35)',zIndex:90,
+    maxWidth:'calc(100vw - 16px)',overflowX:'auto'}}>
+    {items.map(it=>{
+      const isActive=active===it.key;
+      return <button key={it.key} onClick={()=>onNavigate(it.key)}
+        style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1,
+          padding:'7px 13px',borderRadius:100,border:'none',cursor:'pointer',flexShrink:0,
+          background:isActive?t.accent+'20':'transparent',
+          color:isActive?t.accent:t.muted,fontFamily:t.fontBody,
+          transition:'background .15s,color .15s'}}>
+        <span style={{fontSize:17,lineHeight:1}}>{it.icon}</span>
+        <span style={{fontSize:9,fontWeight:800,lineHeight:1.3,whiteSpace:'nowrap'}}>{it.label}</span>
+      </button>;
+    })}
+  </div>;
+}
+
+function SettingsScreen({t, lang, onA11y, onOpenColors, onOpenBusiness}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:'0 0 18px'}}>
+      ⚙️ {L('Einstellungen','Settings','Ajustes')}
+    </h2>
+    <Card t={t}>
+      <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,
+        margin:'0 0 10px',textTransform:'uppercase'}}>
+        {L('Anzeige & Barrierefreiheit','Display & accessibility','Pantalla y accesibilidad')}
+      </p>
+      <A11yMenu t={t} lang={lang} onA11y={onA11y} onOpenColors={onOpenColors} onOpenBusiness={onOpenBusiness}/>
+    </Card>
+  </div>;
+}
+
+function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null,onShowLogin=null,onSignOut=null,onShowOnboarding=null,onMyQuestions=null,onAdmin=null,onA11y=null,onTeam=null,profile=null,onOpenColors=null,onOpenBusiness=null,onTabChange=null}){
   const i=UI[lang]||UI.de;
   const[tab,setTab]=useState(()=>new URLSearchParams(location.search).get("room")?"join":location.search.includes("daily")?"daily":"landing");
   const[name,setName]=useState("");
@@ -2262,13 +2306,13 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   const[mode,setMode]=useState("adult");
   const[error,setError]=useState("");
   const[busy,setBusy]=useState(false);
-  const[a11yOpen,setA11yOpen]=useState(false);
   const t=applyA11y(mode==="kids"?KIDS:ADULT);
   const menuRow={display:'flex',alignItems:'center',gap:12,width:'100%',
     padding:'13px 16px',borderRadius:t.radius,background:t.surface,
     border:`1px solid ${t.border}`,color:t.text,fontSize:14,fontWeight:600,
     cursor:'pointer',fontFamily:t.fontBody,textAlign:'left'};
   useEffect(()=>{inject(globalCSS(tab==="landing"?applyA11y(ADULT):t));},[t,tab]);
+  useEffect(()=>{ onTabChange&&onTabChange(tab); },[tab]);
 
   async function submit(){
     if(!name.trim()){setError(i.enterName);return;}
@@ -2308,10 +2352,6 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
   if(tab==="landing"){
     const li=UI[lang]||UI.de;
     const lt=applyA11y(ADULT);
-    const landingMenuBtn={width:'100%',display:'flex',alignItems:'center',gap:10,
-      justifyContent:'flex-start',background:lt.surface,
-      border:`1.5px solid ${lt.border}`,borderRadius:100,padding:'11px 22px',
-      color:lt.text,fontSize:14,cursor:'pointer',fontFamily:ADULT.fontBody,fontWeight:600};
     inject(globalCSS(lt));
     const pills={
       de:["4.800+ Fragen","Echtzeit","Joker"],
@@ -2377,40 +2417,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginTop:36}}>
           {(pills[lang]||pills.de).map(x=><Pill key={x} t={lt} color={lt.muted}>{x}</Pill>)}
         </div>
-        {/* Menü auf Landing */}
-        <div style={{marginTop:28,display:'flex',flexDirection:'column',gap:10,
-          alignItems:'center',width:'100%',maxWidth:300,marginLeft:'auto',marginRight:'auto'}}>
-          {onMyQuestions&&<button onClick={onMyQuestions} style={landingMenuBtn}>
-            <span style={{fontSize:17,width:22,textAlign:'center'}}>📝</span>
-            <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'My questions':lang==='es'?'Mis preguntas':'Meine Fragen'}</span>
-            <span style={{color:lt.muted}}>›</span>
-          </button>}
-          {onTeam&&<button onClick={onTeam} style={landingMenuBtn}>
-            <span style={{fontSize:17,width:22,textAlign:'center'}}>👥</span>
-            <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Team':lang==='es'?'Equipo':'Team'}</span>
-            <span style={{color:lt.muted}}>›</span>
-          </button>}
-          {onAdmin&&<button onClick={onAdmin} style={{...landingMenuBtn,borderColor:ADULT.accent+'66',color:ADULT.accent,fontWeight:700}}>
-            <span style={{fontSize:17,width:22,textAlign:'center'}}>📊</span>
-            <span style={{flex:1,textAlign:'left'}}>Admin Dashboard</span>
-            <span style={{color:ADULT.accent}}>›</span>
-          </button>}
-          {onA11y&&<div style={{width:'100%',marginTop:4}}>
-            <button onClick={()=>setA11yOpen(o=>!o)} style={{...landingMenuBtn,fontWeight:700}}>
-              <span style={{fontSize:17,width:22,textAlign:'center'}}>⚙️</span>
-              <span style={{flex:1,textAlign:'left'}}>{lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}</span>
-              <span style={{color:lt.muted,transform:a11yOpen?'rotate(90deg)':'none',transition:'transform .15s'}}>›</span>
-            </button>
-            {a11yOpen&&<div style={{marginTop:6,marginLeft:11,paddingLeft:13,
-              borderLeft:`2px solid ${lt.gold}55`,display:'flex',flexDirection:'column',gap:8}}>
-              <p style={{fontSize:10,color:lt.muted,fontWeight:700,letterSpacing:.6,
-                margin:'2px 0 0',textTransform:'uppercase'}}>
-                {lang==='en'?'Display & accessibility':lang==='es'?'Pantalla y accesibilidad':'Anzeige & Barrierefreiheit'}
-              </p>
-              <A11yMenu t={lt} lang={lang} onA11y={onA11y} compact onOpenColors={onOpenColors} onOpenBusiness={onOpenBusiness}/>
-            </div>}
-          </div>}
-        </div>
+        <div style={{height:90}}/>
       </div>
     </div>;
   }
@@ -5537,11 +5544,9 @@ function AdminDashboard({t, lang, onBack}){
     setCleanupBusy(false);
   }
 
-  return <div style={{...page,paddingBottom:40,animation:'fu .3s ease both'}}>
+  return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
     {/* Header */}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
-      <button onClick={onBack} style={{background:'none',border:'none',color:muted,
-        fontSize:20,cursor:'pointer',padding:0}}>←</button>
       <div style={{flex:1}}>
         <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,color:t.text}}>
           Admin Dashboard
@@ -6686,10 +6691,8 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
     borderRadius:t.radius,color:t.text,fontSize:14,padding:'10px 12px',
     fontFamily:t.fontBody,boxSizing:'border-box'};
 
-  return <div style={{...page,animation:'fu .3s ease both'}}>
+  return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
-      <button onClick={onBack} style={{background:'none',border:'none',color:t.muted,
-        fontSize:20,cursor:'pointer',padding:0}}>←</button>
       <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
         👥 {L('Team','Team','Equipo')}
       </h2>
@@ -7333,10 +7336,8 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   questions.forEach(q=>{ const c=q.category||DEFAULT_PACK; (packs[c]=packs[c]||[]).push(q); });
   const packNames=Object.keys(packs);
 
-  return <div style={{...page,animation:'fu .3s ease both'}}>
+  return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
-      <button onClick={onBack} style={{background:'none',border:'none',color:t.muted,
-        fontSize:20,cursor:'pointer',padding:0}}>←</button>
       <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
         {lang==='en'?'My Questions':lang==='es'?'Mis Preguntas':'Meine Fragen'}
       </h2>
@@ -7845,6 +7846,7 @@ function App(){
   const[showSteckbrief,setShowSteckbrief]=useState(false);
   const[showColorEditor,setShowColorEditor]=useState(false);
   const[showBusiness,setShowBusiness]=useState(false);
+  const[homeFormOpen,setHomeFormOpen]=useState(false);
   const[bizTick,setBizTick]=useState(0);
   const[gamePaused,setGamePaused]=useState(false);
   const[soundOn,setSoundOn]=useState(isSoundOn());
@@ -8557,7 +8559,14 @@ function App(){
     {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
     {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onThemeApplied={()=>setA11yTick(x=>x+1)}/>}
-    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)}/>}
+    {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)} onTabChange={tab=>setHomeFormOpen(tab==='host'||tab==='join')}/>}
+    {screen==="settings"&&<SettingsScreen t={t} lang={lang} onA11y={handleA11y} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)}/>}
+    {(()=>{
+      const showFloatingNav=(screen==='home'&&!homeFormOpen)||screen==='myQuestions'||screen==='team'||screen==='settings'||(screen==='admin'&&isPro);
+      if(!showFloatingNav) return null;
+      return <FloatingNav t={t} lang={lang} active={screen} isAdmin={isPro}
+        onNavigate={key=>setScreen(key)}/>;
+    })()}
     {screen==='lobby'&&!room&&<div style={{minHeight:'100vh',background:t.bg,
       display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <Spinner t={t}/>
@@ -8609,7 +8618,7 @@ function App(){
     </div>}
 
     {/* #8 Einstellungen auch im Spiel erreichbar */}
-    {screen!=="home"&&screen!=="admin"&&screen!=="myQuestions"&&<>
+    {screen!=="home"&&screen!=="admin"&&screen!=="myQuestions"&&screen!=="team"&&screen!=="settings"&&<>
       <button onClick={()=>setShowA11y(true)}
         title={lang==='en'?'Settings':lang==='es'?'Ajustes':'Einstellungen'}
         style={{position:'fixed',left:14,bottom:14,zIndex:480,width:42,height:42,
