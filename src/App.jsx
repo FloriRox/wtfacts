@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: team-help-overlay v1
+// EstiMates – Build-Marker: help-overlays-settings-myquestions v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -2279,12 +2279,70 @@ function FloatingNav({t, lang, active, onNavigate, isAdmin}){
   </div>;
 }
 
+/* ─── EINSTELLUNGEN-HILFE ──────────────────────────────────── */
+function SettingsHelpOverlay({t, lang, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const steps=[
+    {icon:'☀️', title:L('Heller Modus','Light mode','Modo claro'),
+      body:L('Schaltet zwischen der dunklen Farbgebung „Mitternachtsblau" und der hellen „Mint Frisch" um. Wirkt sofort auf die ganze App.',
+             'Switches between the dark "Midnight Blue" look and the light "Fresh Mint" look. Applies instantly across the whole app.',
+             'Cambia entre el aspecto oscuro "Azul medianoche" y el claro "Menta fresca". Se aplica al instante en toda la app.')},
+    {icon:'🔠', title:L('Große Schrift','Large text','Texto grande'),
+      body:L('Vergrößert die gesamte Darstellung etwas – hilfreich, wenn Text auf dem Bildschirm schwer lesbar ist.',
+             'Slightly enlarges the entire display – helpful if text on screen is hard to read.',
+             'Aumenta ligeramente toda la visualización – útil si el texto es difícil de leer.')},
+    {icon:'🎨', title:L('Farben & Stil','Colors & style','Colores y estilo'),
+      body:L('Eigene Farbgebung statt der Standardmodi: Vorlagen wählen, eigene Farben pro Element setzen oder als „Meine CI" speichern, um sie später wieder anzuwenden.',
+             'Custom colors instead of the default modes: pick a preset, set your own color per element, or save it as "My CI" to reapply later.',
+             'Colores propios en vez de los modos por defecto: elige una plantilla, define colores por elemento o guárdalos como "Mi CI" para reutilizarlos.')},
+    {icon:'🏢', title:L('Business-CI','Business CI','CI de empresa'),
+      body:L('Eigener Firmenname & Logo, die auf dem Beamer und in der Lobby erscheinen, sobald du einen Raum eröffnest – ideal für Firmen-Events.',
+             'Your own company name & logo shown on the beamer and in the lobby once you open a room – great for company events.',
+             'Tu nombre de empresa y logo aparecen en el proyector y la sala al abrir una sala – ideal para eventos de empresa.')},
+  ];
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:600,
+    background:'rgba(0,0,0,0.72)',display:'flex',alignItems:'center',justifyContent:'center',
+    padding:18}}>
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal-85" style={{background:t.card,borderRadius:t.radius,
+      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',
+      overflowY:'auto',padding:'22px 20px',animation:'fu .25s ease both'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+        <h2 style={{fontFamily:t.fontTitle,fontSize:24,margin:0,color:t.text}}>
+          {L('Was die Einstellungen bewirken','What the settings do','Qué hacen los ajustes')}
+        </h2>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,
+          fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+        {steps.map((s,idx)=><div key={idx} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+          <span style={{fontSize:24,flexShrink:0,lineHeight:1.1}}>{s.icon}</span>
+          <div>
+            <p style={{fontSize:14,fontWeight:800,color:t.text,margin:'0 0 3px'}}>{s.title}</p>
+            <p style={{fontSize:13,color:t.muted,margin:0,lineHeight:1.5}}>{s.body}</p>
+          </div>
+        </div>)}
+      </div>
+      <Btn t={t} onClick={onClose} full style={{marginTop:20}}>
+        {L('Verstanden','Got it','Entendido')}
+      </Btn>
+    </div>
+  </div>;
+}
+
 function SettingsScreen({t, lang, onA11y, onOpenColors, onOpenBusiness}){
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const[showHelp,setShowHelp]=useState(false);
   return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
-    <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:'0 0 18px'}}>
-      ⚙️ {L('Einstellungen','Settings','Ajustes')}
-    </h2>
+    {showHelp&&<SettingsHelpOverlay t={t} lang={lang} onClose={()=>setShowHelp(false)}/>}
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,flex:1}}>
+        ⚙️ {L('Einstellungen','Settings','Ajustes')}
+      </h2>
+      <button onClick={()=>setShowHelp(true)} title={L('So geht\'s','How it works','Cómo funciona')}
+        style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:'50%',
+          width:34,height:34,color:t.muted,fontSize:16,fontWeight:800,cursor:'pointer',
+          flexShrink:0,fontFamily:t.fontBody}}>?</button>
+    </div>
     <Card t={t}>
       <p style={{fontSize:11,color:t.muted,fontWeight:700,letterSpacing:.6,
         margin:'0 0 10px',textTransform:'uppercase'}}>
@@ -7126,6 +7184,56 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
 }
 
 /* ─── MY QUESTIONS SCREEN ──────────────────────────────── */
+/* ─── MEINE-FRAGEN-HILFE ──────────────────────────────────── */
+function MyQuestionsHelpOverlay({t, lang, onClose}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const steps=[
+    {icon:'➕', title:L('Eine Frage bauen','Building a question','Crear una pregunta'),
+      body:L('Eine Schätzfrage mit einer Zahl als Antwort – am besten beginnend mit „Wie viele…" oder „Wie lange…". Dazu Einheit (z. B. „Tage") und optional ein Fun-Fact-Hinweis, der nach dem Auflösen erscheint.',
+             'An estimation question with a number as the answer – best starting with "How many…" or "How long…". Add a unit (e.g. "days") and optionally a fun-fact hint shown after the reveal.',
+             'Una pregunta de estimación con un número como respuesta – mejor empezando con "¿Cuántos…?". Añade una unidad (p. ej. "días") y opcionalmente un dato curioso que aparece al revelar.')},
+    {icon:'📋', title:L('Vorlagen','Templates','Plantillas'),
+      body:L('Fertige Anlass-Pakete (z. B. Geburtstag, Junggesellenabschied) mit rund 22 Fragen – Antworten danach an euer Event anpassen. Oder eine leere CSV-Vorlage zum selbst Ausfüllen.',
+             'Ready-made occasion packs (e.g. birthday, bachelor party) with about 22 questions – adjust the answers to your event afterwards. Or a blank CSV template to fill in yourself.',
+             'Paquetes por ocasión (p. ej. cumpleaños, despedida) con unas 22 preguntas – ajusta las respuestas a tu evento. O una plantilla CSV en blanco para completar tú mismo.')},
+    {icon:'📄', title:L('CSV importieren','CSV import','Importar CSV'),
+      body:L('Die ausgefüllte Vorlage (aus Excel/Sheets) hier hochladen – bis zu 50 Fragen auf einmal werden automatisch übernommen.',
+             'Upload the filled-in template (from Excel/Sheets) here – up to 50 questions are added automatically at once.',
+             'Sube aquí la plantilla rellenada (de Excel/Sheets) – hasta 50 preguntas se añaden automáticamente de una vez.')},
+    {icon:'📥', title:L('Geteilte Pack-Links','Shared pack links','Enlaces de paquetes compartidos'),
+      body:L('Hat dir jemand einen Pack-Link oder -Code geschickt, fügst du ihn hier ein, um dessen Fragen in deine eigene Sammlung zu übernehmen. Umgekehrt kannst du eigene Packs über das Teilen-Symbol an einem Pack als Link weitergeben.',
+             'If someone sent you a pack link or code, paste it here to add their questions to your own collection. Conversely, you can share your own packs as a link via the share icon on a pack.',
+             'Si alguien te envió un enlace o código de paquete, pégalo aquí para añadir sus preguntas a tu colección. A la inversa, puedes compartir tus propios paquetes como enlace con el icono de compartir.')},
+  ];
+  return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:600,
+    background:'rgba(0,0,0,0.72)',display:'flex',alignItems:'center',justifyContent:'center',
+    padding:18}}>
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal-85" style={{background:t.card,borderRadius:t.radius,
+      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',
+      overflowY:'auto',padding:'22px 20px',animation:'fu .25s ease both'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+        <h2 style={{fontFamily:t.fontTitle,fontSize:24,margin:0,color:t.text}}>
+          {L('So bekommst du Fragen rein','How to add questions','Cómo añadir preguntas')}
+        </h2>
+        <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,
+          fontSize:24,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+        {steps.map((s,idx)=><div key={idx} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+          <span style={{fontSize:24,flexShrink:0,lineHeight:1.1}}>{s.icon}</span>
+          <div>
+            <p style={{fontSize:14,fontWeight:800,color:t.text,margin:'0 0 3px'}}>{s.title}</p>
+            <p style={{fontSize:13,color:t.muted,margin:0,lineHeight:1.5}}>{s.body}</p>
+          </div>
+        </div>)}
+      </div>
+      <Btn t={t} onClick={onClose} full style={{marginTop:20}}>
+        {L('Verstanden','Got it','Entendido')}
+      </Btn>
+    </div>
+  </div>;
+}
+
 function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   const i=UI[lang]||UI.de;
   const DEFAULT_PACK = lang==='en'?'⭐ My Questions':lang==='es'?'⭐ Mis Preguntas':'⭐ Meine Fragen';
@@ -7137,6 +7245,7 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   const[showOccasions,setShowOccasions]=useState(false);
   const[myTeams,setMyTeams]=useState([]);
   const[pushTarget,setPushTarget]=useState(null); // {name, questions}
+  const[showHelp,setShowHelp]=useState(false);
   const myName=(typeof localStorage!=='undefined'&&localStorage.getItem('em_lastname'))||'—';
   useEffect(()=>{
     if(!myId) return;
@@ -7415,10 +7524,15 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
   const packNames=Object.keys(packs);
 
   return <div style={{...page,paddingBottom:100,animation:'fu .3s ease both'}}>
+    {showHelp&&<MyQuestionsHelpOverlay t={t} lang={lang} onClose={()=>setShowHelp(false)}/>}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
-      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0}}>
+      <h2 style={{fontFamily:t.fontTitle,fontSize:28,margin:0,flex:1}}>
         {lang==='en'?'My Questions':lang==='es'?'Mis Preguntas':'Meine Fragen'}
       </h2>
+      <button onClick={()=>setShowHelp(true)} title={lang==='en'?'How it works':lang==='es'?'Cómo funciona':'So geht\'s'}
+        style={{background:'none',border:`1.5px solid ${t.border}`,borderRadius:'50%',
+          width:34,height:34,color:t.muted,fontSize:16,fontWeight:800,cursor:'pointer',
+          flexShrink:0,fontFamily:t.fontBody}}>?</button>
     </div>
 
     <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv"
