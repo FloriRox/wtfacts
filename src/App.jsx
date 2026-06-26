@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: midnight-mint-theme v1
+// EstiMates – Build-Marker: brand-design-admin-only v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -176,24 +176,15 @@ function applyA11y(base){
   return o;
 }
 function applyBaseA11y(base){
-  if(!A11Y || (!A11Y.cb && !A11Y.contrast && !A11Y.light)) return base;
-  var key=base.id+'|'+(A11Y.cb?1:0)+'|'+(A11Y.contrast?1:0)+'|'+(A11Y.light?1:0);
+  if(!A11Y || !A11Y.light) return base;
+  var key=base.id+'|'+(A11Y.light?1:0);
   if(_a11yCache[key]) return _a11yCache[key];
   var t={...base};
   // Heller/freundlicher Modus (nur Adult): Mint Frisch – ersetzt den Mitternachtsblau-Look
   if(A11Y.light && base.id==='adult'){
     t={...t, bg:'#F0FAF5', surface:'#FFFFFF', card:'#F6FDF9', border:'#CFE9DD',
       accent:'#0FA98E', gold:'#F2A93B', green:'#17B26A', danger:'#E5484D', text:'#1E2B27', muted:'#6E8A80'};
-    if(A11Y.cb) t.green='#2f7fe0';
-    _a11yCache[key]=t; return t; // im hellen Modus kein zusätzlicher Dark-Kontrast
-  }
-  if(A11Y.cb){
-    // Rot/Grün-Schwäche: "richtig/nah" wird Blau statt Grün (klar von Rot unterscheidbar)
-    t.green = '#3b9dff';
-  }
-  if(A11Y.contrast){
-    if(base.id==='kids'){ t.bg='#ffffff'; t.text='#000000'; t.muted='#4a4036'; t.border='#1e1e1e'; }
-    else { t.bg='#000000'; t.surface='#16110d'; t.card='#1d1813'; t.text='#ffffff'; t.muted='#cabcae'; t.border='#7a6656'; }
+    _a11yCache[key]=t; return t;
   }
   _a11yCache[key]=t;
   return t;
@@ -204,9 +195,7 @@ function A11yMenu({t, lang, onA11y, compact=false, onOpenColors=null, onOpenBusi
   const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
   const items=[
     {k:'light', icon:'☀️', label:L('Heller Modus','Light mode','Modo claro')},
-    {k:'cb', icon:'🎨', label:L('Rot/Grün-Schwäche','Red/green colorblind','Daltonismo rojo/verde')},
     {k:'large', icon:'🔠', label:L('Große Schrift','Large text','Texto grande')},
-    {k:'contrast', icon:'◐', label:L('Hoher Kontrast','High contrast','Alto contraste')},
   ];
   const pad=compact?'8px 12px':'10px 20px';
   const fs=compact?13:14;
@@ -286,17 +275,13 @@ function ColorEditor({t, lang, onChange, onClose}){
   const norm=v=>(v&&/^#[0-9a-fA-F]{6}$/.test(v))?v:'#000000';
   const change=(k,v)=>{ setCustomColor(k,v); onChange&&onChange(); rerender(); };
   const resetOne=k=>{ clearCustomColor(k); onChange&&onChange(); rerender(); };
-  const resetAll=()=>{ resetCustomColors(); resetCustomStyle(); onChange&&onChange(); rerender(); };
+  const resetAll=()=>{ resetCustomColors(); onChange&&onChange(); rerender(); };
   const pickPreset=p=>{ applyColorPreset(p.colors); onChange&&onChange(); rerender(); };
   const[ciName,setCiName]=useState('');
   const currentColors=()=>({bg:t.bg,surface:t.surface,card:t.card,border:t.border,accent:t.accent,gold:t.gold,green:t.green,danger:t.danger,text:t.text,muted:t.muted});
   const saveCI=()=>{ const n=(ciName||'').trim(); if(!n) return; saveThemePreset(n,currentColors()); setCiName(''); onChange&&onChange(); rerender(); };
   const applyCI=c=>{ applyColorPreset(c.colors); onChange&&onChange(); rerender(); };
   const delCI=id=>{ deleteSavedTheme(id); rerender(); };
-  const setStyle=(k,v)=>{ setCustomStyle(k,v); onChange&&onChange(); rerender(); };
-  const curRadius=CUSTOM_STYLE.radius!=null?CUSTOM_STYLE.radius:(t.radius!=null?t.radius:12);
-  const curDepth=CUSTOM_STYLE.depth||'flat';
-  const curGloss=!!CUSTOM_STYLE.gloss;
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
     display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
     <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
@@ -395,8 +380,32 @@ function ColorEditor({t, lang, onChange, onClose}){
           </div>;
         })}
       </div>
-      {/* ── Button-Stil ── */}
-      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'18px 0 8px',textTransform:'uppercase'}}>
+      {/* ── Button-Stil und Logo: siehe Admin-Bereich → Marken-Design ── */}
+      <button onClick={resetAll} style={{width:'100%',marginTop:16,padding:'11px',borderRadius:t.radius,
+        background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
+        cursor:'pointer',fontFamily:t.fontBody}}>{L('Farben zurücksetzen','Reset colors','Restablecer colores')}</button>
+    </div>
+  </div>;
+}
+
+/* ─── MARKEN-DESIGN (Logo + Button-Stil) – nur Admin ── */
+function BrandDesignScreen({t, lang, onChange}){
+  const L=(de,en,es)=>lang==='en'?en:lang==='es'?es:de;
+  const[,setTick]=useState(0); const rerender=()=>setTick(x=>x+1);
+  const setStyle=(k,v)=>{ setCustomStyle(k,v); onChange&&onChange(); rerender(); };
+  const curRadius=CUSTOM_STYLE.radius!=null?CUSTOM_STYLE.radius:(t.radius!=null?t.radius:12);
+  const curDepth=CUSTOM_STYLE.depth||'flat';
+  const curGloss=!!CUSTOM_STYLE.gloss;
+  const resetStyle=()=>{ resetCustomStyle(); onChange&&onChange(); rerender(); };
+  return <div style={{animation:'fu .3s ease both'}}>
+    <h2 style={{fontFamily:t.fontTitle,fontSize:22,margin:'4px 0 4px'}}>
+      👑 {L('Marken-Design','Brand design','Diseño de marca')}
+    </h2>
+    <p style={{fontSize:12,color:t.muted,margin:'0 0 18px'}}>
+      {L('Nur für Admins – Logo & Button-Stil gelten global für alle Spieler.','Admin only – logo & button style apply globally for all players.','Solo admin – el logo y el estilo de botón se aplican globalmente.')}
+    </p>
+    <Card t={t}>
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 8px',textTransform:'uppercase'}}>
         🔘 {L('Button-Stil','Button style','Estilo de botón')}
       </p>
       <div style={{marginBottom:10}}>
@@ -424,7 +433,7 @@ function ColorEditor({t, lang, onChange, onClose}){
           })}
         </div>
       </div>
-      <div style={{marginBottom:4}}>
+      <div>
         <p style={{fontSize:11,color:t.muted,margin:'0 0 5px'}}>{L('Glanz / Reflektion','Gloss / reflection','Brillo / reflejo')}</p>
         <div style={{display:'flex',gap:6}}>
           {[{l:L('Aus','Off','No'),v:false},{l:L('An','On','Sí'),v:true}].map(o=>{
@@ -438,8 +447,10 @@ function ColorEditor({t, lang, onChange, onClose}){
           })}
         </div>
       </div>
-      {/* ── Logo ── */}
-      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'18px 0 8px',textTransform:'uppercase'}}>
+    </Card>
+    <div style={{height:14}}/>
+    <Card t={t}>
+      <p style={{fontSize:11,fontWeight:800,color:t.muted,letterSpacing:.6,margin:'0 0 8px',textTransform:'uppercase'}}>
         👑 {L('Logo','Logo','Logo')}
       </p>
       <div style={{background:t.bg,border:`1.5px solid ${t.border}`,borderRadius:t.radius,padding:'10px 8px 14px',marginBottom:12}}>
@@ -489,17 +500,17 @@ function ColorEditor({t, lang, onChange, onClose}){
           style={{flex:1,accentColor:t.accent}}/>
         <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoGlowInt!=null?t.logoGlowInt:6)}px</span>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
         <span style={{flex:'0 0 auto',fontSize:13,color:t.text,minWidth:120}}>{L('Kippwinkel Krone','Crown tilt','Inclinación')}</span>
         <input type="range" min="0" max="18" step="0.5" value={t.logoTilt!=null?t.logoTilt:6}
           onChange={e=>setStyle('logoTilt',parseFloat(e.target.value))}
           style={{flex:1,accentColor:t.accent}}/>
         <span style={{fontFamily:t.fontMono,fontSize:11,color:t.muted,minWidth:42,textAlign:'right'}}>{(t.logoTilt!=null?t.logoTilt:6)}°</span>
       </div>
-      <button onClick={resetAll} style={{width:'100%',marginTop:16,padding:'11px',borderRadius:t.radius,
-        background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
-        cursor:'pointer',fontFamily:t.fontBody}}>{L('Alles zurücksetzen','Reset everything','Restablecer todo')}</button>
-    </div>
+    </Card>
+    <button onClick={resetStyle} style={{width:'100%',marginTop:16,padding:'11px',borderRadius:t.radius,
+      background:'none',border:`1.5px solid ${t.danger}66`,color:t.danger,fontSize:13,fontWeight:700,
+      cursor:'pointer',fontFamily:t.fontBody}}>{L('Logo & Button-Stil zurücksetzen','Reset logo & button style','Restablecer logo y estilo')}</button>
   </div>;
 }
 
@@ -5234,7 +5245,7 @@ function LoginPrompt({t, lang, onClose, onSuccess}) {
 
 
 /* ─── ADMIN DASHBOARD ──────────────────────────────────── */
-function AdminDashboard({t, lang, onBack}){
+function AdminDashboard({t, lang, onBack, onBrandChange=null}){
   const gold=t.gold||'#ff8c2a';
   const green=t.green||'#39d98a';
   const accent=t.accent||'#e8360a';
@@ -5570,6 +5581,7 @@ function AdminDashboard({t, lang, onBack}){
         {id:'categories',label:'Kategorien'},
         {id:'questions',label:'Fragen'},
         {id:'regions',label:'Regionen'},
+        {id:'brand',label:'👑 Marken-Design'},
       ].map(tb=>(
         <button key={tb.id} onClick={()=>setTab(tb.id)}
           style={{padding:'6px 14px',borderRadius:100,fontSize:12,fontWeight:700,
@@ -6126,6 +6138,9 @@ function AdminDashboard({t, lang, onBack}){
           });
         })()}
       </div>}
+
+      {/* ── MARKEN-DESIGN ── */}
+      {tab==='brand'&&<BrandDesignScreen t={t} lang={lang} onChange={onBrandChange}/>}
 
     </>}
   </div>;
@@ -8558,7 +8573,7 @@ function App(){
     {loading&&<LoadingOverlay t={t} text={loadTxt}/>}
     {screen==="home"&&showOnboarding&&<OnboardingScreen t={t} lang={lang}
       onDone={()=>setShowOnboarding(false)}/>}
-    {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')}/>}
+    {screen==="admin"&&isPro&&<AdminDashboard t={t} lang={lang} onBack={()=>setScreen('home')} onBrandChange={()=>setA11yTick(x=>x+1)}/>}
     {screen==="myQuestions"&&<MyQuestionsScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onTeam={()=>setScreen('team')}/>}
     {screen==="team"&&<TeamScreen myId={myId} t={t} lang={lang} onBack={()=>setScreen('home')} onThemeApplied={()=>setA11yTick(x=>x+1)}/>}
     {screen==="home"&&!showOnboarding&&<HomeScreen onHost={handleHost} onJoin={handleJoin} lang={lang} onSetLang={setLang} isAnonymous={isAnonymous} userName={userName} onShowLogin={()=>setShowLoginPrompt(true)} onSignOut={async()=>{await signOut(auth);await signInAnonymously(auth);setShowLoginPrompt(true);}} onShowOnboarding={()=>setShowOnboarding(true)} onMyQuestions={()=>setScreen('myQuestions')} onTeam={()=>setScreen('team')} onAdmin={isPro?()=>setScreen('admin'):null} onA11y={handleA11y} profile={profile} onOpenColors={()=>setShowColorEditor(true)} onOpenBusiness={()=>setShowBusiness(true)} onTabChange={tab=>setHomeFormOpen(tab==='host'||tab==='join')}/>}
