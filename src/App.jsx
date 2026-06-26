@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: brand-design-admin-only v1
+// EstiMates – Build-Marker: sheet-modal-dvh-fix v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -284,8 +284,8 @@ function ColorEditor({t, lang, onChange, onClose}){
   const delCI=id=>{ deleteSavedTheme(id); rerender(); };
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
     display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
-      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',maxHeight:'88vh',overflowY:'auto'}}>
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal" style={{width:'100%',maxWidth:520,background:t.card,
+      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',overflowY:'auto'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
         <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🎨 {L('Farben & Stil','Colors & style','Colores y estilo')}</p>
         <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
@@ -556,8 +556,8 @@ function BusinessScreen({t, lang, onOpenColors, onChange, onClose}){
   const name=BIZ.name||'', logo=BIZ.logo||null;
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.6)',
     display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
-      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',maxHeight:'90vh',overflowY:'auto'}}>
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal" style={{width:'100%',maxWidth:520,background:t.card,
+      borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',overflowY:'auto'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
         <p style={{fontSize:16,fontWeight:800,color:t.text,margin:0}}>🏢 {L('Business-CI','Business CI','CI de empresa')}</p>
         <button onClick={onClose} style={{background:'none',border:'none',color:t.muted,fontSize:24,cursor:'pointer',lineHeight:1}}>×</button>
@@ -1308,6 +1308,9 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes bop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes flame{0%,100%{text-shadow:0 0 16px #e8360a,0 0 32px #ff7c2a}50%{text-shadow:0 0 28px #ff7c2a,0 0 56px #e8360a}}
 @keyframes rainbow{0%{color:#ff5c5c}16%{color:#ffca2c}33%{color:#42c96e}50%{color:#4ecdc4}66%{color:#a29bfe}83%{color:#fd79a8}100%{color:#ff5c5c}}
+.sheet-modal{max-height:88vh;max-height:88dvh}
+.sheet-modal-80{max-height:80vh;max-height:80dvh}
+.sheet-modal-85{max-height:85vh;max-height:85dvh}
 @keyframes confettifall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}
 @keyframes revealSlide{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @keyframes pulseGold{0%,100%{box-shadow:0 0 0 2px #f5c542,0 0 8px 0 rgba(245,197,66,.45)}50%{box-shadow:0 0 0 2px #f5c542,0 0 16px 4px rgba(245,197,66,.85)}}
@@ -6978,9 +6981,9 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
     {newPackMenu&&<div onClick={()=>setNewPackMenu(null)}
       style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,.6)',
         display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,background:t.card,
+      <div onClick={e=>e.stopPropagation()} className="sheet-modal-80" style={{width:'100%',maxWidth:520,background:t.card,
         borderTopLeftRadius:18,borderTopRightRadius:18,padding:'16px 16px 28px',
-        maxHeight:'80vh',overflowY:'auto'}}>
+        overflowY:'auto'}}>
         <p style={{fontSize:15,fontWeight:800,color:t.text,margin:'0 0 4px'}}>
           {L('Neues Pack','New pack','Nuevo paquete')} · {newPackMenu.name}
         </p>
@@ -7019,8 +7022,8 @@ function TeamScreen({myId, t, lang, onBack, onThemeApplied=null}){
     {qEdit&&<div onClick={()=>setQEdit(null)}
       style={{position:'fixed',inset:0,zIndex:620,background:'rgba(0,0,0,0.72)',
         display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
-        border:`1.5px solid ${t.border}`,maxWidth:400,width:'100%',maxHeight:'88vh',overflowY:'auto',
+      <div onClick={e=>e.stopPropagation()} className="sheet-modal" style={{background:t.card,borderRadius:t.radius,
+        border:`1.5px solid ${t.border}`,maxWidth:400,width:'100%',overflowY:'auto',
         padding:'20px',animation:'fu .25s ease both'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
           <h3 style={{fontFamily:t.fontTitle,fontSize:19,margin:0,color:t.text}}>
@@ -7377,8 +7380,8 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
     {showOccasions&&<div onClick={()=>setShowOccasions(false)}
       style={{position:'fixed',inset:0,zIndex:600,background:'rgba(0,0,0,0.72)',
         display:'flex',alignItems:'center',justifyContent:'center',padding:18}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
-        border:`1.5px solid ${t.border}`,maxWidth:420,width:'100%',maxHeight:'85vh',
+      <div onClick={e=>e.stopPropagation()} className="sheet-modal-85" style={{background:t.card,borderRadius:t.radius,
+        border:`1.5px solid ${t.border}`,maxWidth:420,width:'100%',
         overflowY:'auto',padding:'20px',animation:'fu .25s ease both'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
           <h2 style={{fontFamily:t.fontTitle,fontSize:22,margin:0,color:t.text}}>
@@ -7601,8 +7604,8 @@ function EditorHelpOverlay({t, lang, onClose}){
   return <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:600,
     background:'rgba(0,0,0,0.72)',display:'flex',alignItems:'center',justifyContent:'center',
     padding:18}}>
-    <div onClick={e=>e.stopPropagation()} style={{background:t.card,borderRadius:t.radius,
-      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',maxHeight:'85vh',
+    <div onClick={e=>e.stopPropagation()} className="sheet-modal-85" style={{background:t.card,borderRadius:t.radius,
+      border:`1.5px solid ${t.border}`,maxWidth:440,width:'100%',
       overflowY:'auto',padding:'22px 20px',animation:'fu .25s ease both'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <h2 style={{fontFamily:t.fontTitle,fontSize:24,margin:0,color:t.text}}>
