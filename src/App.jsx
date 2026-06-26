@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: sheet-modal-fixedheight-v3
+// EstiMates – Build-Marker: myquestions-vertical-buttons v1
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -7360,20 +7360,18 @@ function MyQuestionsScreen({myId, t, lang, onBack, onTeam=null}){
     <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv"
       onChange={onCSVFile} style={{display:'none'}}/>
 
-    <div style={{display:'flex',gap:8,marginBottom:8}}>
-      <Btn t={t} onClick={()=>setEditing('new')} style={{flex:2}}>
+    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:8}}>
+      <Btn t={t} onClick={()=>setEditing('new')}>
         + {lang==='en'?'New question':lang==='es'?'Nueva pregunta':'Neue Frage'}
       </Btn>
-      <Btn t={t} variant="secondary" onClick={importPack} style={{flex:1}}>
-        🔗 {lang==='en'?'Link':lang==='es'?'Enlace':'Link'}
+      <Btn t={t} variant="secondary" onClick={()=>setShowOccasions(true)}>
+        📋 {lang==='en'?'Templates':lang==='es'?'Plantillas':'Vorlagen'}
       </Btn>
-    </div>
-    <div style={{display:'flex',gap:8,marginBottom:8}}>
-      <Btn t={t} variant="secondary" onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1}}>
+      <Btn t={t} variant="secondary" onClick={()=>fileRef.current&&fileRef.current.click()}>
         📄 {lang==='en'?'Import CSV':lang==='es'?'Importar CSV':'CSV importieren'}
       </Btn>
-      <Btn t={t} variant="secondary" onClick={()=>setShowOccasions(true)} style={{flex:1}}>
-        📋 {lang==='en'?'Templates':lang==='es'?'Plantillas':'Vorlagen'}
+      <Btn t={t} variant="secondary" onClick={importPack}>
+        📥 {lang==='en'?'Import shared pack link':lang==='es'?'Importar enlace de paquete':'Geteiltes Pack per Link importieren'}
       </Btn>
     </div>
 
