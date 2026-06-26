@@ -19,3 +19,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Service Worker darf nie gecacht werden – sonst merken Browser/CDN
+# Änderungen am CACHE_NAME nicht und liefern alte Assets weiter aus.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
