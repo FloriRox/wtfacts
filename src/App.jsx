@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: icon-laser-final v14
+// EstiMates – Build-Marker: icon-vcenter-fix v15
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -1509,7 +1509,8 @@ function buildAppIconSVG(){
   var esti=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoEsti)||'#1f9d75';
   var mates=(typeof CUSTOM_STYLE!=='undefined'&&CUSTOM_STYLE&&CUSTOM_STYLE.logoMates)||'#2f8ce0';
   var ff="'Grandstander','Poppins','Fredoka One',system-ui,'Segoe UI',Arial,sans-serif";
-  var half=148, h=2.6, cy=257; // tapered spear/lens laser dimensions
+  var cy1=205, cy2=317; // vertikale Mitte Zeile 1 / Zeile 2 (gleiche Proportion wie PNG-Icons)
+  var half=148, h=2.6, cy=(cy1+cy2)/2; // Laser exakt mittig zwischen den Zeilen
   var lensPath="M "+(256-half)+","+cy+" C "+(256-half*0.5)+","+(cy-h)+" "+(256+half*0.5)+","+(cy-h)+" "+(256+half)+","+cy+
     " C "+(256+half*0.5)+","+(cy+h)+" "+(256-half*0.5)+","+(cy+h)+" "+(256-half)+","+cy+" Z";
   var glowH=h*3.2;
@@ -1527,8 +1528,8 @@ function buildAppIconSVG(){
     +"<rect width='512' height='512' rx='113' fill='url(#glow2)'/>"
     +"<path d='"+lensGlow+"' fill='#2c81ff' opacity='0.85' filter='url(#lb)'/>"
     +"<path d='"+lensPath+"' fill='#4696ff'/>"
-    +"<text x='256' y='245' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+esti+"'>e?ti</text>"
-    +"<text x='256' y='357' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+mates+"'>mates</text>"
+    +"<text x='256' y='"+cy1+"' dominant-baseline='central' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+esti+"'>e?ti</text>"
+    +"<text x='256' y='"+cy2+"' dominant-baseline='central' font-family=\""+ff+"\" font-size='150' font-weight='800' text-anchor='middle' fill='"+mates+"'>mates</text>"
     +"<rect x='2' y='2' width='508' height='508' rx='111' fill='none' stroke='#ffffff' stroke-opacity='0.15' stroke-width='3'/>"
     +"</svg>";
 }
