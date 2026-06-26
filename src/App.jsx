@@ -1,4 +1,4 @@
-// EstiMates – Build-Marker: sheet-modal-minheight v1
+// EstiMates – Build-Marker: sheet-modal-minheight-v2
 import React, { useState, useEffect, useRef } from "react";
 import { QUESTIONS_DE, QUESTIONS_EN, QUESTIONS_ES } from "./questions/index.js";
 import { initializeApp } from "firebase/app";
@@ -1308,9 +1308,9 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes bop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes flame{0%,100%{text-shadow:0 0 16px #e8360a,0 0 32px #ff7c2a}50%{text-shadow:0 0 28px #ff7c2a,0 0 56px #e8360a}}
 @keyframes rainbow{0%{color:#ff5c5c}16%{color:#ffca2c}33%{color:#42c96e}50%{color:#4ecdc4}66%{color:#a29bfe}83%{color:#fd79a8}100%{color:#ff5c5c}}
-.sheet-modal{max-height:88vh;max-height:88dvh;min-height:70vh;min-height:70dvh}
-.sheet-modal-80{max-height:80vh;max-height:80dvh;min-height:62vh;min-height:62dvh}
-.sheet-modal-85{max-height:85vh;max-height:85dvh;min-height:65vh;min-height:65dvh}
+.sheet-modal{max-height:88vh;max-height:88dvh;min-height:84vh;min-height:84dvh}
+.sheet-modal-80{max-height:80vh;max-height:80dvh;min-height:76vh;min-height:76dvh}
+.sheet-modal-85{max-height:85vh;max-height:85dvh;min-height:80vh;min-height:80dvh}
 @keyframes confettifall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}
 @keyframes revealSlide{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @keyframes pulseGold{0%,100%{box-shadow:0 0 0 2px #f5c542,0 0 8px 0 rgba(245,197,66,.45)}50%{box-shadow:0 0 0 2px #f5c542,0 0 16px 4px rgba(245,197,66,.85)}}
