@@ -213,7 +213,7 @@ export default [
   {id:"polit_211",q:"Wie viele Millionen Menschen leben in der Europäischen Union?",a:450,unit:"Millionen",hint:"Ca. 450 Millionen Menschen in 27 EU-Ländern.",emoji:"🇪🇺"},
   {id:"polit_212",q:"Wie viele Staaten hat die USA?",a:50,unit:"Staaten",hint:"50 Staaten – Hawaii und Alaska als letzte 1959 aufgenommen.",emoji:"🇺🇸"},
   {id:"polit_213",q:"Wie viele Prozent des deutschen Stroms kommt aus erneuerbaren Energien?",a:60,unit:"%",hint:"Ca. 60% Erneuerbare in Deutschland (Stand 2023).",emoji:"🌱"},
-  {id:"polit_214",q:"Wie viele Milliarden Euro kostet Deutschlands Sozialsystem jährlich?",a:1000,unit:"Milliarden Euro",hint:"Über 1 Billion Euro – größter Posten im Bundeshaushalt.",emoji:"🏥"},
+  {id:"polit_214",q:"Wie viele Milliarden Euro kostet Deutschlands Sozialsystem jährlich?",a:1300,unit:"Milliarden Euro",hint:"Rund 1,3 Billionen Euro – größter Posten im Bundeshaushalt (Stand ~2024).",emoji:"🏥"},
   {id:"polit_215",q:"Wie viele Länder haben China diplomatisch anerkannt?",a:180,unit:"Länder",hint:"Ca. 180 Länder – Taiwan hingegen nur noch ~12.",emoji:"🇨🇳"},
   {id:"polit_216",q:"Wie viele Kilometer lang ist die Chinesische Mauer?",a:21000,unit:"km",hint:"21.196 km – aller Abschnitte zusammen.",emoji:"🏯"},
   {id:"polit_217",q:"Wie viele Millionen Menschen flohen 2015 nach Europa?",a:1,unit:"Million",hint:"Ca. 1 Million Flüchtlinge kamen 2015 nach Europa.",emoji:"🌍"},

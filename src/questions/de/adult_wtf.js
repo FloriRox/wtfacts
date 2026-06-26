@@ -219,7 +219,7 @@ export default [
   {id:"wtf_217",q:"Wie viele Mal kleben Augenlider pro Tag zusammen?",a:0,unit:"Mal",hint:"Gar nicht – Augenlider sind selbst-reinigend durch Tränenfilm.",emoji:"👁️"},
   {id:"wtf_218",q:"Wie viele Millionen km legt ein Blutkörperchen in seinem Leben zurück?",a:1500,unit:"km",hint:"Ca. 1.500 km – Lebensdauer ca. 120 Tage.",emoji:"🩸"},
   {id:"wtf_219",q:"Wie viele Liter Schleim produziert die Nase jährlich?",a:0.5,unit:"Liter",hint:"Ca. 0,5L pro Nase – Atemwege insgesamt 1-1,5L.",emoji:"🤧"},
-  {id:"wtf_220",q:"Wie viele Prozent des Gehirns sind aktiv während man schläft?",a:80,unit:"%",hint:"Bis zu 80% – das Gehirn schläft fast nie.",emoji:"🧠"},
+  {id:"wtf_220",q:"Wie viele Prozent der Körperenergie verbraucht das Gehirn?",a:20,unit:"%",hint:"Trotz nur ~2% Körpergewicht verbraucht das Gehirn ca. 20% der Energie.",emoji:"🧠"},
   {id:"wtf_221",q:"Wie viele Stunden verbringt ein Mensch im Leben mit Warten?",a:43800,unit:"Stunden",hint:"Ca. 5 Jahre – u.a. Ampeln, Schlangen, Downloads.",emoji:"⏳"},
   {id:"wtf_222",q:"Wie viele Mal niest ein Mensch täglich durchschnittlich?",a:4,unit:"Mal",hint:"Ca. 4 Mal täglich – bei Erkältung viel mehr.",emoji:"🤧"},
   {id:"wtf_223",q:"Wie viele km/h bewegen sich die Impulse im langsamen Nervensystem?",a:1,unit:"km/h",hint:"Langsame Schmerzfasern: nur 1 km/h – deshalb Schmerz oft verzögert.",emoji:"⚡"},
