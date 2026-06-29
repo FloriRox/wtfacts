@@ -630,7 +630,7 @@ const UI = {
     createRoom:"Raum erstellen",join:"Beitreten",back:"← Zurück",
     yourName:"Dein Name",roomCode:"Raumcode (z.B. AB3XY)",
     searching:"Suche Raum...",roomNotFound:"Raum nicht gefunden.",
-    gameRunning:"Das Spiel läuft bereits.",roomFull:"Raum voll (max. 50 Spieler).",
+    gameRunning:"Das Spiel läuft bereits.",roomFull:"Raum voll (max. 200 Spieler).",
     enterName:"Bitte gib deinen Namen ein.",enterCode:"Bitte gib einen Raumcode ein.",
     waitingHost:"Warte auf den Spielleiter 🙂",
     players:"SPIELER",inviteQr:"EINLADUNGS-QR",scanJoin:"Scannen zum Beitreten",
@@ -696,7 +696,7 @@ const UI = {
     createRoom:"Create Room",join:"Join",back:"← Back",
     yourName:"Your Name",roomCode:"Room Code (e.g. AB3XY)",
     searching:"Searching...",roomNotFound:"Room not found.",
-    gameRunning:"Game already running.",roomFull:"Room full (max. 50 players).",
+    gameRunning:"Game already running.",roomFull:"Room full (max. 200 players).",
     enterName:"Please enter your name.",enterCode:"Please enter a room code.",
     waitingHost:"Waiting for the host 🙂",
     players:"PLAYERS",inviteQr:"INVITE QR",scanJoin:"Scan to join",
@@ -762,7 +762,7 @@ const UI = {
     createRoom:"Crear sala",join:"Unirse",back:"← Volver",
     yourName:"Tu nombre",roomCode:"Código de sala (ej. AB3XY)",
     searching:"Buscando...",roomNotFound:"Sala no encontrada.",
-    gameRunning:"El juego ya está en curso.",roomFull:"Sala llena (máx. 50 jugadores).",
+    gameRunning:"El juego ya está en curso.",roomFull:"Sala llena (máx. 200 jugadores).",
     enterName:"Por favor ingresa tu nombre.",enterCode:"Por favor ingresa un código.",
     waitingHost:"Esperando al anfitrión 🙂",
     players:"JUGADORES",inviteQr:"QR DE INVITACIÓN",scanJoin:"Escanear para unirse",
@@ -2411,7 +2411,7 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
       setBusy(false);
       if(!room){setError(i.roomNotFound);return;}
       // Allow joining mid-game - player will catch up from current state
-      if((room.order||[]).length>=50){setError(i.roomFull);return;}
+      if((room.order||[]).length>=200){setError(i.roomFull);return;}
       localStorage.setItem('em_lastname', name.trim());
       onJoin(c,name.trim(),room.mode,room.lang||"de",{kampfname:spitzname.trim(),fact:funfact.trim(),selfie:selfieHome});
     }
@@ -2422,9 +2422,9 @@ function HomeScreen({onHost,onJoin,lang,onSetLang,isAnonymous=true,userName=null
     const lt=applyA11y(ADULT);
     inject(globalCSS(lt));
     const pills={
-      de:["4.800+ Fragen","Echtzeit","Joker"],
-      en:["4,800+ Questions","Real-time","Jokers"],
-      es:["4.800+ Preguntas","Tiempo real","Comodines"],
+      de:["5.000+ Fragen","Multiplayer bis 200 Spieler","Joker & Wetten"],
+      en:["5,000+ Questions","Multiplayer up to 200 players","Jokers & Bets"],
+      es:["5.000+ Preguntas","Multijugador hasta 200 jugadores","Comodines y apuestas"],
     };
     return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:lt.bg,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",width:600,height:600,borderRadius:"50%",background:`radial-gradient(circle,${lt.accent}2e,transparent 65%)`,top:-200,left:"50%",transform:"translateX(-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
@@ -5110,22 +5110,23 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
       {isAnonymous
         ? <>
           <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
-            🏆 Statistiken dauerhaft speichern
+            {lang==='en'?'🏆 Save your stats permanently':lang==='es'?'🏆 Guarda tus estadísticas permanentemente':'🏆 Statistiken dauerhaft speichern'}
           </p>
           <p style={{fontSize:12,color:t.muted,margin:'0 0 10px'}}>
-            Streak & Rangliste geräteübergreifend sichern
+            {lang==='en'?'Sync streak & leaderboard across devices':lang==='es'?'Sincroniza racha y ranking entre dispositivos':'Streak & Rangliste geräteübergreifend sichern'}
           </p>
           <button onClick={()=>onShowLogin()}
             style={{width:'100%',padding:'11px',borderRadius:t.radius,
               background:t.gold+'33',border:`1.5px solid ${t.gold}`,
               color:t.gold,fontWeight:700,fontSize:14,cursor:'pointer',
               fontFamily:t.fontBody}}>
-            🔐 Mit Google anmelden
+            {lang==='en'?'🔐 Sign in with Google':lang==='es'?'🔐 Iniciar sesión con Google':'🔐 Mit Google anmelden'}
           </button>
         </>
         : <div>
             <p style={{fontSize:13,color:t.gold,fontWeight:700,margin:'0 0 6px'}}>
-              ✅ Angemeldet{userName?' als '+userName:''}
+              {lang==='en'?'✅ Signed in':lang==='es'?'✅ Conectado':'✅ Angemeldet'}
+              {userName?(lang==='en'?' as ':lang==='es'?' como ':' als ')+userName:''}
             </p>
             <button onClick={async()=>{
               await signOut(auth);
@@ -5133,12 +5134,12 @@ function FinalScreen({room,myId,t,onRestart,lang,isAnonymous=true,onShowLogin=nu
             }} style={{background:'none',border:'none',color:t.muted,
               fontSize:11,cursor:'pointer',textDecoration:'underline',padding:0,
               fontFamily:t.fontBody}}>
-              Abmelden
+              {lang==='en'?'Sign out':lang==='es'?'Cerrar sesión':'Abmelden'}
             </button>
           </div>
       }
     </div>}
-    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>🔄 Nochmal spielen!</Btn>
+    <Btn t={t} onClick={onRestart} full style={{marginBottom:16}}>{i.playAgain}</Btn>
   </div>;
 }
 
@@ -5550,9 +5551,14 @@ function AdminDashboard({t, lang, onBack, onBrandChange=null}){
   function buildSeries(sessions, range){
     const now=Date.now();
     let buckets=[]; let unit='day';
-    if(range==='14d'||range==='30d'){
+    if(range==='1d'){
+      unit='hour';
+      const HOUR=3600*1000;
+      const curHourStart=Math.floor(now/HOUR)*HOUR;
+      for(let k=23;k>=0;k--){const t0=curHourStart-k*HOUR; buckets.push({t0,t1:t0+HOUR,count:0,label:new Date(t0)});}
+    } else if(range==='7d'||range==='14d'||range==='30d'){
       unit='day';
-      const n=range==='14d'?14:30; const today=startOfDay(now);
+      const n=range==='7d'?7:range==='14d'?14:30; const today=startOfDay(now);
       for(let k=n-1;k>=0;k--){const t0=today-k*DAY; buckets.push({t0,t1:t0+DAY,count:0,label:new Date(t0)});}
     } else if(range==='6m'){
       unit='week';
@@ -5586,6 +5592,7 @@ function AdminDashboard({t, lang, onBack, onBrandChange=null}){
   }
   const fmtTick=(date,unit)=>{
     if(unit==='month') return date.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
+    if(unit==='hour') return date.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     return date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   };
 
@@ -5683,6 +5690,8 @@ function AdminDashboard({t, lang, onBack, onBrandChange=null}){
             </p>
             <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
               {[
+                {id:'1d',label:'1 T.'},
+                {id:'7d',label:'7 T.'},
                 {id:'14d',label:'14 T.'},
                 {id:'30d',label:'1 Mon.'},
                 {id:'6m',label:'6 Mon.'},
@@ -5704,7 +5713,7 @@ function AdminDashboard({t, lang, onBack, onBrandChange=null}){
             if(!buckets.length) return <p style={{fontSize:12,color:muted,margin:0}}>Noch keine Daten.</p>;
             const mx=Math.max(1,...buckets.map(b=>b.count));
             const total=buckets.reduce((s,b)=>s+b.count,0);
-            const unitLbl=unit==='day'?'Tag':unit==='week'?'Woche':'Monat';
+            const unitLbl=unit==='hour'?'Stunde':unit==='day'?'Tag':unit==='week'?'Woche':'Monat';
             // bis zu 6 X-Achsen-Ticks gleichmäßig verteilt
             const tickN=Math.min(6,buckets.length);
             const tickIdx=new Set();
